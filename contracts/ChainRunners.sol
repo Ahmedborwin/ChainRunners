@@ -8,12 +8,23 @@ contract ChainRunners {
     struct athleteProfile {
         string username;
         uint256 slotID; //this is used to store and retreive athlete strava tokens from the DON
+        uint256[] activeCompeitions;
+        uint256 compeitionsWon;
+        uint256 totalMiles;
     }
 
     struct competitionForm {
-        uint256 competitionId;
-        bool isCompetitionLive;
+        uint256 id;
+        bool isLive;
         address[] competingAthletes;
+        uint256 createdDate;
+        uint256 startDate;
+        uint256 durationDays;
+        uint256 endDate;
+        uint256 nextPayoutDate;
+        uint256 payoutIntervals;
+        uint256 buyIn;
+
     }
 
     //state variables
@@ -26,27 +37,28 @@ contract ChainRunners {
 
     //Athlete mapping - address to Struct
     mapping(address => athleteProfile) public athleteTable;
-
     mapping(uint256 => competitionForm) public competitionTable;
 
     constructor() {}
 
-    function createAthlete() external {}
+    function createAthlete(string calldata _username) external {
+        athleteProfile memory athlete;
+        athlete.username = _username;
 
-    function createCompetition(uint256 _compId) external {
+        //create athlete mapping
+        athleteTable[msg.sender] = athlete;
+    }
+
+    function createCompetition(uint256 _durationDays , uint256 _payoutIntervals  ) payable external {
         //increment ID for compeition
         competitionId++;
-
-        //set up array of competing athletes. At this point that is msg.sender only
-        // address[] storage _listCompetitors;
-        // _listCompetitors.push(msg.sender);
 
         //initialise CompetitionForm
         competitionForm memory newCompetition;
 
         //populate Form
-        newCompetition.competitionId = competitionId;
-        newCompetition.isCompetitionLive = false;
+        newCompetition.id = competitionId;
+        newCompetition.isLive = false;
         newCompetition.competingAthletes[0] = msg.sender;
 
         //populate mapping with new compeition struct

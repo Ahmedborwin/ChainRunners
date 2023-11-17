@@ -237,7 +237,7 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
 
-        describe("Failure", () => {
+        describe("Commence Competition - Failure", () => {
             let competition
             beforeEach(async () => {
                 //create athlete profiles
@@ -254,9 +254,10 @@ describe("ChainRunners", () => {
                 )
             })
             it("reverts if caller is no the admin", async () => {
-                await expect(
-                    chainrunners.connect(athlete2).commenceCompetition("1", { value: buyin })
-                ).revertedWith("Only Competition Admin Can Call this function")
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+                await expect(chainrunners.connect(athlete2).commenceCompetition("1")).revertedWith(
+                    "Only Competition Admin Can Call this function"
+                )
             })
             it("", async () => {})
         })

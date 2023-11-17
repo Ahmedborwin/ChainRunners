@@ -5,8 +5,9 @@ import "hardhat/console.sol";
 
 contract ChainRunners {
     modifier onlyAdmin(address _caller, uint256 _compId) {
+        uint256 competitionIndex = _compId - 1;
         require(
-            _caller == competitionList[_compId].administrator,
+            _caller == competitionList[competitionIndex].administrator,
             "Only Competition Admin Can Call this function"
         );
         _;
@@ -68,6 +69,15 @@ contract ChainRunners {
 
     constructor() {}
 
+    /**
+     *
+     * @param _username User to provide their username
+     * Require that address is not registered to an existing athlete
+     * Require that username is not already registered
+     * @dev Creates new athlete profile as a struct and stores this in mapping with address as the Unique Identifier
+     * @dev updates username table
+     * @dev emits athleteProfileCreated event
+     */
     function createAthlete(string calldata _username) external {
         require(
             athleteTable[msg.sender].registeredAthlete == false,
@@ -86,6 +96,18 @@ contract ChainRunners {
         emit athleteProfileCreated(msg.sender, _username);
     }
 
+    /**
+     *
+     * @param _buyin ether amoutn required to enter competition
+     * @param _durationDays length of competition - expected in days
+     * @param _payoutIntervals length of time between payout intervals
+     * @dev NEED TO RETHINK THE PAYOUT INTERVALS - WILL CAUSE ISSUES AND WILL REQUIRE TOO MANY CHECKS
+     * @dev COULD USE ENUMS FOR THE DURATION AND INTERVALS TO MAKE SURE THE MATHS WILL ALWAYS ADD UP
+     * @dev Requires that ether sent is equal to the buyin amount and that caller is a registered athlete
+     * @dev initialise competition form as struct and add to both mapping and array
+     * @dev NEED ARRAY FOR LIVE COMPETITIONS ONLY - CURRENT ARRAY IS FOR ALL COMPETITIONS CREATED
+     * @dev newCompetitionCreated event is emitted
+     */
     function createCompetition(
         uint256 _buyin,
         uint256 _durationDays,
@@ -121,6 +143,14 @@ contract ChainRunners {
         emit newCompetitionCreated(competition.id, _buyin);
     }
 
+    /**
+     *
+     * @param _compId caller confirms the Id of the Competition they wish to join
+     * @dev Required to send ether equal to buyIn and for caller to be a registered athlete
+     * @dev update list of competing athletes by Compeition Id to include new competitor
+     * @dev update amount stake for competition
+     * @dev emit athleteJoinedCompetition event
+     */
     function joinCompetition(uint256 _compId) external payable {
         competition = competitionTable[_compId];
 
@@ -135,14 +165,18 @@ contract ChainRunners {
         emit athleteJoinedCompetition(_compId, msg.sender, msg.value);
     }
 
+    /**
+     *
+     * @param _compId the id of the competition
+     * @dev only competition admin can call this function and at least two competitors required
+     */
     function commenceCompetition(uint256 _compId) external onlyAdmin(msg.sender, _compId) {
-        //atleast two participants in comp
         require(athleteListByComp[_compId].length >= 2, "Atleast two competitors required");
     }
 
     function payoutEvent() public {}
 
-    function competitionCompletion() public {}
+    function finaliseCompetition() public {}
 
     //getter functions
     function getCompetitionList() external returns (competitionForm[] memory) {

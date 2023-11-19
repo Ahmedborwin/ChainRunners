@@ -94,8 +94,9 @@ describe("ChainRunners", () => {
                 expect(await newCompetition.administrator).equal(deployer.address)
             })
             it("competing athletes includes sender", async () => {
-                const competingAthletes = await newCompetition.competingAthletes[0]
-                expect(competingAthletes).equal(deployer.address)
+                const competingAthletes = await chainrunners.getAthleteList(1)
+                // Assert that the mapping contains the added athlete address
+                expect(competingAthletes).to.deep.include(deployer.address) // Change athleteAddress to the expected address
             })
             it("total staked is updated", async () => {
                 const totalStaked = await newCompetition.totalStaked
@@ -171,12 +172,12 @@ describe("ChainRunners", () => {
             it("updates competition list with new athlete address", async () => {
                 //join competition
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
-                //get compeition table object
+                //get comp table object
                 competition = await chainrunners.competitionTable("1")
-
-                //   const competingAthletes = await chainrunners.athleteListByComp("1")
-                //  console.log(competingAthletes)
-                expect(1).equal(2) //placeholder for a failed test
+                const competingAthletes = await chainrunners.getAthleteList(1)
+                console.log(competingAthletes)
+                // Assert that the mapping contains the added athlete address
+                expect(competingAthletes).to.deep.include(athlete2.address) // Change athleteAddress to the expected address
             })
             it("updates amount staked", async () => {
                 //join competition
@@ -250,6 +251,12 @@ describe("ChainRunners", () => {
                 expect(competition.nextPayoutDate).equal(
                     parseInt(competition.startDate, 10) + sevenDaysinseconds
                 )
+            })
+
+            it("live competition array updated", async () => {
+                await chainrunners.commenceCompetition("1")
+                const liveCompetitions = await chainrunners.liveCompetitions(0)
+                expect(liveCompetitions).equal(1)
             })
             it("emits Comp started event", async () => {
                 await expect(chainrunners.commenceCompetition("1")).emit(

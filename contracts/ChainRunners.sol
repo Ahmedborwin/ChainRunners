@@ -65,8 +65,11 @@ contract ChainRunners {
     athleteProfile athlete;
 
     uint256 public competitionId;
+
+    //arrays
     competitionForm[] public competitionList;
-    athleteProfile[] internal athleteList;
+    athleteProfile[] public athleteList;
+    uint256[] public liveCompetitions;
 
     //chainlink Variables
     uint256 currentSlotId;
@@ -198,8 +201,11 @@ contract ChainRunners {
         //set next reward interval
         competition.nextPayoutDate = block.timestamp + competition.payoutIntervals;
 
-        //Assing updated Competition Form back to mapping
+        //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
+
+        //push competitionId to live competitions array
+        liveCompetitions.push(_compId);
 
         emit competitionStarted(
             _compId,
@@ -210,12 +216,21 @@ contract ChainRunners {
         );
     }
 
-    function payoutEvent() public {}
+    function payoutEvent() public {
+        //check for live competitions
+        //loop through live comps and call strava api for each athlete - expect return of uint
+        //find largest number
+        //if all zeros deal then end
+        //largest > than min miles? if not deal with scenario
+    }
 
-    function finaliseCompetition() public {}
+    function finaliseCompetition() public {
+        //
+    }
 
     //getter functions
-    function getCompetitionList() external returns (competitionForm[] memory) {
-        return competitionList;
+    function getAthleteList(uint256 _compId) external returns (address[] memory) {
+        address[] memory listofAthletes = athleteListByComp[_compId];
+        return listofAthletes;
     }
 }

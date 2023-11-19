@@ -220,7 +220,7 @@ describe("ChainRunners", () => {
         })
     })
     describe("Commence Competition", () => {
-        describe("Success", () => {
+        describe("Commence Competition - Success", () => {
             let competition
             beforeEach(async () => {
                 //create athlete profiles
@@ -230,11 +230,33 @@ describe("ChainRunners", () => {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
-                competition = await chainrunners.competitionTable("1")
             })
-            it("", async () => {})
-            it("", async () => {})
-            it("", async () => {})
+            it("sets status to inProgress", async () => {
+                await chainrunners.commenceCompetition("1")
+                //get competition form
+                competition = await chainrunners.competitionTable("1")
+                expect(competition.status.toString()).equal("1")
+            })
+            it("records start time, calculates endDate and next Pay out Date", async () => {
+                await chainrunners.commenceCompetition("1")
+                //get competition form
+                competition = await chainrunners.competitionTable("1")
+                const thirtyDaysinseconds = 60 * 60 * 24 * 30
+                const sevenDaysinseconds = 60 * 60 * 24 * 7
+
+                expect(competition.endDate).equal(
+                    parseInt(competition.startDate, 10) + thirtyDaysinseconds
+                )
+                expect(competition.nextPayoutDate).equal(
+                    parseInt(competition.startDate, 10) + sevenDaysinseconds
+                )
+            })
+            it("emits Comp started event", async () => {
+                await expect(chainrunners.commenceCompetition("1")).emit(
+                    chainrunners,
+                    "competitionStarted"
+                )
+            })
         })
 
         describe("Commence Competition - Failure", () => {
@@ -259,7 +281,14 @@ describe("ChainRunners", () => {
                     "Only Competition Admin Can Call this function"
                 )
             })
-            it("", async () => {})
+            it("reverts if comp status anything other then pending", async () => {
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+                await chainrunners.commenceCompetition("1")
+                await expect(chainrunners.commenceCompetition("1")).revertedWithCustomError(
+                    chainrunners,
+                    "ChainRunners__CompStatusNotAsExpected"
+                )
+            })
         })
     })
     describe("", () => {

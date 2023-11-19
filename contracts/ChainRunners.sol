@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract ChainRunners {
+    //errors
+    error ChainRunners__CompStatusNotAsExpected(CompetitionStatus currentStatus);
+
     modifier onlyAdmin(address _caller, uint256 _compId) {
         uint256 competitionIndex = _compId - 1;
         require(
@@ -15,6 +18,13 @@ contract ChainRunners {
     event athleteProfileCreated(address athlete, string username);
     event newCompetitionCreated(uint256 compId, uint256 buyIn);
     event athleteJoinedCompetition(uint256 compId, address athleteAddress, uint256 stake);
+    event competitionStarted(
+        uint256 compId,
+        address[] competingAthletes,
+        uint256 startDate,
+        uint256 endDate,
+        uint256 nextPayout
+    );
 
     enum CompetitionStatus {
         pending,
@@ -172,6 +182,32 @@ contract ChainRunners {
      */
     function commenceCompetition(uint256 _compId) external onlyAdmin(msg.sender, _compId) {
         require(athleteListByComp[_compId].length >= 2, "Atleast two competitors required");
+
+        //populate mapping with new competition struct
+        competition = competitionTable[competitionId];
+        if (competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(competition.status);
+        }
+
+        //set Comp Status
+        competition.status = CompetitionStatus.inProgress;
+        //set start date
+        competition.startDate = block.timestamp;
+        //set end date
+        competition.endDate = block.timestamp + competition.durationDays;
+        //set next reward interval
+        competition.nextPayoutDate = block.timestamp + competition.payoutIntervals;
+
+        //Assing updated Competition Form back to mapping
+        competitionTable[competitionId] = competition;
+
+        emit competitionStarted(
+            _compId,
+            athleteListByComp[_compId],
+            competition.startDate,
+            competition.endDate,
+            competition.nextPayoutDate
+        );
     }
 
     function payoutEvent() public {}

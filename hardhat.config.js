@@ -16,11 +16,7 @@ module.exports = {
                     viaIR: true,
                     optimizer: {
                         enabled: true,
-                        details: {
-                            yulDetails: {
-                                optimizerSteps: "u:",
-                            },
-                        },
+                        yul: true,
                     },
                 },
             },
@@ -31,9 +27,7 @@ module.exports = {
                     optimizer: {
                         enabled: true,
                         details: {
-                            yulDetails: {
-                                optimizerSteps: "u:",
-                            },
+                            yul: true,
                         },
                     },
                 },

@@ -9,15 +9,25 @@ const tokens = (n) => {
 const ether = tokens
 
 describe("ChainRunners", () => {
-    let chainrunners, deployer, athlete2
+    //variables
+    let chainrunners, deployer, athlete2, defaultAddress
     let username = "Ahmed"
     let buyin = ether(0.0001)
+    let stravaId = 123456
+    let clrConsumer
     beforeEach(async () => {
-        ;[deployer, athlete2] = await ethers.getSigners()
+        ;[deployer, athlete2, defaultAddress] = await ethers.getSigners()
+
+        //deploy chainlinkRequestConsumer contract
+        const clrConsumerFactory = await ethers.getContractFactory("crChainlinkRequestConsumer")
+        clrConsumer = await clrConsumerFactory.deploy(
+            "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C" //dummy router address
+        )
+        await clrConsumer.deployed()
 
         //deploy chainrunners contract
         const chainrunnerFactory = await ethers.getContractFactory("ChainRunners")
-        chainrunners = await chainrunnerFactory.deploy()
+        chainrunners = await chainrunnerFactory.deploy(clrConsumer.address)
     })
 
     describe("Deployment", () => {
@@ -25,25 +35,30 @@ describe("ChainRunners", () => {
             const compId = await chainrunners.competitionId()
             expect(compId.toString()).equal("0")
         })
-        it("", async () => {})
-        it("", async () => {})
+        it("sets address for Chainlink functions consumer", async () => {
+            expect(await chainrunners.linkReq()).equal(clrConsumer.address)
+        })
+        it("updates app strava AccessTokenExpiry date", async () => {
+            const NextdDayinEpoch = Math.floor(Date.now() / 1000) + 60 * 60 * 24
+            chainrunners.updateAppAccessTokenExpires(NextdDayinEpoch)
+            expect(await chainrunners.appAccessTokenExpires()).equal(NextdDayinEpoch)
+        })
     })
-
     describe("Create Athlete Profile", () => {
         let athleteProfile
         describe("Success", () => {
             it("expect user created with username passed", async () => {
-                await chainrunners.createAthlete(username)
+                await chainrunners.createAthlete(username, stravaId)
                 athleteProfile = await chainrunners.athleteTable(deployer.address)
                 expect(athleteProfile.username.toString()).equal(username)
             })
             it("emits new player created event", async () => {
-                await expect(chainrunners.createAthlete(username))
+                await expect(chainrunners.createAthlete(username, stravaId))
                     .emit(chainrunners, "athleteProfileCreated")
                     .withArgs(deployer.address, "Ahmed")
             })
             it("sets athlete profile bool to true", async () => {
-                await chainrunners.createAthlete(username)
+                await chainrunners.createAthlete(username, stravaId)
                 athleteProfile = await chainrunners.athleteTable(deployer.address)
                 expect(athleteProfile.registeredAthlete).equal(true)
             })
@@ -51,18 +66,18 @@ describe("ChainRunners", () => {
 
         describe("Failure", () => {
             beforeEach("create athlete", async () => {
-                await chainrunners.createAthlete(username)
+                await chainrunners.createAthlete(username, stravaId)
                 athleteProfile = await chainrunners.athleteTable(deployer.address)
             })
             it("address already registered", async () => {
-                await expect(chainrunners.createAthlete("Borwin")).revertedWith(
+                await expect(chainrunners.createAthlete("Borwin", stravaId)).revertedWith(
                     "Address already registered to an Athlete"
                 )
             })
             it("username is already taken", async () => {
-                await expect(chainrunners.connect(athlete2).createAthlete(username)).revertedWith(
-                    "Username is Taken. Choose Another"
-                )
+                await expect(
+                    chainrunners.connect(athlete2).createAthlete(username, stravaId)
+                ).revertedWith("Username is Taken. Choose Another")
             })
 
             it("", async () => {})
@@ -73,7 +88,7 @@ describe("ChainRunners", () => {
 
         describe("Success", () => {
             beforeEach(async () => {
-                txResponse = await chainrunners.createAthlete(username)
+                txResponse = await chainrunners.createAthlete(username, stravaId)
 
                 txResponse = await chainrunners.createCompetition(
                     "Winner Takes All",
@@ -123,6 +138,12 @@ describe("ChainRunners", () => {
                     thirtyDaysinSeconds.toString()
                 )
             })
+            it("sets deadline date for comp to start", async () => {
+                const sevenDaysinSeconds = 7 * 60 * 60 * 24
+                expect(await newCompetition.startDeadline.toString()).equal(
+                    sevenDaysinSeconds.toString()
+                )
+            })
             it("sets payout intervals in seconds", async () => {
                 const sevenDaysinSeconds = 7 * 60 * 60 * 24
                 expect(await newCompetition.payoutIntervals.toString()).equal(
@@ -156,7 +177,7 @@ describe("ChainRunners", () => {
                 ).revertedWith("Not a registered Athlete")
             })
             it("fails if not enough ether is sent", async () => {
-                await chainrunners.createAthlete(username)
+                await chainrunners.createAthlete(username, stravaId)
                 await expect(
                     chainrunners.createCompetition("Winner Takes All", ether(0.00001), 30, 7, {
                         value: buyin,
@@ -164,7 +185,7 @@ describe("ChainRunners", () => {
                 ).revertedWith("Incorrect Buy In Amount Sent")
             })
             it("fails if too much ether is sent", async () => {
-                await chainrunners.createAthlete(username)
+                await chainrunners.createAthlete(username, stravaId)
                 await expect(
                     chainrunners.createCompetition("Winner Takes All", ether(0.00001), 30, 7, {
                         value: ether(0.01),
@@ -177,7 +198,7 @@ describe("ChainRunners", () => {
         let competition
         beforeEach(async () => {
             //create athlete profiles
-            await chainrunners.createAthlete(username)
+            await chainrunners.createAthlete(username, stravaId)
 
             await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                 value: buyin,
@@ -187,7 +208,7 @@ describe("ChainRunners", () => {
         describe("Success", () => {
             beforeEach("set up for successfull join of existing comp", async () => {
                 //create athlete profiles
-                await chainrunners.connect(athlete2).createAthlete("Bolt")
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
             })
             it("updates competition list with new athlete address", async () => {
                 //join competition
@@ -220,7 +241,7 @@ describe("ChainRunners", () => {
                 ).revertedWith("Not a registered Athlete")
             })
             it("fails if not enough ether is sent", async () => {
-                await chainrunners.connect(athlete2).createAthlete("Bolt")
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await expect(
                     chainrunners.joinCompetition("1", {
                         value: ether(0.00001),
@@ -228,7 +249,7 @@ describe("ChainRunners", () => {
                 ).revertedWith("Incorrect Buy In Amount Sent")
             })
             it("fails if too much ether is sent", async () => {
-                await chainrunners.connect(athlete2).createAthlete("Bolt")
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await expect(
                     chainrunners.joinCompetition("1", {
                         value: ether(0.001),
@@ -243,8 +264,8 @@ describe("ChainRunners", () => {
             let competition
             beforeEach(async () => {
                 //create athlete profiles
-                await chainrunners.createAthlete(username)
-                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })
@@ -286,8 +307,8 @@ describe("ChainRunners", () => {
             let competition
             beforeEach(async () => {
                 //create athlete profiles
-                await chainrunners.createAthlete(username)
-                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })
@@ -318,8 +339,8 @@ describe("ChainRunners", () => {
         describe("Abort Competition - Success", () => {
             beforeEach(async () => {
                 //create athlete profiles
-                await chainrunners.createAthlete(username)
-                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })
@@ -366,8 +387,8 @@ describe("ChainRunners", () => {
         describe("Abort Competition - Failure", () => {
             beforeEach(async () => {
                 //create athlete profiles
-                await chainrunners.createAthlete(username)
-                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
                 await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })

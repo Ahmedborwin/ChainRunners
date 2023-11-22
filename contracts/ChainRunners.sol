@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "./CRLinkReqInterface.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ChainRunners {
+contract ChainRunners is Ownable {
     //errors
     error ChainRunners__CompStatusNotAsExpected(CompetitionStatus currentStatus);
 
@@ -26,9 +27,9 @@ contract ChainRunners {
     //Athlete Struct
     struct athleteProfile {
         string username;
-        uint256 slotID; //this is used to store and retrieve athlete strava tokens from the DON
+        uint256 stravaUserId;
         uint256[] activeCompetitions;
-        uint256 compeitionsWon;
+        uint256 competitionsWon;
         uint256 totalMiles;
         bool registeredAthlete;
     }
@@ -46,18 +47,19 @@ contract ChainRunners {
         uint256 endDate;
         uint256 nextPayoutDate;
         uint256 payoutIntervals;
+        uint256 startDeadline;
         uint256 buyIn;
         uint256 totalStaked;
     }
 
     //state variables
     CRLinkReqInterface public linkReq;
+    uint256 public competitionId;
+    uint256 public appAccessTokenExpires;
 
     //initialise structs
     competitionForm competition;
     athleteProfile athlete;
-
-    uint256 public competitionId;
 
     //arrays
     competitionForm[] public competitionList;
@@ -103,14 +105,17 @@ contract ChainRunners {
      * @dev updates username table
      * @dev emits athleteProfileCreated event
      */
-    function createAthlete(string calldata _username) external {
+    function createAthlete(string calldata _username, uint256 _stravaUseId) external {
         require(
             athleteTable[msg.sender].registeredAthlete == false,
             "Address already registered to an Athlete"
         );
         require(usernameTable[_username] == false, "Username is Taken. Choose Another");
 
+        //there should be
+
         athlete.username = _username;
+        athlete.stravaUserId = _stravaUseId;
         athlete.registeredAthlete = true;
 
         //create athlete mapping
@@ -161,10 +166,11 @@ contract ChainRunners {
         competition.buyIn = _buyin;
         competition.administrator = msg.sender;
         competition.status = CompetitionStatus.pending;
-
+        //7 day deadline for competition to start otherwise it is Auto aborted
+        competition.startDeadline = 7 * 60 * 60 * 24;
         //update mapping with amount staked by athlete for _compID
         stakedByCompByUser[msg.sender][competitionId] = msg.value;
-        console.log(stakedByCompByUser[msg.sender][competitionId]);
+
         //populate mapping with new competition struct
         competitionTable[competitionId] = competition;
 
@@ -290,6 +296,13 @@ contract ChainRunners {
         competitionIsLive[_compId] = false;
 
         emit competitionAborted(_compId);
+    }
+
+    //helper function
+
+    //owner can update his apps access token expiry date
+    function updateAppAccessTokenExpires(uint256 _newExpiryDate) external onlyOwner {
+        appAccessTokenExpires = _newExpiryDate;
     }
 
     //getter functions

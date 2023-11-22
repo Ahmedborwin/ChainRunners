@@ -15,7 +15,7 @@ async function main() {
     const donId = hre.ethers.utils.formatBytes32String("fun-polygon-mumbai-1")
 
     // Deploy Token
-    const consumerFactory = await hre.ethers.getContractFactory("FunctionsConsumerExample")
+    const consumerFactory = await hre.ethers.getContractFactory("crChainlinkRequestConsumer")
     let consumer = await consumerFactory.deploy("0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C")
 
     await consumer.deployed()

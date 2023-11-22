@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
+import "./CRLinkReqInterface.sol";
 
 contract ChainRunners {
     //errors
@@ -15,16 +16,6 @@ contract ChainRunners {
         );
         _;
     }
-    event athleteProfileCreated(address athlete, string username);
-    event newCompetitionCreated(uint256 compId, uint256 buyIn);
-    event athleteJoinedCompetition(uint256 compId, address athleteAddress, uint256 stake);
-    event competitionStarted(
-        uint256 compId,
-        address[] competingAthletes,
-        uint256 startDate,
-        uint256 endDate,
-        uint256 nextPayout
-    );
 
     enum CompetitionStatus {
         pending,
@@ -35,7 +26,7 @@ contract ChainRunners {
     //Athlete Struct
     struct athleteProfile {
         string username;
-        uint256 slotID; //this is used to store and retreive athlete strava tokens from the DON
+        uint256 slotID; //this is used to store and retrieve athlete strava tokens from the DON
         uint256[] activeCompetitions;
         uint256 compeitionsWon;
         uint256 totalMiles;
@@ -44,6 +35,7 @@ contract ChainRunners {
 
     struct competitionForm {
         uint256 id;
+        string name;
         CompetitionStatus status;
         address administrator;
         bool isLive;
@@ -59,6 +51,7 @@ contract ChainRunners {
     }
 
     //state variables
+    CRLinkReqInterface public linkReq;
 
     //initialise structs
     competitionForm competition;
@@ -69,7 +62,6 @@ contract ChainRunners {
     //arrays
     competitionForm[] public competitionList;
     athleteProfile[] public athleteList;
-    uint256[] public liveCompetitions;
 
     //chainlink Variables
     uint256 currentSlotId;
@@ -77,10 +69,30 @@ contract ChainRunners {
     //Mapings
     mapping(address => athleteProfile) public athleteTable; //Athlete mapping - address to Struct
     mapping(uint256 => address[]) public athleteListByComp;
+    mapping(uint256 => bool) public competitionIsLive;
     mapping(uint256 => competitionForm) public competitionTable; //Comp Id to CompForm
     mapping(string => bool) public usernameTable; //username to bool
+    mapping(address => mapping(uint256 => uint256)) public stakedByCompByUser;
 
-    constructor() {}
+    event athleteProfileCreated(address indexed athlete, string indexed username);
+    event newCompetitionCreated(uint256 indexed compId, uint256 indexed buyIn);
+    event athleteJoinedCompetition(
+        uint256 indexed compId,
+        address indexed athleteAddress,
+        uint256 indexed stake
+    );
+    event competitionStarted(
+        uint256 compId,
+        address[] competingAthletes,
+        uint256 startDate,
+        uint256 endDate,
+        uint256 nextPayout
+    );
+    event competitionAborted(uint256 indexed CompetitionId);
+
+    constructor(address _linkReq) {
+        linkReq = CRLinkReqInterface(_linkReq);
+    }
 
     /**
      *
@@ -122,6 +134,7 @@ contract ChainRunners {
      * @dev newCompetitionCreated event is emitted
      */
     function createCompetition(
+        string calldata _name,
         uint256 _buyin,
         uint256 _durationDays,
         uint256 _payoutIntervals
@@ -140,6 +153,8 @@ contract ChainRunners {
 
         uint256 durationSecs = _durationDays * 60 * 60 * 24;
         uint256 payoutIntervalSecs = _payoutIntervals * 60 * 60 * 24;
+
+        competition.name = _name;
         competition.durationDays = durationSecs;
         competition.payoutIntervals = payoutIntervalSecs;
         competition.totalStaked += msg.value;
@@ -147,6 +162,9 @@ contract ChainRunners {
         competition.administrator = msg.sender;
         competition.status = CompetitionStatus.pending;
 
+        //update mapping with amount staked by athlete for _compID
+        stakedByCompByUser[msg.sender][competitionId] = msg.value;
+        console.log(stakedByCompByUser[msg.sender][competitionId]);
         //populate mapping with new competition struct
         competitionTable[competitionId] = competition;
 
@@ -165,15 +183,19 @@ contract ChainRunners {
      * @dev emit athleteJoinedCompetition event
      */
     function joinCompetition(uint256 _compId) external payable {
-        competition = competitionTable[_compId];
+        competitionForm storage _competition = competitionTable[_compId];
 
         require(athleteTable[msg.sender].registeredAthlete == true, "Not a registered Athlete");
         require(msg.value == competition.buyIn, "Incorrect Buy In Amount Sent");
 
+        //update total staked
+        _competition.totalStaked += msg.value;
+
         //add athlete to competition and amount staked
         athleteListByComp[competitionId].push(msg.sender);
 
-        competition.totalStaked += msg.value;
+        //update mapping with amount staked by athlete for _compID
+        stakedByCompByUser[msg.sender][_compId] = msg.value;
 
         emit athleteJoinedCompetition(_compId, msg.sender, msg.value);
     }
@@ -205,7 +227,7 @@ contract ChainRunners {
         competitionTable[competitionId] = competition;
 
         //push competitionId to live competitions array
-        liveCompetitions.push(_compId);
+        competitionIsLive[_compId] = true;
 
         emit competitionStarted(
             _compId,
@@ -218,19 +240,66 @@ contract ChainRunners {
 
     function payoutEvent() public {
         //check for live competitions
-        //loop through live comps and call strava api for each athlete - expect return of uint
+        uint256 competitionsCount = competitionList.length;
+
+        for (uint256 i = 0; i <= competitionsCount; i++) {
+            competitionForm memory _competition = competitionList[i];
+            //check if competitionId is set to live on isLive mapping
+            if (
+                competitionIsLive[_competition.id] == true &&
+                _competition.nextPayoutDate >= block.timestamp
+            ) {
+                for (uint256 j = 0; j <= athleteListByComp[i].length; j++) {
+                    //need to call chainlink function here for each athlete
+                }
+            }
+        }
+
         //find largest number
         //if all zeros deal then end
         //largest > than min miles? if not deal with scenario
     }
 
-    function finaliseCompetition() public {
+    function endCompetition() public {
         //
+    }
+
+    function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {
+        if (competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(competition.status);
+        }
+
+        //retrieve comp tables
+        competitionForm storage _competition = competitionTable[competitionId];
+
+        //update status
+        _competition.status = CompetitionStatus.aborted;
+
+        uint256 numberOfCompetitors = athleteListByComp[competitionId].length;
+        address[] memory athletesList = athleteListByComp[competitionId];
+
+        //return funds to stakers
+        for (uint16 i = 0; i < numberOfCompetitors; i++) {
+            uint256 amountStaked = stakedByCompByUser[athletesList[i]][_compId];
+
+            (bool sent, ) = athletesList[i].call{value: amountStaked}("");
+            _competition.totalStaked -= amountStaked;
+        }
+
+        //set isLive to false
+        competitionIsLive[_compId] = false;
+
+        emit competitionAborted(_compId);
     }
 
     //getter functions
     function getAthleteList(uint256 _compId) external returns (address[] memory) {
         address[] memory listofAthletes = athleteListByComp[_compId];
         return listofAthletes;
+    }
+
+    function getSourceTest() external view returns (string memory) {
+        console.log("Source API From Contract", linkReq.getStringTest());
+        linkReq.getStringTest();
     }
 }

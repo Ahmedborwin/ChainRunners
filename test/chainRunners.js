@@ -1,4 +1,5 @@
-const { expect } = require("chai")
+const { AlchemyProvider, TokenBalanceType, BigNumber } = require("alchemy-sdk")
+const { expect, add } = require("chai")
 const { ethers } = require("hardhat")
 
 const tokens = (n) => {
@@ -74,14 +75,23 @@ describe("ChainRunners", () => {
             beforeEach(async () => {
                 txResponse = await chainrunners.createAthlete(username)
 
-                txResponse = await chainrunners.createCompetition(buyin, 30, 7, {
-                    value: buyin,
-                })
+                txResponse = await chainrunners.createCompetition(
+                    "Winner Takes All",
+                    buyin,
+                    30,
+                    7,
+                    {
+                        value: buyin,
+                    }
+                )
 
                 newCompetition = await chainrunners.competitionTable("1")
             })
             it("Competition ID set", async () => {
                 expect(await newCompetition.id.toString()).equal("1")
+            })
+            it("Competition Name set", async () => {
+                expect(await newCompetition.name.toString()).equal("Winner Takes All")
             })
             it("Competition isLive is set to false", async () => {
                 expect(await newCompetition.isLive).equal(false)
@@ -96,11 +106,16 @@ describe("ChainRunners", () => {
             it("competing athletes includes sender", async () => {
                 const competingAthletes = await chainrunners.getAthleteList(1)
                 // Assert that the mapping contains the added athlete address
-                expect(competingAthletes).to.deep.include(deployer.address) // Change athleteAddress to the expected address
+                expect(competingAthletes).to.deep.include(deployer.address.toString()) // Change athleteAddress to the expected address
             })
             it("total staked is updated", async () => {
                 const totalStaked = await newCompetition.totalStaked
                 expect(totalStaked).equal(buyin)
+            })
+            it("Staked amount by address by Comp ID is updated", async () => {
+                const stakedCompID = await chainrunners.stakedByCompByUser[deployer.address][1]
+                console.log(stakedCompID)
+                expect(stakedCompID).equal(buyin)
             })
             it("sets duration of Competition in seconds", async () => {
                 const thirtyDaysinSeconds = 30 * 60 * 60 * 24
@@ -114,6 +129,7 @@ describe("ChainRunners", () => {
                     sevenDaysinSeconds.toString()
                 )
             })
+
             it("competition array includes msg sender", async () => {
                 const competitionList = await chainrunners.competitionList(0)
                 //console.log(JSON.stringify(competitionList))
@@ -121,7 +137,11 @@ describe("ChainRunners", () => {
                 expect(competitionList["totalStaked"]).equal(buyin)
             })
             it("competition event emitted", async () => {
-                await expect(chainrunners.createCompetition(buyin, 30, 7, { value: buyin }))
+                await expect(
+                    chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                        value: buyin,
+                    })
+                )
                     .emit(chainrunners, "newCompetitionCreated")
                     .withArgs(2, buyin)
             })
@@ -130,7 +150,7 @@ describe("ChainRunners", () => {
         describe("Failure", () => {
             it("reverts if competition creator is not a registered athlete", async () => {
                 await expect(
-                    chainrunners.createCompetition(buyin, 30, 7, {
+                    chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                         value: buyin,
                     })
                 ).revertedWith("Not a registered Athlete")
@@ -138,7 +158,7 @@ describe("ChainRunners", () => {
             it("fails if not enough ether is sent", async () => {
                 await chainrunners.createAthlete(username)
                 await expect(
-                    chainrunners.createCompetition(ether(0.00001), 30, 7, {
+                    chainrunners.createCompetition("Winner Takes All", ether(0.00001), 30, 7, {
                         value: buyin,
                     })
                 ).revertedWith("Incorrect Buy In Amount Sent")
@@ -146,7 +166,7 @@ describe("ChainRunners", () => {
             it("fails if too much ether is sent", async () => {
                 await chainrunners.createAthlete(username)
                 await expect(
-                    chainrunners.createCompetition(ether(0.00001), 30, 7, {
+                    chainrunners.createCompetition("Winner Takes All", ether(0.00001), 30, 7, {
                         value: ether(0.01),
                     })
                 ).revertedWith("Incorrect Buy In Amount Sent")
@@ -159,7 +179,7 @@ describe("ChainRunners", () => {
             //create athlete profiles
             await chainrunners.createAthlete(username)
 
-            await chainrunners.createCompetition(buyin, 30, 7, {
+            await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                 value: buyin,
             })
         })
@@ -172,19 +192,17 @@ describe("ChainRunners", () => {
             it("updates competition list with new athlete address", async () => {
                 //join competition
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
-                //get comp table object
-                competition = await chainrunners.competitionTable("1")
                 const competingAthletes = await chainrunners.getAthleteList(1)
                 console.log(competingAthletes)
                 // Assert that the mapping contains the added athlete address
-                expect(competingAthletes).to.deep.include(athlete2.address) // Change athleteAddress to the expected address
+                expect(JSON.parse(competingAthletes)).to.deep.include(athlete2.address) // Change athleteAddress to the expected address
             })
             it("updates amount staked", async () => {
                 //join competition
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
                 //get compeition table object
                 competition = await chainrunners.competitionTable("1")
-                expect(competition.totalStaked.toString()).equal(buyin.toString())
+                expect(competition.totalStaked.toString()).equal(buyin.mul(2).toString())
             })
             it("emits event", async () => {
                 await expect(chainrunners.connect(athlete2).joinCompetition("1", { value: buyin }))
@@ -227,7 +245,7 @@ describe("ChainRunners", () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username)
                 await chainrunners.connect(athlete2).createAthlete("bolt")
-                await chainrunners.createCompetition(buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
@@ -253,10 +271,9 @@ describe("ChainRunners", () => {
                 )
             })
 
-            it("live competition array updated", async () => {
+            it("Competition set to live", async () => {
                 await chainrunners.commenceCompetition("1")
-                const liveCompetitions = await chainrunners.liveCompetitions(0)
-                expect(liveCompetitions).equal(1)
+                expect(await chainrunners.competitionIsLive(1)).equal(true)
             })
             it("emits Comp started event", async () => {
                 await expect(chainrunners.commenceCompetition("1")).emit(
@@ -265,14 +282,13 @@ describe("ChainRunners", () => {
                 )
             })
         })
-
         describe("Commence Competition - Failure", () => {
             let competition
             beforeEach(async () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username)
                 await chainrunners.connect(athlete2).createAthlete("bolt")
-                await chainrunners.createCompetition(buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                     value: buyin,
                 })
                 competition = await chainrunners.competitionTable("1")
@@ -296,6 +312,110 @@ describe("ChainRunners", () => {
                     "ChainRunners__CompStatusNotAsExpected"
                 )
             })
+        })
+    })
+    describe("Abort competition", () => {
+        describe("Abort Competition - Success", () => {
+            beforeEach(async () => {
+                //create athlete profiles
+                await chainrunners.createAthlete(username)
+                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                    value: buyin,
+                })
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+            })
+            let competition
+            it("Comptition Status is updated", async () => {
+                await chainrunners.abortCompetition(1)
+                competition = await chainrunners.competitionTable("1")
+                expect(await competition.status).equal(3)
+            })
+            it("staked ether is sent back to users", async () => {
+                //confirm deployer and athlete2 address ether balance increases by buyin
+                const deployerBalBefore = await ethers.provider.getBalance(deployer.address)
+                const balanceBefore = await ethers.provider.getBalance(athlete2.address)
+
+                const tx = await chainrunners.abortCompetition(1)
+                // Wait for the transaction to be mined and get the receipt
+                await tx.wait()
+                const receipt = await ethers.provider.getTransactionReceipt(tx.hash)
+
+                // Calculate transaction cost
+                const transactionCost = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+
+                //get balance after function call
+                const deployerBalAfter = await ethers.provider.getBalance(deployer.address)
+                const balanceAfter = await ethers.provider.getBalance(athlete2.address)
+
+                expect(balanceBefore.add(buyin)).equal(balanceAfter.toString())
+                expect(deployerBalBefore.add(buyin).sub(transactionCost)).equal(
+                    deployerBalAfter.toString()
+                )
+            })
+            it("competition isLive mapping set to false", async () => {
+                expect(await chainrunners.competitionIsLive(1)).equal(false)
+            })
+            it("emits comp aborted event", async () => {
+                await expect(chainrunners.abortCompetition(1))
+                    .emit(chainrunners, "competitionAborted")
+                    .withArgs(1)
+            })
+        })
+
+        describe("Abort Competition - Failure", () => {
+            beforeEach(async () => {
+                //create athlete profiles
+                await chainrunners.createAthlete(username)
+                await chainrunners.connect(athlete2).createAthlete("bolt")
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                    value: buyin,
+                })
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+            })
+            it("revert if aborted by non admin", async () => {
+                await expect(chainrunners.connect(athlete2).abortCompetition(1)).revertedWith(
+                    "Only Competition Admin Can Call this function"
+                )
+            })
+            it("reverts if aborted and Com status is not pending ", async () => {
+                await chainrunners.commenceCompetition("1")
+                await expect(chainrunners.abortCompetition(1)).revertedWithCustomError(
+                    chainrunners,
+                    "ChainRunners__CompStatusNotAsExpected"
+                )
+            })
+            it("", async () => {})
+        })
+    })
+    describe("", () => {
+        beforeEach(async () => {})
+
+        describe("Success", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
+        })
+
+        describe("Failure", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
+        })
+    })
+    describe("", () => {
+        beforeEach(async () => {})
+
+        describe("Success", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
+        })
+
+        describe("Failure", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
         })
     })
     describe("", () => {

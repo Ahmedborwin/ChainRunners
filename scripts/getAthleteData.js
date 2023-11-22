@@ -1,9 +1,4 @@
-// This example shows how to make call an API using a secret
-// https://coinmarketcap.com/api/documentation/v1/
-
-// Arguments can be provided when a request is initated on-chain and used in the request source code as shown below
-
-const access_token = "9451c8a737800c8ff7d11515fff7d22a7f7b15cf"
+const access_token = "409579c760ee1674d699fa821db9923f3c8d293d"
 
 // build HTTP request object
 const userId = args[0]
@@ -11,7 +6,7 @@ const userId = args[0]
 const stravaGetAtheleteRequest = Functions.makeHttpRequest({
     url: `https://www.strava.com/api/v3/athletes/${userId}/stats`,
     headers: {
-        "Content-Type": "application/json",
+        "Content-Type": `application/json`,
         Authorization: `Bearer ${access_token}`,
     },
 })

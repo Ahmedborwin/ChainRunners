@@ -13,11 +13,14 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     using FunctionsRequest for FunctionsRequest.Request;
 
-    string public source;
+    string internal dummy;
+    string public getAthleteStatsJS;
     bytes32 public s_lastRequestId;
     bytes public s_lastResponse;
     bytes public s_lastError;
     bytes32 public donID;
+    uint64 subscriptionId;
+    uint32 constant DEFAULT_GAS_LIMIT = 300000;
 
     error UnexpectedRequestID(bytes32 requestId);
 
@@ -29,28 +32,14 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
      * @notice Send a simple request
   
      * @param args List of arguments accessible from within the source code
-     * @param subscriptionId Billing ID
      */
-    function sendRequest(
-        string[] memory args,
-        uint64 subscriptionId,
-        uint32 gasLimit
-    ) external onlyOwner returns (bytes32 requestId) {
+    function sendRequest(string[] memory args) external onlyOwner returns (bytes32 requestId) {
         FunctionsRequest.Request memory req;
-        req.initializeRequestForInlineJavaScript(source);
+        req.initializeRequestForInlineJavaScript(getAthleteStatsJS);
         if (args.length > 0) req.setArgs(args);
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, gasLimit, donID);
+        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, DEFAULT_GAS_LIMIT, donID);
         return s_lastRequestId;
     }
-
-    /**
-     * @notice Send a pre-encoded CBOR request
-     * @param request CBOR-encoded request data
-     * @param subscriptionId Billing ID
-     * @param gasLimit The maximum amount of gas the request can consume
-     * @param donID ID of the job to be invoked
-     * @return requestId The ID of the sent request
-     */
 
     /**
      * @notice Store latest result/error
@@ -73,16 +62,22 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         emit Response(requestId, s_lastResponse, s_lastError);
     }
 
-    function populateString(string calldata _string) public {
-        source = _string;
+    //Helper functions
+
+    function populateAPICallJS(string calldata _string) public {
+        getAthleteStatsJS = _string;
+    }
+
+    function getAPICallString() external view returns (string memory) {
+        return getAthleteStatsJS;
     }
 
     function populateDonId(bytes32 _donId) public {
         donID = _donId;
     }
 
-    function getStringTest() external view returns (string memory) {
-        return source;
+    function populateSubId(uint64 _subscriptionId) external {
+        subscriptionId = _subscriptionId;
     }
 
     function bytesToUint(bytes memory b) public pure returns (uint256) {

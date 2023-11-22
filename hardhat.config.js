@@ -5,6 +5,7 @@ const providerApiKey = process.env.ALCHEMY_API_KEY || "oKxs-03sij-U_N0iOlrSsZFr2
 // If not set, it uses the hardhat account 0 private key.
 const PRIVATE_KEY = process.env.PRIVATE_KEY || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
+const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY || ""
 /** @type import('hardhat/config').HardhatUserConfig */
 
 module.exports = {
@@ -35,13 +36,21 @@ module.exports = {
         ],
     },
     networks: {
+        hardhat: {
+            // forking: {
+            //     url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
+            //     enabled: process.env.MAINNET_FORKING_ENABLED === "true",
+            // },
+        },
         polygonMumbai: {
             url: `https://polygon-mumbai.g.alchemy.com/v2/${providerApiKey}`,
             accounts: [PRIVATE_KEY],
         },
     },
     etherscan: {
-        apiKey: ETHERSCAN_API_KEY,
+        apiKey: {
+            polygonMumbai: POLYGON_SCAN_API_KEY,
+        },
         // customChains: [], // uncomment this line if you are getting a TypeError: customChains is not iterable
     },
 }

@@ -45,6 +45,7 @@
     "devDependencies": {
         "@chainlink/functions-toolkit": "^0.2.6",
         "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+        "@nomicfoundation/hardhat-verify": "^2.0.1",
         "dotenv": "^16.3.1",
         "hardhat": "^2.14.1"
     }

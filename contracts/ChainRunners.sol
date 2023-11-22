@@ -123,6 +123,8 @@ contract ChainRunners is Ownable {
 
         usernameTable[_username] = true; //add username to existing username table
 
+        //make call to strava api to get user stats
+
         emit athleteProfileCreated(msg.sender, _username);
     }
 
@@ -311,8 +313,18 @@ contract ChainRunners is Ownable {
         return listofAthletes;
     }
 
-    function getSourceTest() external view returns (string memory) {
-        console.log("Source API From Contract", linkReq.getStringTest());
-        linkReq.getStringTest();
+    // TESTING THE CONNECTION BETWEEN THE CHAINRUNNER CONTRACT
+    // AND THE CHAINLINK CONSUMER CONTRACT
+
+    function getSourceTest() public view returns (string memory) {
+        console.log("Source API From Contract");
+        linkReq.getAPICallString();
+    }
+
+    function callAPIRequest() external {
+        string[] memory args = new string[](1);
+        // Set the elements individually
+        args[0] = "62612170";
+        linkReq.sendRequest(args);
     }
 }

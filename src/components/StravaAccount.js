@@ -39,7 +39,7 @@ const StravaAccountCreation = () => {
 
     const CLIENT_ID = '117193';
     const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
-    const REDIRECT_URI = 'http://localhost:3000'; // Replace with your actual redirect URI
+    const REDIRECT_URI = 'http://chain-runners-qcms.vercel.app'; // Replace with your actual redirect URI
     const SCOPE = 'read,activity:read_all';
 
     // Set up the authorization URL

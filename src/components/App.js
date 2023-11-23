@@ -5,6 +5,7 @@ import { ethers } from 'ethers'
 // Components
 import Navigation from './Navigation';
 import Loading from './Loading';
+import StravaAccountCreation from './StravaAccount';
 
 // ABIs: Import your contract ABIs here
 // import TOKEN_ABI from '../abis/Token.json'
@@ -41,7 +42,7 @@ function App() {
     }
   }, [isLoading]);
 
-  return(
+  return (
     <Container>
       <Navigation account={account} />
 
@@ -50,10 +51,7 @@ function App() {
       {isLoading ? (
         <Loading />
       ) : (
-        <>
-          <p className='text-center'><strong>Your ETH Balance:</strong> {balance} ETH</p>
-          <p className='text-center'>Edit App.js to add your code here.</p>
-        </>
+        <StravaAccountCreation />
       )}
     </Container>
   )

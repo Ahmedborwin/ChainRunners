@@ -1,4 +1,4 @@
-const access_token = "409579c760ee1674d699fa821db9923f3c8d293d"
+const access_token = "60c049636ef15456ca069d1a7954a80195ca0d65"
 
 // build HTTP request object
 const userId = args[0]

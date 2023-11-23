@@ -1,11 +1,9 @@
 const hre = require("hardhat")
-const fs = require("fs")
-const path = require("path")
 
-async function main() {
+async function verifyContracts() {
     const mumbaiRouter = "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C"
-    const chainRunnerAddress = "0x77218f5F2810545A76d4C97206e4cffA558f1dcC"
-    const consumerAddress = "0x1a1611Aff8242C4E013AB63541cce9D9f0aFd718"
+    const chainRunnerAddress = "0x5aAD41117e3769bF0A619b427Fd01414ef0c6721"
+    const consumerAddress = "0xbAA51B3Cd6083955BcAE6BF7160a12e095D47c48"
 
     await hre.run("verify:verify", {
         address: consumerAddress,
@@ -20,7 +18,7 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
+verifyContracts().catch((error) => {
     console.error(error)
     process.exitCode = 1
 })

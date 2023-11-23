@@ -13,9 +13,9 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     using FunctionsRequest for FunctionsRequest.Request;
 
-    string internal dummy;
-    string public getAthleteStatsJS;
     bytes32 public s_lastRequestId;
+
+    string public getAthleteStatsJS;
     bytes public s_lastResponse;
     bytes public s_lastError;
     bytes32 public donID;
@@ -33,7 +33,7 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
   
      * @param args List of arguments accessible from within the source code
      */
-    function sendRequest(string[] memory args) external onlyOwner returns (bytes32 requestId) {
+    function sendRequest(string[] memory args) external returns (bytes32 requestId) {
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(getAthleteStatsJS);
         if (args.length > 0) req.setArgs(args);
@@ -68,16 +68,26 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         getAthleteStatsJS = _string;
     }
 
-    function getAPICallString() external view returns (string memory) {
-        return getAthleteStatsJS;
-    }
-
     function populateDonId(bytes32 _donId) public {
         donID = _donId;
     }
 
     function populateSubId(uint64 _subscriptionId) external {
         subscriptionId = _subscriptionId;
+    }
+
+    function transferOwner(address _newOwner) external onlyOwner {
+        transferOwnership(_newOwner);
+    }
+
+    //helper functions
+
+    function getLastResponse() external view returns (bytes memory) {
+        return s_lastResponse;
+    }
+
+    function getAPICallString() external view returns (string memory) {
+        return getAthleteStatsJS;
     }
 
     function bytesToUint(bytes memory b) public pure returns (uint256) {

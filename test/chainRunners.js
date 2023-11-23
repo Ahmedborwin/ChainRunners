@@ -36,7 +36,7 @@ describe("ChainRunners", () => {
             expect(compId.toString()).equal("0")
         })
         it("sets address for Chainlink functions consumer", async () => {
-            expect(await chainrunners.linkReq()).equal(clrConsumer.address)
+            expect(await chainrunners.i_linkReq()).equal(clrConsumer.address)
         })
         it("updates app strava AccessTokenExpiry date", async () => {
             const NextdDayinEpoch = Math.floor(Date.now() / 1000) + 60 * 60 * 24
@@ -119,17 +119,16 @@ describe("ChainRunners", () => {
                 expect(await newCompetition.administrator).equal(deployer.address)
             })
             it("competing athletes includes sender", async () => {
-                const competingAthletes = await chainrunners.getAthleteList(1)
+                const athletes = await chainrunners.getAthleteList(1)
                 // Assert that the mapping contains the added athlete address
-                expect(competingAthletes).to.deep.include(deployer.address.toString()) // Change athleteAddress to the expected address
+                expect(athletes).to.include(deployer.address)
             })
             it("total staked is updated", async () => {
                 const totalStaked = await newCompetition.totalStaked
                 expect(totalStaked).equal(buyin)
             })
             it("Staked amount by address by Comp ID is updated", async () => {
-                const stakedCompID = await chainrunners.stakedByCompByUser[deployer.address][1]
-                console.log(stakedCompID)
+                const stakedCompID = await chainrunners.stakedByCompByUser(deployer.address, 1)
                 expect(stakedCompID).equal(buyin)
             })
             it("sets duration of Competition in seconds", async () => {
@@ -214,9 +213,8 @@ describe("ChainRunners", () => {
                 //join competition
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
                 const competingAthletes = await chainrunners.getAthleteList(1)
-                console.log(competingAthletes)
                 // Assert that the mapping contains the added athlete address
-                expect(JSON.parse(competingAthletes)).to.deep.include(athlete2.address) // Change athleteAddress to the expected address
+                expect(competingAthletes).to.include(athlete2.address) // Change athleteAddress to the expected address
             })
             it("updates amount staked", async () => {
                 //join competition

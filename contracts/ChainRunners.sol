@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "./CRLinkReqInterface.sol";
+import "./crChainlinkRequestConsumer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ChainRunners is Ownable {
@@ -27,7 +28,7 @@ contract ChainRunners is Ownable {
     //Athlete Struct
     struct athleteProfile {
         string username;
-        uint256 stravaUserId;
+        string stravaUserId;
         uint256[] activeCompetitions;
         uint256 competitionsWon;
         uint256 totalMiles;
@@ -41,7 +42,6 @@ contract ChainRunners is Ownable {
         address administrator;
         bool isLive;
         uint256 stake;
-        uint256 createdDate;
         uint256 startDate;
         uint256 durationDays;
         uint256 endDate;
@@ -53,9 +53,10 @@ contract ChainRunners is Ownable {
     }
 
     //state variables
-    CRLinkReqInterface public linkReq;
+    CRLinkReqInterface public i_linkReq;
     uint256 public competitionId;
     uint256 public appAccessTokenExpires;
+    uint256 internal dappFee;
 
     //initialise structs
     competitionForm competition;
@@ -67,6 +68,15 @@ contract ChainRunners is Ownable {
 
     //chainlink Variables
     uint256 currentSlotId;
+
+    //----------------------------------------
+    //TEST VARIABLES _ SHOULD BE DELETED AFTER
+    //----------------------------------------
+    uint256 public testInteger;
+    string public testString;
+    bytes32 public responseID;
+    //----------------------------------------
+    //----------------------------------------
 
     //Mapings
     mapping(address => athleteProfile) public athleteTable; //Athlete mapping - address to Struct
@@ -93,7 +103,7 @@ contract ChainRunners is Ownable {
     event competitionAborted(uint256 indexed CompetitionId);
 
     constructor(address _linkReq) {
-        linkReq = CRLinkReqInterface(_linkReq);
+        i_linkReq = CRLinkReqInterface(_linkReq);
     }
 
     /**
@@ -105,7 +115,7 @@ contract ChainRunners is Ownable {
      * @dev updates username table
      * @dev emits athleteProfileCreated event
      */
-    function createAthlete(string calldata _username, uint256 _stravaUseId) external {
+    function createAthlete(string calldata _username, string calldata _stravaUseId) external {
         require(
             athleteTable[msg.sender].registeredAthlete == false,
             "Address already registered to an Athlete"
@@ -218,6 +228,7 @@ contract ChainRunners is Ownable {
 
         //populate mapping with new competition struct
         competition = competitionTable[competitionId];
+
         if (competition.status != CompetitionStatus.pending) {
             revert ChainRunners__CompStatusNotAsExpected(competition.status);
         }
@@ -230,12 +241,17 @@ contract ChainRunners is Ownable {
         competition.endDate = block.timestamp + competition.durationDays;
         //set next reward interval
         competition.nextPayoutDate = block.timestamp + competition.payoutIntervals;
-
+        // take fee
+        uint256 fee = (competition.stake * 5) / 100;
+        competition.stake -= fee;
+        dappFee += fee;
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
 
         //push competitionId to live competitions array
         competitionIsLive[_compId] = true;
+
+        //Need to get the atheletes current Miles logged
 
         emit competitionStarted(
             _compId,
@@ -247,10 +263,7 @@ contract ChainRunners is Ownable {
     }
 
     function payoutEvent() public {
-        //check for live competitions
-        uint256 competitionsCount = competitionList.length;
-
-        for (uint256 i = 0; i <= competitionsCount; i++) {
+        for (uint256 i = 0; i <= competitionList.length; i++) {
             competitionForm memory _competition = competitionList[i];
             //check if competitionId is set to live on isLive mapping
             if (
@@ -259,13 +272,21 @@ contract ChainRunners is Ownable {
             ) {
                 for (uint256 j = 0; j <= athleteListByComp[i].length; j++) {
                     //need to call chainlink function here for each athlete
+                    // call chainlink interface
+                    string[] memory args = new string[](1);
+                    args[0] = athleteTable[msg.sender].stravaUserId;
+                    i_linkReq.sendRequest(args);
+                    //get response
+                    bytes memory _lastResponse = i_linkReq.getLastResponse();
+                    //parse to integer
+                    bytesToUint(_lastResponse);
+                    //save to athlete struct
                 }
             }
+            // figure out who the winner is
+            //if all zeros deal then end
+            //largest > than min miles? if not deal with scenario
         }
-
-        //find largest number
-        //if all zeros deal then end
-        //largest > than min miles? if not deal with scenario
     }
 
     function endCompetition() public {
@@ -307,24 +328,41 @@ contract ChainRunners is Ownable {
         appAccessTokenExpires = _newExpiryDate;
     }
 
+    function bytesToUint(bytes memory _bytes) public pure returns (uint256) {
+        uint256 number;
+        for (uint i = 0; i < _bytes.length; i++) {
+            number = number + uint(uint8(_bytes[i])) * (2 ** (8 * (_bytes.length - (i + 1))));
+        }
+        return number;
+    }
+
     //getter functions
-    function getAthleteList(uint256 _compId) external returns (address[] memory) {
-        address[] memory listofAthletes = athleteListByComp[_compId];
-        return listofAthletes;
+    function getAthleteList(uint256 _compId) external view returns (address[] memory) {
+        return athleteListByComp[_compId];
+    }
+
+    function getStakedByCompByAthlete(
+        address _athlete,
+        uint256 _compId
+    ) external view returns (uint256) {
+        stakedByCompByUser[_athlete][_compId];
     }
 
     // TESTING THE CONNECTION BETWEEN THE CHAINRUNNER CONTRACT
-    // AND THE CHAINLINK CONSUMER CONTRACT
+    // AND THE CHAINLINK CONSUMER CONTRACT string[] calldata _args
 
-    function getSourceTest() public view returns (string memory) {
-        console.log("Source API From Contract");
-        linkReq.getAPICallString();
-    }
-
-    function callAPIRequest() external {
+    function sendRequest() public returns (bytes memory) {
         string[] memory args = new string[](1);
-        // Set the elements individually
         args[0] = "62612170";
-        linkReq.sendRequest(args);
+
+        bytes32 requestId = i_linkReq.sendRequest(args);
+
+        responseID = requestId;
+
+        bytes memory requestResponse = i_linkReq.getLastResponse();
+
+        testInteger = bytesToUint(requestResponse);
     }
+
+    function getDataFromConsumer() external {}
 }

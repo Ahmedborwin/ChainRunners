@@ -39,11 +39,12 @@ const StravaAccountCreation = () => {
 
     const CLIENT_ID = '117193';
     const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
-    const REDIRECT_URI = 'http://chain-runners-qcms.vercel.app'; // Replace with your actual redirect URI
+    const REDIRECT_URI = 'https://chain-runners-qcms.vercel.app'; // Replace with your actual redirect URI
     const SCOPE = 'read,activity:read_all';
 
     // Set up the authorization URL
     const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
+    console.log(STRAVA_AUTH_URL)
 
     // Set up the token exchange URL
     const TOKEN_EXCHANGE_URL = 'https://www.strava.com/oauth/token';

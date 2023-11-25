@@ -43,6 +43,7 @@
         ]
     },
     "devDependencies": {
+        "@chainlink/env-enc": "^1.0.5",
         "@chainlink/functions-toolkit": "^0.2.6",
         "@nomicfoundation/hardhat-toolbox": "^2.0.2",
         "@nomicfoundation/hardhat-verify": "^2.0.1",

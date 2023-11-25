@@ -44,6 +44,7 @@ module.exports = {
         polygonMumbai: {
             url: `https://polygon-mumbai.g.alchemy.com/v2/${providerApiKey}`,
             accounts: [PRIVATE_KEY],
+            chainId: 80001,
         },
         fuji: {
             url: "https://api.avax-test.network/ext/bc/C/rpc",

@@ -71,16 +71,14 @@ describe("ChainRunners", () => {
             })
             it("address already registered", async () => {
                 await expect(chainrunners.createAthlete("Borwin", stravaId)).revertedWith(
-                    "Address already registered to an Athlete"
+                    "Address Registered to An Athlete"
                 )
             })
             it("username is already taken", async () => {
                 await expect(
                     chainrunners.connect(athlete2).createAthlete(username, stravaId)
-                ).revertedWith("Username is Taken. Choose Another")
+                ).revertedWithCustomError(chainrunners, "ChainRunners__UsernameTaken")
             })
-
-            it("", async () => {})
         })
     })
     describe("Create new Competition", () => {
@@ -128,7 +126,7 @@ describe("ChainRunners", () => {
                 expect(totalStaked).equal(buyin)
             })
             it("Staked amount by address by Comp ID is updated", async () => {
-                const stakedCompID = await chainrunners.stakedByCompByUser(deployer.address, 1)
+                const stakedCompID = await chainrunners.stakedByAthleteByComp(deployer.address, 1)
                 expect(stakedCompID).equal(buyin)
             })
             it("sets duration of Competition in seconds", async () => {
@@ -173,7 +171,7 @@ describe("ChainRunners", () => {
                     chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
                         value: buyin,
                     })
-                ).revertedWith("Not a registered Athlete")
+                ).revertedWithCustomError(chainrunners, "ChainRunners__NotRegisteredAthlete")
             })
             it("fails if not enough ether is sent", async () => {
                 await chainrunners.createAthlete(username, stravaId)
@@ -236,7 +234,7 @@ describe("ChainRunners", () => {
                     chainrunners.connect(athlete2).joinCompetition("1", {
                         value: buyin,
                     })
-                ).revertedWith("Not a registered Athlete")
+                ).revertedWithCustomError(chainrunners, "ChainRunners__NotRegisteredAthlete")
             })
             it("fails if not enough ether is sent", async () => {
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
@@ -244,7 +242,7 @@ describe("ChainRunners", () => {
                     chainrunners.joinCompetition("1", {
                         value: ether(0.00001),
                     })
-                ).revertedWith("Incorrect Buy In Amount Sent")
+                ).revertedWith("Incorrect BuyIn Amount")
             })
             it("fails if too much ether is sent", async () => {
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
@@ -252,7 +250,7 @@ describe("ChainRunners", () => {
                     chainrunners.joinCompetition("1", {
                         value: ether(0.001),
                     })
-                ).revertedWith("Incorrect Buy In Amount Sent")
+                ).revertedWith("Incorrect BuyIn Amount")
             })
             it("rejects if athlete already in competition", async () => {})
         })
@@ -407,7 +405,7 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("", () => {
+    describe("checkup keep for automated contract call", () => {
         beforeEach(async () => {})
 
         describe("Success", () => {
@@ -422,7 +420,7 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("", () => {
+    describe("handle API Call", () => {
         beforeEach(async () => {})
 
         describe("Success", () => {
@@ -437,7 +435,7 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("", () => {
+    describe("handle API response", () => {
         beforeEach(async () => {})
 
         describe("Success", () => {
@@ -452,7 +450,22 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("", () => {
+    describe("Pick winner", () => {
+        beforeEach(async () => {})
+
+        describe("Success", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
+        })
+
+        describe("Failure", () => {
+            it("", async () => {})
+            it("", async () => {})
+            it("", async () => {})
+        })
+    })
+    describe("Close Competition", () => {
         beforeEach(async () => {})
 
         describe("Success", () => {

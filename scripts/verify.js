@@ -1,9 +1,15 @@
+const { ethers } = require("hardhat")
 const hre = require("hardhat")
 
+const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
+const consumerAddressList = require("../config/consumerAddress.json")
+const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
+
 async function verifyContracts() {
-    const mumbaiRouter = "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C"
-    const chainRunnerAddress = "0x5aAD41117e3769bF0A619b427Fd01414ef0c6721"
-    const consumerAddress = "0xbAA51B3Cd6083955BcAE6BF7160a12e095D47c48"
+    const chainID = (await ethers.provider.getNetwork()).chainId.toString()
+    const mumbaiRouter = chainLinkFunctionsRouterList[chainID]
+    const chainRunnerAddress = chainRunnerAddressList[chainID]
+    const consumerAddress = consumerAddressList[chainID]
 
     await hre.run("verify:verify", {
         address: consumerAddress,
@@ -22,3 +28,5 @@ verifyContracts().catch((error) => {
     console.error(error)
     process.exitCode = 1
 })
+
+module.exports.verifyContracts = verifyContracts

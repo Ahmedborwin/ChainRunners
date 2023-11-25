@@ -1,13 +1,11 @@
-const access_token = "60c049636ef15456ca069d1a7954a80195ca0d65"
-
 // build HTTP request object
-const userId = args[0]
+const athleteId = args[0]
 
 const stravaGetAtheleteRequest = Functions.makeHttpRequest({
-    url: `https://www.strava.com/api/v3/athletes/${userId}/stats`,
+    url: `https://www.strava.com/api/v3/athletes/${athleteId}/stats`,
     headers: {
         "Content-Type": `application/json`,
-        Authorization: `Bearer ${access_token}`,
+        Authorization: `Bearer ${secrets.accessToken}`,
     },
 })
 

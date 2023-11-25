@@ -36,7 +36,7 @@ contract ChainRunners is Ownable {
     }
 
     enum requestType {
-        beginCompeition,
+        beginCompetition,
         payoutEvent
     }
 
@@ -105,7 +105,10 @@ contract ChainRunners is Ownable {
     mapping(string => bool) public usernameTable; //username to bool
     mapping(address => mapping(uint256 => uint256)) public stakedByAthleteByComp;
     mapping(address => uint256) public refundBalanceOwedToAthlete;
+    mapping(uint256 => uint8) public startCompCallCounter;
+    mapping(uint256 => uint8) public payoutEventCounter;
 
+    //events
     event athleteProfileCreated(address indexed athlete, string indexed username);
     event UsernameTaken(string username);
     event newCompetitionCreated(uint256 indexed compId, uint256 indexed buyIn);
@@ -244,6 +247,25 @@ contract ChainRunners is Ownable {
             revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
         }
 
+        //Need to get the atheletes current Miles logged
+        //************************
+        for (uint8 i = 0; i <= athleteListByComp[_compId].length; i++) {
+            address[] memory listAthletes = athleteListByComp[_compId];
+            //Call handleAPIRequest and pass athletes address
+            handleAPICall(
+                uint8(requestType.beginCompetition),
+                listAthletes[i],
+                athleteTable[listAthletes[i]].stravaUserId
+            );
+        }
+    }
+
+    function handleStartCompetition(uint256 _compId) internal {
+        if (competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
+        }
+        //populate mapping with new competition struct
+        competition = competitionTable[_compId];
         //set Comp Status
         competition.status = CompetitionStatus.inProgress;
         //set start date
@@ -256,27 +278,11 @@ contract ChainRunners is Ownable {
         uint256 fee = (competition.stake * 5) / 100;
         competition.stake -= fee;
         dappFee += fee;
-
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
-
-        //Need to get the atheletes current Miles logged
-        //************************
-        //this function is still under build
-        for (uint8 i = 0; i <= athleteListByComp[_compId].length; i++) {
-            address[] memory listAthletes = athleteListByComp[_compId];
-            //Call handleAPIRequest and pass athletes address
-            handleAPICall(
-                uint8(requestType.beginCompeition),
-                listAthletes[i],
-                athleteTable[listAthletes[i]].stravaUserId
-            );
-        }
-        //************************
-        //should we set comp to Live here or on the back of retrieving their current miles?
-        //setLive status to competition mapping
         competitionIsLive[_compId] = true;
-        // athleteTable[athleteListByComp[_compId][i]].activeCompetitions.push(_compId);
+
+        //athleteTable[athleteListByComp[_compId][i]].activeCompetitions.push(_compId);
 
         emit competitionStarted(
             _compId,
@@ -319,11 +325,35 @@ contract ChainRunners is Ownable {
         //emit event?
     }
 
-    function handleAPIResponse(uint8 _requestType, address _athlete, uint256 _distance) external {
+    function handleAPIResponse(
+        uint8 _requestType,
+        address _athlete,
+        uint256 _distance,
+        uint8 _compId
+    ) external {
         //needs to be only consumer
-        // figure out who the winner is
-        //if all zeros deal then end
+        //require(msg.sender == address(i_linkReq), "Only Consumer can call this function");
+        // check requestType
+        if (requestType(_requestType) == requestType.beginCompetition) {
+            //update athletes distance logged
+            athleteTable[_athlete].totalMiles = _distance;
+            startCompCallCounter[_compId] += 1;
+            //if final response for comp received then start Comp
+            if (startCompCallCounter[_compId] == athleteListByComp[_compId].length) {
+                //start competition
+                handleStartCompetition(_compId);
+            }
+        } else if (requestType(_requestType) == requestType.payoutEvent) {
+            //record miles logged since last call
+            //check nextPayout Date to make sure function is not called to early?
+            //would i need to keep track of both previousPayoutEvent
+        }
+    }
+
+    function handleWinner() internal {
         //largest > than min miles? if not deal with scenario
+        //if all zeros deal then end
+        // figure out who the winner is
     }
 
     function endCompetition() public {
@@ -387,6 +417,18 @@ contract ChainRunners is Ownable {
         uint256 _compId
     ) external view returns (uint256) {
         stakedByAthleteByComp[_athlete][_compId];
+    }
+
+    //FUNCTIONS TO HELP WITH TESTs
+    function setCompStatus(uint256 _compId) external {
+        competitionTable[_compId].status = CompetitionStatus.inProgress;
+    }
+
+    function callHandleStartCompetitionTest(uint8 _compId) external {
+        if (competitionTable[_compId].status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(uint8(competitionTable[_compId].status));
+        }
+        handleStartCompetition(_compId);
     }
 
     function testReceiveAPIResponse(

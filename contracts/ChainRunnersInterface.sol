@@ -2,11 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface ChainRunnersInterface {
-    function testReceiveAPIResponse(
+    function handleAPIResponse(
         uint8 _requestType,
         address _athleteAddress,
-        uint256 distance
+        uint256 _distance
     ) external;
-
-    function handleAPIResponse(address _athlete, uint8 _requestType) external;
 }

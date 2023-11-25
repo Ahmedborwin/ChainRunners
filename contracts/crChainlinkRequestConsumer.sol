@@ -67,8 +67,8 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         if (args.length > 0) req.setArgs(args);
         s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, DEFAULT_GAS_LIMIT, donID);
 
-        // requestIdToAthleteAddress[s_lastRequestId] = _athleteAddress;
-        // requestIdToRequestType[s_lastRequestId] = requestType(_requestType);
+        requestIdToAthleteAddress[s_lastRequestId] = _athleteAddress;
+        requestIdToRequestType[s_lastRequestId] = requestType(_requestType);
 
         return s_lastRequestId;
     }
@@ -92,12 +92,13 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         s_lastError = err;
 
         uint256 distance = bytesToUint(s_lastResponse);
-        address athleteAddress = requestIdToAthleteAddress[requestId];
-        uint8 _requestType = uint8(requestIdToRequestType[requestId]);
 
         //call chainrunners and pass back athlete address and distance
-
-        i_chainrunners.testReceiveAPIResponse(_requestType, athleteAddress, distance);
+        i_chainrunners.handleAPIResponse(
+            uint8(requestIdToRequestType[requestId]),
+            requestIdToAthleteAddress[requestId],
+            distance
+        );
 
         emit Response(requestId, s_lastResponse, s_lastError);
     }

@@ -51,20 +51,20 @@ async function main() {
     const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE_KEY
     const rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
 
-    const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
-    const wallet = new hre.ethers.Wallet(privateKey)
-    const wallet_2 = new hre.ethers.Wallet(privateKey_2)
-    const athlete_1 = wallet.connect(provider)
-    const athlete_2 = wallet_2.connect(provider)
-    //create two athletes
-    await chainrunner.createAthlete("Ahmed", "62612170")
-    await chainrunner.connect(athlete_2).createAthlete("Bolt", "62612170")
-    //create competitions and join with other athlete
-    await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
-        value: buyIn,
-    })
-    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
-    //begin competition
+    // const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    // const wallet = new hre.ethers.Wallet(privateKey)
+    // const wallet_2 = new hre.ethers.Wallet(privateKey_2)
+    // const athlete_1 = wallet.connect(provider)
+    // const athlete_2 = wallet_2.connect(provider)
+    // //create two athletes
+    // await chainrunner.createAthlete("Ahmed", "62612170")
+    // await chainrunner.connect(athlete_2).createAthlete("Bolt", "62612170")
+    // //create competitions and join with other athlete
+    // await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
+    //     value: buyIn,
+    // })
+    // await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    // //begin competition
 
     //set chainrunner as admin
     await consumer.setAdmin(chainrunner.address)

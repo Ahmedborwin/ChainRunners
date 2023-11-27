@@ -13,7 +13,7 @@ describe("ChainRunners", () => {
     let chainrunners, deployer, athlete2, defaultAddress
     let username = "Ahmed"
     let buyin = ether(0.0001)
-    let stravaId = 123456
+    let stravaId = "123456"
     let clrConsumer
     beforeEach(async () => {
         ;[deployer, athlete2, defaultAddress] = await ethers.getSigners()
@@ -266,6 +266,10 @@ describe("ChainRunners", () => {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+            })
+            it("sets string to success", async () => {
+                await chainrunners.commenceCompetition(1)
+                expect(await chainrunners.testString()).equal("Success")
             })
             //can i test chainlink function for here??
         })

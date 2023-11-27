@@ -3,6 +3,9 @@ const path = require("path")
 const { SecretsManager } = require("@chainlink/functions-toolkit")
 const { ethers } = require("hardhat")
 const hardhatConfig = require("../hardhat.config")
+
+const accessToken = require("../scripts/getAppAccessToken")
+
 const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
 const consumerAddressList = require("../config/consumerAddress.json")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
@@ -10,6 +13,7 @@ require("@chainlink/env-enc").config()
 
 // Initialize functions settings
 // will need this make these dynamic - add to hardhat-config under networks
+
 const linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
 const donId = "fun-polygon-mumbai-1"
 const gatewayUrls = [
@@ -21,17 +25,22 @@ const getAthleteData = fs
     .readFileSync(path.resolve(__dirname, "APICalls/getAthleteData.js"))
     .toString()
 
-const secrets = {
-    clientId: "116415",
-    clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
-    accessToken: "6a4c38c0cfdfc654d8a37e0e5a8b2076f1216600",
-}
 const slotIdNumber = 0 // slot ID where to upload the secrets
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
 async function chainLinkFunctions() {
     let rpcUrl, chainID, routerAddress, chainRunnerAddress, consumerAddress
     const network = await ethers.provider.getNetwork()
+
+    //get updated Access token
+    const accessTokenString = await accessToken()
+    console.log("access token Functions call to secret manager: ", accessTokenString.toString())
+
+    const secrets = {
+        clientId: "116415",
+        clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
+        accessToken: accessTokenString,
+    }
 
     // Initialize ethers signer and provider to interact with the contracts onchain
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY

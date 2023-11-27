@@ -55,7 +55,6 @@ contract ChainRunners is Ownable {
         string name;
         CompetitionStatus status;
         address administrator;
-        bool isLive;
         uint256 stake;
         uint256 startDate;
         uint256 durationDays;
@@ -185,7 +184,6 @@ contract ChainRunners is Ownable {
 
         //populate Form
         competition.id = competitionId;
-        competition.isLive = false;
         athleteListByComp[competitionId].push(msg.sender);
         competition.name = _name;
         competition.totalStaked += msg.value;
@@ -249,13 +247,14 @@ contract ChainRunners is Ownable {
 
         //Need to get the atheletes current Miles logged
         //************************
-        for (uint8 i = 0; i <= athleteListByComp[_compId].length; i++) {
+        for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
             address[] memory listAthletes = athleteListByComp[_compId];
             //Call handleAPIRequest and pass athletes address
             handleAPICall(
                 uint8(requestType.beginCompetition),
+                athleteTable[listAthletes[i]].stravaUserId,
                 listAthletes[i],
-                athleteTable[listAthletes[i]].stravaUserId
+                _compId
             );
         }
     }
@@ -293,7 +292,7 @@ contract ChainRunners is Ownable {
         );
     }
 
-    function handlePayoutEvent() public {
+    function handlePayoutEvent(uint256 _compId) public {
         for (uint256 i = 0; i <= competitionList.length; i++) {
             competitionForm memory _competition = competitionList[i];
             address[] memory athleteListbyComp = athleteListByComp[i];
@@ -306,21 +305,27 @@ contract ChainRunners is Ownable {
                 for (uint256 j = 0; j <= athleteListbyComp.length; j++) {
                     handleAPICall(
                         uint8(requestType.payoutEvent),
+                        athleteTable[athleteListbyComp[j]].stravaUserId,
                         athleteListbyComp[j],
-                        athleteTable[athleteListbyComp[j]].stravaUserId
+                        _compId
                     );
                 }
             }
         }
     }
 
-    function handleAPICall(uint8 _requestType, address _athlete, string memory _stravaId) internal {
+    function handleAPICall(
+        uint8 _requestType,
+        string memory _stravaId,
+        address _athlete,
+        uint256 _compId
+    ) internal {
         //call consumer contract and pass address of athlete
         string[] memory args = new string[](1);
         args[0] = _stravaId;
 
         //need to think about the what to record and why
-        i_linkReq.sendRequest(_requestType, args, _athlete);
+        i_linkReq.sendRequest(_requestType, args, _athlete, _compId);
 
         //emit event?
     }
@@ -329,7 +334,7 @@ contract ChainRunners is Ownable {
         uint8 _requestType,
         address _athlete,
         uint256 _distance,
-        uint8 _compId
+        uint256 _compId
     ) external {
         //needs to be only consumer
         //require(msg.sender == address(i_linkReq), "Only Consumer can call this function");
@@ -429,6 +434,20 @@ contract ChainRunners is Ownable {
             revert ChainRunners__CompStatusNotAsExpected(uint8(competitionTable[_compId].status));
         }
         handleStartCompetition(_compId);
+    }
+
+    function testHandleAPICall(
+        uint8 _requestType,
+        address _athlete,
+        string memory _stravaId,
+        uint256 _compId
+    ) external onlyOwner {
+        //call consumer contract and pass address of athlete
+        string[] memory args = new string[](1);
+        args[0] = _stravaId;
+
+        //need to think about the what to record and why
+        i_linkReq.sendRequest(_requestType, args, _athlete, _compId);
     }
 
     function testReceiveAPIResponse(

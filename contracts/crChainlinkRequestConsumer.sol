@@ -44,6 +44,7 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     //Data Structures to deal with API Call from Chainrunners
     mapping(bytes32 => address) public requestIdToAthleteAddress;
     mapping(bytes32 => requestType) public requestIdToRequestType;
+    mapping(bytes32 => uint256) public requestIdToCompId;
 
     //events
     event Response(bytes32 indexed requestId, bytes response, bytes err);
@@ -57,7 +58,8 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     function sendRequest(
         uint8 _requestType,
         string[] memory args,
-        address _athleteAddress
+        address _athleteAddress,
+        uint256 _compId
     ) external returns (bytes32 requestId) {
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(getAthleteStatsJS);
@@ -69,6 +71,7 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
 
         requestIdToAthleteAddress[s_lastRequestId] = _athleteAddress;
         requestIdToRequestType[s_lastRequestId] = requestType(_requestType);
+        requestIdToCompId[s_lastRequestId] = _compId;
 
         return s_lastRequestId;
     }
@@ -97,7 +100,8 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         i_chainrunners.handleAPIResponse(
             uint8(requestIdToRequestType[requestId]),
             requestIdToAthleteAddress[requestId],
-            distance
+            distance,
+            requestIdToCompId[requestId]
         );
 
         emit Response(requestId, s_lastResponse, s_lastError);

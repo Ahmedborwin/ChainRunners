@@ -5,7 +5,8 @@ interface CRLinkReqInterface {
     function sendRequest(
         uint8 _requestType,
         string[] memory args,
-        address _athleteAddress
+        address _athleteAddress,
+        uint256 _compId
     ) external returns (bytes32 requestId);
 
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) external;

@@ -88,9 +88,6 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         bytes memory response,
         bytes memory err
     ) internal override {
-        if (s_lastRequestId != requestId) {
-            revert UnexpectedRequestID(requestId);
-        }
         s_lastResponse = response;
         s_lastError = err;
 

@@ -459,4 +459,9 @@ contract ChainRunners is Ownable {
         testAddress = _athleteAddress;
         requesttype = requestType(_requestType);
     }
+
+    function withdrawBalanceTEST() external onlyOwner {
+        (bool sent, ) = msg.sender.call{value: address(this).balance}("");
+        require(sent, "Unable to withdraw funds");
+    }
 }

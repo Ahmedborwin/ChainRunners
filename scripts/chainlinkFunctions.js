@@ -3,9 +3,7 @@ const path = require("path")
 const { SecretsManager } = require("@chainlink/functions-toolkit")
 const { ethers } = require("hardhat")
 const hardhatConfig = require("../hardhat.config")
-
 const accessToken = require("../scripts/getAppAccessToken")
-
 const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
 const consumerAddressList = require("../config/consumerAddress.json")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
@@ -24,7 +22,6 @@ const gatewayUrls = [
 const getAthleteData = fs
     .readFileSync(path.resolve(__dirname, "APICalls/getAthleteData.js"))
     .toString()
-
 const slotIdNumber = 0 // slot ID where to upload the secrets
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
@@ -34,8 +31,6 @@ async function chainLinkFunctions() {
 
     //get updated Access token
     const accessTokenString = await accessToken()
-    console.log("access token Functions call to secret manager: ", accessTokenString.toString())
-
     const secrets = {
         clientId: "116415",
         clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",

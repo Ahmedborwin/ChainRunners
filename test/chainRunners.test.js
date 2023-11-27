@@ -1,6 +1,5 @@
-const { AlchemyProvider, TokenBalanceType, BigNumber } = require("alchemy-sdk")
 const { expect, add } = require("chai")
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
 
 const tokens = (n) => {
     return ethers.utils.parseUnits(n.toString(), "ether")
@@ -10,13 +9,13 @@ const ether = tokens
 
 describe("ChainRunners", () => {
     //variables
-    let chainrunners, deployer, athlete2, defaultAddress
+    let chainrunners, deployer, athlete2, defaultAddress, athlete3
     let username = "Ahmed"
-    let buyin = ether(0.0001)
+    let buyin = ether(1)
     let stravaId = "123456"
     let clrConsumer
     beforeEach(async () => {
-        ;[deployer, athlete2, defaultAddress] = await ethers.getSigners()
+        ;[deployer, athlete2, defaultAddress, athlete3] = await ethers.getSigners()
 
         //deploy chainlinkRequestConsumer contract
         const clrConsumerFactory = await ethers.getContractFactory("crChainlinkRequestConsumer")
@@ -442,11 +441,27 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("checkup keep for automated contract call", () => {
-        beforeEach(async () => {})
-
+    describe("check upkeep", () => {
         describe("Success", () => {
-            it("", async () => {})
+            let competition
+            beforeEach(async () => {
+                //create athlete profiles
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                    value: buyin,
+                })
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+            })
+            it("smoke Test", async () => {
+                await chainrunners.testHandleStartCompetition(1)
+                const sevenDays = parseInt(8 * 60 * 60 * 24)
+                //fast forward time
+                network.provider.send("evm_increaseTime", [sevenDays])
+                network.provider.send("evm_mine")
+                chainrunners.checkupKeep(1)
+                expect(await chainrunners.testString()).equal("Success")
+            })
             it("", async () => {})
             it("", async () => {})
         })
@@ -487,19 +502,55 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("Pick winner", () => {
-        beforeEach(async () => {})
-
+    describe("handle Pick Winner", () => {
         describe("Success", () => {
-            it("", async () => {})
-            it("", async () => {})
-            it("", async () => {})
-        })
+            describe("Success", () => {
+                let competition
+                beforeEach(async () => {
+                    //create athlete profiles
+                    await chainrunners.createAthlete(username, stravaId)
+                    await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
+                    await chainrunners.connect(athlete3).createAthlete("Ymir", stravaId)
+                    await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                        value: buyin,
+                    })
+                    await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+                    await chainrunners.connect(athlete3).joinCompetition("1", { value: buyin })
+                    await chainrunners.testHandleStartCompetition(1)
 
-        describe("Failure", () => {
-            it("", async () => {})
-            it("", async () => {})
-            it("", async () => {})
+                    const totalStaked = (await chainrunners.competitionTable(1)).totalStaked
+
+                    //emulatate check upkeep
+                    await chainrunners.testPayoutIdIncrement(1)
+                })
+                it("sets winner to result struct", async () => {
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    const result = await chainrunners.eventResultsMapping(1, 1)
+                    expect(result.winnnersAddress.toString()).equal(deployer.address.toString())
+                })
+                it("emits winner picked event", async () => {
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    await expect(
+                        chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    ).emit(chainrunners, "winnerPicked")
+                })
+                it("winner receives split of the pot", async () => {
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    expect(
+                        await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    ).changeEtherBalance(deployer, ether(0.725))
+                })
+            })
+
+            describe("Failure", () => {
+                it("", async () => {})
+                it("", async () => {})
+                it("", async () => {})
+            })
         })
     })
     describe("Close Competition", () => {

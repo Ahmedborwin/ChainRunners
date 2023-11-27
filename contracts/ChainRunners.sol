@@ -44,10 +44,14 @@ contract ChainRunners is Ownable {
     struct athleteProfile {
         string username;
         string stravaUserId;
-        uint256[] activeCompetitions;
         uint256 competitionsWon;
-        uint256 totalMiles;
+        uint256 totalMeters;
         bool registeredAthlete;
+    }
+
+    struct EventResults {
+        address winnnersAddress;
+        uint256 metersLogged;
     }
 
     struct competitionForm {
@@ -64,17 +68,19 @@ contract ChainRunners is Ownable {
         uint256 startDeadline;
         uint256 buyIn;
         uint256 totalStaked;
+        uint256 rewardPot;
     }
 
     //state variables
     CRLinkReqInterface public i_linkReq;
     uint256 public competitionId;
     uint256 public appAccessTokenExpires;
-    uint256 internal dappFee;
+    uint256 public dappFee;
 
     //initialise structs
     competitionForm competition;
     athleteProfile athlete;
+    EventResults eventresults;
 
     //arrays
     competitionForm[] public competitionList;
@@ -99,14 +105,18 @@ contract ChainRunners is Ownable {
     //Mapings
     mapping(address => athleteProfile) public athleteTable; //Athlete mapping - address to Struct
     mapping(uint256 => address[]) public athleteListByComp;
+    mapping(address => uint8[]) public athleteToCompIdList; //Allow front end to access competition info using athlete address
     mapping(uint256 => bool) public competitionIsLive;
     mapping(uint256 => competitionForm) public competitionTable; //Comp Id to CompForm
     mapping(string => bool) public usernameTable; //username to bool
     mapping(address => mapping(uint256 => uint256)) public stakedByAthleteByComp;
     mapping(address => uint256) public refundBalanceOwedToAthlete;
+    mapping(address => uint256) public rewardBalanceOwedToAthlete;
     mapping(uint256 => uint8) public startCompCallCounter;
-    mapping(uint256 => uint8) public payoutEventCounter;
-
+    mapping(uint256 => uint8) public payoutEventAPIResponseCounter; //count the payoutEvent responses by compId
+    //trying something.......
+    mapping(uint256 => uint8) public compPayoutId; //count the number of payoutEvents recorded by compId
+    mapping(uint256 => mapping(uint8 => EventResults)) public eventResultsMapping; //compId to payoutId to event results
     //events
     event athleteProfileCreated(address indexed athlete, string indexed username);
     event UsernameTaken(string username);
@@ -124,6 +134,7 @@ contract ChainRunners is Ownable {
         uint256 nextPayout
     );
     event competitionAborted(uint256 indexed CompetitionId);
+    event winnerPicked(address winnnersAddress, uint256 winnings);
 
     constructor(address _linkReq) {
         i_linkReq = CRLinkReqInterface(_linkReq);
@@ -190,8 +201,8 @@ contract ChainRunners is Ownable {
         competition.buyIn = _buyin;
         competition.administrator = msg.sender;
         competition.status = CompetitionStatus.pending;
-        competition.durationDays = _durationDays * 60 * 60 * 24;
-        competition.payoutIntervals = _payoutIntervals * 60 * 60 * 24;
+        competition.durationDays = _durationDays;
+        competition.payoutIntervals = _payoutIntervals;
         //7 day deadline for competition to start otherwise it is Auto aborted
         competition.startDeadline = 7 * 60 * 60 * 24;
         //populate mapping with new competition struct
@@ -270,18 +281,30 @@ contract ChainRunners is Ownable {
         //set start date
         competition.startDate = block.timestamp;
         //set end date
-        competition.endDate = block.timestamp + competition.durationDays;
+        competition.endDate = block.timestamp + (competition.durationDays * 60 * 60 * 24);
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + competition.payoutIntervals;
+        competition.nextPayoutDate = block.timestamp + (competition.payoutIntervals * 60 * 60 * 24);
         // take fee
-        uint256 fee = (competition.stake * 5) / 100;
-        competition.stake -= fee;
+        uint256 fee = (competition.totalStaked * 5) / 100;
+        competition.totalStaked -= fee;
         dappFee += fee;
+
+        //reward per payout Interval
+        uint256 _rewardPot = competition.totalStaked * 1 ether;
+        competition.rewardPot =
+            _rewardPot /
+            (competition.durationDays / competition.payoutIntervals);
+
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
+
         competitionIsLive[_compId] = true;
 
-        //athleteTable[athleteListByComp[_compId][i]].activeCompetitions.push(_compId);
+        //assign compId to athlete Address
+        for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
+            address[] memory listAthletes = athleteListByComp[_compId];
+            athleteToCompIdList[listAthletes[i]].push(uint8(_compId));
+        }
 
         emit competitionStarted(
             _compId,
@@ -292,17 +315,16 @@ contract ChainRunners is Ownable {
         );
     }
 
-    function handlePayoutEvent(uint256 _compId) public {
-        for (uint256 i = 0; i <= competitionList.length; i++) {
-            competitionForm memory _competition = competitionList[i];
+    function checkupKeep(uint256 _compId) external {
+        for (uint256 i = 1; i <= competitionId; i++) {
+            competitionForm memory _competition = competitionTable[i];
             address[] memory athleteListbyComp = athleteListByComp[i];
 
             //check if competitionId is set to live on isLive mapping
-            if (
-                competitionIsLive[_competition.id] == true &&
-                _competition.nextPayoutDate >= block.timestamp
-            ) {
-                for (uint256 j = 0; j <= athleteListbyComp.length; j++) {
+            if (competitionIsLive[i] == true && block.timestamp >= _competition.nextPayoutDate) {
+                //increment payoutId to reflect a new payout event triggered
+                compPayoutId[_compId]++;
+                for (uint256 j = 0; j < athleteListbyComp.length; j++) {
                     handleAPICall(
                         uint8(requestType.payoutEvent),
                         athleteTable[athleteListbyComp[j]].stravaUserId,
@@ -341,7 +363,7 @@ contract ChainRunners is Ownable {
         // check requestType
         if (requestType(_requestType) == requestType.beginCompetition) {
             //update athletes distance logged
-            athleteTable[_athlete].totalMiles = _distance;
+            athleteTable[_athlete].totalMeters = _distance;
             startCompCallCounter[_compId] += 1;
             //if final response for comp received then start Comp
             if (startCompCallCounter[_compId] == athleteListByComp[_compId].length) {
@@ -349,16 +371,55 @@ contract ChainRunners is Ownable {
                 handleStartCompetition(_compId);
             }
         } else if (requestType(_requestType) == requestType.payoutEvent) {
-            //record miles logged since last call
-            //check nextPayout Date to make sure function is not called to early?
-            //would i need to keep track of both previousPayoutEvent
+            handlePayoutEvent(_athlete, _distance, _compId);
         }
     }
 
-    function handleWinner() internal {
-        //largest > than min miles? if not deal with scenario
-        //if all zeros deal then end
-        // figure out who the winner is
+    function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
+        //check result saved to mapping by compId and by PayoutId
+        uint256 metersLogged;
+        if (athleteTable[_athlete].totalMeters == 0) {
+            metersLogged = _distance;
+        } else {
+            metersLogged = athleteTable[_athlete].totalMeters - _distance;
+        }
+
+        EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
+        //check distance is greater, if so set as new winner
+        if (results.metersLogged < metersLogged) {
+            results.metersLogged = metersLogged; //current winning meters logged
+            results.winnnersAddress = _athlete; //current winners address
+            eventResultsMapping[_compId][compPayoutId[_compId]] = results;
+        }
+        //check if final response for this event call
+        payoutEventAPIResponseCounter[_compId]++;
+        if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
+            //handle winner
+            handleWinner(_compId);
+            //reset variables
+            payoutEventAPIResponseCounter[_compId] = 0;
+            //set new payoutDate
+            competitionForm memory _competition = competitionTable[_compId];
+            _competition.nextPayoutDate =
+                _competition.nextPayoutDate +
+                (competition.payoutIntervals * 60 * 60 * 24);
+        }
+    }
+
+    function handleWinner(uint256 _compId) internal {
+        //the winners details
+        EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
+        uint256 reward = competitionTable[_compId].rewardPot / 1 ether;
+        (bool sent, ) = results.winnnersAddress.call{value: reward}("");
+        if (!sent) {
+            //save rewards for user
+            rewardBalanceOwedToAthlete[results.winnnersAddress] += reward;
+            //emit event
+            //emit event to signal failed transaction and reward owed?
+        } else {
+            emit winnerPicked(results.winnnersAddress, reward);
+            // emit event to signal successfull payout
+        }
     }
 
     function endCompetition() public {
@@ -397,6 +458,11 @@ contract ChainRunners is Ownable {
         emit competitionAborted(_compId);
     }
 
+    function withdrawFeeBalance() external onlyOwner {
+        (bool sent, ) = msg.sender.call{value: dappFee}("");
+        require(sent, "Unable to withdraw funds");
+    }
+
     //helper function
 
     //owner can update his apps access token expiry date
@@ -411,6 +477,8 @@ contract ChainRunners is Ownable {
         }
         return number;
     }
+
+    //winner to withdraw rewards
 
     //getter functions
     function getAthleteList(uint256 _compId) external view returns (address[] memory) {
@@ -458,6 +526,14 @@ contract ChainRunners is Ownable {
         testInteger = _distance;
         testAddress = _athleteAddress;
         requesttype = requestType(_requestType);
+    }
+
+    function testPayoutIdIncrement(uint256 _compId) external {
+        compPayoutId[_compId]++;
+    }
+
+    function testHandleStartCompetition(uint256 _compId) external onlyOwner {
+        handleStartCompetition(_compId);
     }
 
     function withdrawBalanceTEST() external onlyOwner {

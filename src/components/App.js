@@ -3,9 +3,16 @@ import { Container } from 'react-bootstrap'
 import { ethers } from 'ethers'
 
 // Components
+import Dashboard from './Dashboard';
 import Navigation from './Navigation';
 import Loading from './Loading';
 import StravaAccountCreation from './StravaAccount';
+
+// Redux
+import { useSelector } from 'react-redux';
+
+// Store
+import { selectUserData } from '../store/reducers/tokenExchangeReducer';
 
 // ABIs: Import your contract ABIs here
 // import TOKEN_ABI from '../abis/Token.json'
@@ -15,9 +22,10 @@ import StravaAccountCreation from './StravaAccount';
 
 function App() {
   const [account, setAccount] = useState(null)
-  const [balance, setBalance] = useState(0)
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true)
+  const { data } = useSelector(selectUserData);
 
   const loadBlockchainData = async () => {
     // Initiate provider
@@ -28,11 +36,6 @@ function App() {
     const account = ethers.utils.getAddress(accounts[0])
     setAccount(account)
 
-    // Fetch account balance
-    let balance = await provider.getBalance(account)
-    balance = ethers.utils.formatUnits(balance, 18)
-    setBalance(balance)
-
     setIsLoading(false)
   }
 
@@ -42,17 +45,27 @@ function App() {
     }
   }, [isLoading]);
 
+  useEffect(() => {
+    if (Object.keys(data).length > 0)
+      setDataLoaded(true);
+    else setDataLoaded(false);
+  }, [data])
+
   return (
     <Container>
-      <Navigation account={account} />
+
+      {dataLoaded &&
+        <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
+      }
 
       <h1 className='my-4 text-center'>Welcome to ChainRunners</h1>
 
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <StravaAccountCreation />
-      )}
+      {isLoading
+        ? <Loading />
+        : !dataLoaded && <StravaAccountCreation userAccountDetails={data} />
+      }
+
+      {!isLoading && dataLoaded && <Dashboard />}
     </Container>
   )
 }

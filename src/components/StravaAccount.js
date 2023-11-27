@@ -3,6 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { tokenExchangeSuccess, tokenExchangeFailure } from '../store/actions';
 
+const CLIENT_ID = '117193';
+const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
+const REDIRECT_URI = 'http://localhost:3000'; // Replace with your actual redirect URI
+const SCOPE = 'read,activity:read_all';
+
+// Set up the authorization URL
+const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
+
+// Set up the token exchange URL
+const TOKEN_EXCHANGE_URL = 'https://www.strava.com/oauth/token';
+
 // Styles (you can use a separate CSS file if needed)
 const styles = {
     body: {
@@ -33,21 +44,9 @@ const styles = {
 };
 
 // Define the StravaAccountCreation component
-const StravaAccountCreation = () => {
+const StravaAccountCreation = ({ userAccountDetails }) => {
     const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(false);
-
-    const CLIENT_ID = '117193';
-    const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
-    const REDIRECT_URI = 'https://chain-runners-qcms.vercel.app'; // Replace with your actual redirect URI
-    const SCOPE = 'read,activity:read_all';
-
-    // Set up the authorization URL
-    const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
-    console.log(STRAVA_AUTH_URL)
-
-    // Set up the token exchange URL
-    const TOKEN_EXCHANGE_URL = 'https://www.strava.com/oauth/token';
 
     // Function to handle the button click and redirect to the Strava authorization page
     const redirectToStravaAuthorization = () => {
@@ -57,7 +56,6 @@ const StravaAccountCreation = () => {
 
     const handleTokenExchange = (code) => {
         setIsLoading(true);
-        let responseStatus;
 
         // Set up the request parameters
         const requestOptions = {
@@ -99,16 +97,18 @@ const StravaAccountCreation = () => {
     };
 
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const authorizationCode = urlParams.get('code');
+        if (userAccountDetails && Object.keys(userAccountDetails) == 0) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authorizationCode = urlParams.get('code');
 
-        if (authorizationCode) {
-            // Now you have the authorization code, proceed to token exchange
-            handleTokenExchange(authorizationCode);
-        } else {
-            console.error('Authorization code not found in URL parameters.');
+            if (authorizationCode) {
+                // Now you have the authorization code, proceed to token exchange
+                handleTokenExchange(authorizationCode);
+            } else {
+                console.error('Authorization code not found in URL parameters.');
+            }
         }
-    }, []);
+    }, [userAccountDetails]);
 
     return (
         <div style={styles.body}>

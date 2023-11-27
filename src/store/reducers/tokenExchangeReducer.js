@@ -1,37 +1,35 @@
-import * as actionTypes from '../actionTypes';
+import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
-    isLoading: false,
-    data: null,
-    error: null,
-};
+const tokenExchangeSlice = createSlice({
+    name: 'tokenExchange',
+    initialState: {
+        isLoading: false,
+        data: null,
+        error: null,
+    },
+    reducers: {
+        tokenExchangeRequest: (state) => {
+            state.isLoading = true;
+            state.error = null;
+        },
+        tokenExchangeSuccess: (state, action) => {
+            state.isLoading = false;
+            state.data = action.payload;
+        },
+        tokenExchangeFailure: (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+        },
+    },
+});
 
-const tokenExchangeReducer = (state = initialState, action) => {
-    switch (action.type) {
-        case actionTypes.TOKEN_EXCHANGE_REQUEST:
-            return {
-                ...state,
-                isLoading: true,
-                error: null,
-            };
+// Export the actions and the selector
+export const {
+    tokenExchangeRequest,
+    tokenExchangeSuccess,
+    tokenExchangeFailure,
+} = tokenExchangeSlice.actions;
 
-        case actionTypes.TOKEN_EXCHANGE_SUCCESS:
-            return {
-                ...state,
-                isLoading: false,
-                data: action.payload,
-            };
+export const selectUserData = (state) => state.tokenExchange;
 
-        case actionTypes.TOKEN_EXCHANGE_FAILURE:
-            return {
-                ...state,
-                isLoading: false,
-                error: action.payload,
-            };
-
-        default:
-            return state;
-    }
-};
-
-export default tokenExchangeReducer;
+export default tokenExchangeSlice.reducer;

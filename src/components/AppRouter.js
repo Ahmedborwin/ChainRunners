@@ -5,7 +5,7 @@ import { Container } from 'react-bootstrap';
 // Components
 import App from './App';
 import CreateCompetition from './CreateCompetition';
-import JoinedCompetitions from './JoinedCompetitions';
+import JoinNewCompetition from './JoinNewCompetition';
 import Dashboard from './Dashboard';
 
 const AppRouter = () => {
@@ -16,7 +16,7 @@ const AppRouter = () => {
           <Route path="/" exact component={App} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/create-competition" component={CreateCompetition} />
-          <Route path="/joined-competitions" component={JoinedCompetitions} />
+          <Route path="/joined-competitions" component={JoinNewCompetition} />
         </Switch>
       </Container>
     </Router>

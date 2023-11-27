@@ -1,11 +1,21 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
-
-// Router
+import { Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import styled from 'styled-components';
 
 // Components
 import JoinedCompetitions from './JoinedCompetitions';
+
+const DashboardContainer = styled("div")`
+    position: relative;
+    padding-left: 20px; /* Adjust as needed */
+    padding-right: 20px; /* Adjust as needed */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+`;
 
 const Dashboard = () => {
     const joinedCompetitions = [
@@ -20,29 +30,35 @@ const Dashboard = () => {
     };
 
     return (
-        <div>
-            <h2>Your Dashboard</h2>
+        <DashboardContainer>
 
-            <h4>Active Competitions:</h4>
-            <JoinedCompetitions joinedCompetitions={joinedCompetitions} />
+            <h2 className="text-center my-4">Your Dashboard</h2>
 
-            <div>
-                <h4>Your Stats:</h4>
-                <p>Competitions Won: {userStats.competitionsWon}</p>
-                <p>Money Earned: {userStats.moneyEarned}</p>
-            </div>
+            <Card className="my-5" style={{ width: '80%' }}>
+                <Card.Body>
+                    <h4>Active Competitions:</h4>
+                    <JoinedCompetitions joinedCompetitions={joinedCompetitions} />
+                </Card.Body>
+            </Card>
 
+            <Card className="my-5" style={{ width: '80%' }}>
+                <Card.Body>
+                    <h4>Your Stats:</h4>
+                    <p>Competitions Won: {userStats.competitionsWon}</p>
+                    <p>Money Earned: {userStats.moneyEarned}</p>
+                </Card.Body>
+            </Card>
 
-            <div>
-                <Link to="/create-competition">
-                    <Button variant="primary">Create Competition</Button>
+            <div className="text-center my-4">
+                <Link to="/create-competition" className="mx-4">
+                    <Button style={{ backgroundColor: "#fc4c02" }}>Create Competition</Button>
                 </Link>
 
-                <Link to="/joined-competitions">
-                    <Button variant="success">Join Competition</Button>
+                <Link to="/joined-competitions" className="mx-4">
+                    <Button style={{ backgroundColor: "#ffd700" }}>Join Competition</Button>
                 </Link>
             </div>
-        </div>
+        </DashboardContainer>
     );
 };
 

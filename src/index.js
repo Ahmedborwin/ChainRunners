@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Routers
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 // redux

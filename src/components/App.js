@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Container } from 'react-bootstrap'
 import { ethers } from 'ethers'
+import styled from 'styled-components';
 
 // Components
 import Dashboard from './Dashboard';
 import Navigation from './Navigation';
 import Loading from './Loading';
 import StravaAccountCreation from './StravaAccount';
+
+import mapsImage from '../assets/images/maps.jpg';
 
 // Redux
 import { useSelector } from 'react-redux';
@@ -19,6 +21,32 @@ import { selectUserData } from '../store/reducers/tokenExchangeReducer';
 
 // Config: Import your network config here
 // import config from '../config.json';
+
+const AppContainer = styled("div")`
+  position: relative;
+  background-image: url(${mapsImage});
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+`;
+
+const LeftVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #fc4c02; /* Orange color */
+    left: 0;
+    top: 0;
+`;
+
+const RightVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #ffd700; /* Gold color */
+    right: 0;
+    top: 0;
+`;
 
 function App() {
   const [account, setAccount] = useState(null)
@@ -52,13 +80,27 @@ function App() {
   }, [data])
 
   return (
-    <Container>
+    <AppContainer>
 
       {dataLoaded &&
         <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
       }
 
-      <h1 className='my-4 text-center'>Welcome to ChainRunners</h1>
+      <LeftVerticalLine />
+      <RightVerticalLine />
+
+      <h1
+        className='my-4 text-center'
+        style={{
+          padding: '2%',
+          background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
+          color: '#ffffff', // White text color
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
+          borderRadius: '12px', // Border radius for rounded corners
+        }}
+      >
+        Welcome to ChainRunners
+      </h1>
 
       {isLoading
         ? <Loading />
@@ -66,7 +108,7 @@ function App() {
       }
 
       {!isLoading && dataLoaded && <Dashboard />}
-    </Container>
+    </AppContainer>
   )
 }
 

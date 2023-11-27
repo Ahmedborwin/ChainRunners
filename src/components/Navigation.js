@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from 'react-bootstrap/Navbar';
 import logo from '../assets/images/logo.png';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 // Create styled components with updated styles
@@ -16,9 +17,14 @@ const LogoImg = styled.img`
   }
 `;
 
-const BrandText = styled(Navbar.Brand)`
+const BrandText = styled(Link)`
   font-family: 'YourCustomFont', sans-serif;
   color: #ffffff; /* White text color */
+  text-decoration: none; /* Remove underline on the link */
+
+  &:hover {
+    color: #000000; /* Black text color on hover */
+  }
 `;
 
 const UppercaseAccountText = styled(Navbar.Brand)`
@@ -37,7 +43,10 @@ const Navigation = ({ account }) => {
         height="40"
         className="d-inline-block align-top mx-3"
       />
-      <BrandText href="#">Strava</BrandText>
+      <BrandText to="/" >
+        STRAVA
+      </BrandText>
+
       <Navbar.Collapse className="justify-content-end">
         <UppercaseAccountText href="#">
           {account}

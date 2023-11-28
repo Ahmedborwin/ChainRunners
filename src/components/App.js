@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Container } from 'react-bootstrap'
 import { ethers } from 'ethers'
+import styled from 'styled-components';
 
 // Components
+import Dashboard from './Dashboard';
 import Navigation from './Navigation';
 import Loading from './Loading';
+import StravaAccountCreation from './StravaAccount';
+
+import mapsImage from '../assets/images/maps.jpg';
+
+// Redux
+import { useSelector } from 'react-redux';
+
+// Store
+import { selectUserData } from '../store/reducers/tokenExchangeReducer';
 
 // ABIs: Import your contract ABIs here
 // import TOKEN_ABI from '../abis/Token.json'
@@ -12,11 +22,38 @@ import Loading from './Loading';
 // Config: Import your network config here
 // import config from '../config.json';
 
+const AppContainer = styled("div")`
+  position: relative;
+  background-image: url(${mapsImage});
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+`;
+
+const LeftVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #fc4c02; /* Orange color */
+    left: 0;
+    top: 0;
+`;
+
+const RightVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #ffd700; /* Gold color */
+    right: 0;
+    top: 0;
+`;
+
 function App() {
   const [account, setAccount] = useState(null)
-  const [balance, setBalance] = useState(0)
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true)
+  const { data } = useSelector(selectUserData);
 
   const loadBlockchainData = async () => {
     // Initiate provider
@@ -27,11 +64,6 @@ function App() {
     const account = ethers.utils.getAddress(accounts[0])
     setAccount(account)
 
-    // Fetch account balance
-    let balance = await provider.getBalance(account)
-    balance = ethers.utils.formatUnits(balance, 18)
-    setBalance(balance)
-
     setIsLoading(false)
   }
 
@@ -41,21 +73,42 @@ function App() {
     }
   }, [isLoading]);
 
-  return(
-    <Container>
-      <Navigation account={account} />
+  useEffect(() => {
+    if (Object.keys(data).length > 0)
+      setDataLoaded(true);
+    else setDataLoaded(false);
+  }, [data])
 
-      <h1 className='my-4 text-center'>React Hardhat Template</h1>
+  return (
+    <AppContainer>
 
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <>
-          <p className='text-center'><strong>Your ETH Balance:</strong> {balance} ETH</p>
-          <p className='text-center'>Edit App.js to add your code here.</p>
-        </>
-      )}
-    </Container>
+      {dataLoaded &&
+        <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
+      }
+
+      <LeftVerticalLine />
+      <RightVerticalLine />
+
+      <h1
+        className='my-4 text-center'
+        style={{
+          padding: '2%',
+          background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
+          color: '#ffffff', // White text color
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
+          borderRadius: '12px', // Border radius for rounded corners
+        }}
+      >
+        Welcome to ChainRunners
+      </h1>
+
+      {isLoading
+        ? <Loading />
+        : !dataLoaded && <StravaAccountCreation userAccountDetails={data} />
+      }
+
+      {!isLoading && dataLoaded && <Dashboard />}
+    </AppContainer>
   )
 }
 

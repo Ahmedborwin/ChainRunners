@@ -480,6 +480,14 @@ contract ChainRunners is Ownable {
 
     //winner to withdraw rewards
 
+    function withdrawWinnings() external {
+        require(rewardBalanceOwedToAthlete[msg.sender] > 0, "There are no winnings to withdraw");
+        uint256 rewardOwed = rewardBalanceOwedToAthlete[msg.sender];
+        rewardBalanceOwedToAthlete[msg.sender] = 0;
+        (bool sent, ) = msg.sender.call{value: rewardOwed}("");
+        require(sent, "Transaction failed");
+    }
+
     //getter functions
     function getAthleteList(uint256 _compId) external view returns (address[] memory) {
         return athleteListByComp[_compId];

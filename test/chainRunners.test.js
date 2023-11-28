@@ -519,7 +519,6 @@ describe("ChainRunners", () => {
                     await chainrunners.testHandleStartCompetition(1)
 
                     const totalStaked = (await chainrunners.competitionTable(1)).totalStaked
-
                     //emulatate check upkeep
                     await chainrunners.testPayoutIdIncrement(1)
                 })

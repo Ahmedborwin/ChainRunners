@@ -1,37 +1,43 @@
-// This example shows how to make call an API using a secret
-// https://coinmarketcap.com/api/documentation/v1/
+const URLSearchParams = require("url").URLSearchParams
 
-// Arguments can be provided when a request is initated on-chain and used in the request source code as shown below
+async function getAccessToken() {
+    const { default: fetch } = await import("node-fetch")
 
-// build HTTP request object
+    const url = "https://www.strava.com/api/v3/oauth/token"
+    const clientId = "116415"
+    const clientSecret = "4784e5e419141ad81ecaac028eb765f0311ee0af"
+    const refreshToken = "5dbe5a90769790da6ef3810118e407517e06050a"
 
-const queryString =
-    `client_id=${encodeURIComponent("116415")}&` +
-    `client_secret=${encodeURIComponent("4784e5e419141ad81ecaac028eb765f0311ee0af")}&` +
-    `code=${encodeURIComponent("ca39b8df9b0c3885df308c9bd20619f05cd5e407")}&` +
-    `grant_type:=${encodeURIComponent("authorization_code")}`
+    const formData = new URLSearchParams()
+    formData.append("client_id", clientId)
+    formData.append("client_secret", clientSecret)
+    formData.append("grant_type", "refresh_token")
+    formData.append("refresh_token", refreshToken)
 
-const stravaGetAtheleteRequest = Functions.makeHttpRequest({
-    method: "POST",
-    url: "https://www.strava.com/oauth/token?" + queryString,
-})
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData,
+        })
 
-// Make the HTTP request
-const stravaGetAtheleteResponse = await stravaGetAtheleteRequest
-
-if (stravaGetAtheleteResponse.error) {
-    throw new Error("STRAVA Error")
+        const data = await response.json()
+        return data.access_token.toString()
+    } catch (error) {
+        console.error("Error:", error)
+        throw error // Re-throw the error for handling by the caller
+    }
 }
 
-const data = stravaGetAtheleteResponse["data"]
-if (data.Response === "Error") {
-    console.error(data.Message)
-    throw Error(`Functional error. Read message: ${data.Message}`)
-}
+// Usage example:
+getAccessToken()
+    .then((accessToken) => {
+        console.log("Access Token:", accessToken.toString())
+    })
+    .catch((error) => {
+        console.error("Error fetching access token:", error)
+    })
 
-const { expires_at, refresh_token, access_token, bio } = data
-
-const result = { expires_at, refresh_token, access_token, bio }
-
-//Functions.encodeUint256(Math.round(price * 100))
-return Functions.encodeString(JSON.stringify(result))
+module.exports = getAccessToken // Export the function for use in other modules

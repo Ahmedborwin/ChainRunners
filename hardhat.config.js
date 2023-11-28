@@ -4,6 +4,7 @@ require("dotenv").config()
 const providerApiKey = process.env.ALCHEMY_API_KEY || "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF"
 // If not set, it uses the hardhat account 0 private key.
 const PRIVATE_KEY = process.env.PRIVATE_KEY || ""
+const PRIVATE_KEY_2 = process.env.PRIVATE_KEY_2 || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY || ""
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -35,16 +36,27 @@ module.exports = {
             },
         ],
     },
+    defaultNetwork: "hardhat",
     networks: {
-        hardhat: {
-            // forking: {
-            //     url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
-            //     enabled: process.env.MAINNET_FORKING_ENABLED === "true",
-            // },
+        localhost: {
+            chainId: 31337,
         },
         polygonMumbai: {
             url: `https://polygon-mumbai.g.alchemy.com/v2/${providerApiKey}`,
             accounts: [PRIVATE_KEY],
+            chainId: 80001,
+        },
+        fuji: {
+            url: "https://api.avax-test.network/ext/bc/C/rpc",
+            gasPrice: 500000,
+            chainId: 43113,
+            accounts: [PRIVATE_KEY_2],
+        },
+        AvalancheMainnet: {
+            url: "https://api.avax.network/ext/bc/C/rpc",
+            gasPrice: 500000,
+            chainId: 43114,
+            accounts: [],
         },
     },
     etherscan: {

@@ -1,11 +1,15 @@
+const { ethers } = require("hardhat")
 const hre = require("hardhat")
-const fs = require("fs")
-const path = require("path")
 
-async function main() {
-    const mumbaiRouter = "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C"
-    const chainRunnerAddress = "0x77218f5F2810545A76d4C97206e4cffA558f1dcC"
-    const consumerAddress = "0x1a1611Aff8242C4E013AB63541cce9D9f0aFd718"
+const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
+const consumerAddressList = require("../config/consumerAddress.json")
+const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
+
+async function verifyContracts() {
+    const chainID = (await ethers.provider.getNetwork()).chainId.toString()
+    const mumbaiRouter = chainLinkFunctionsRouterList[chainID]
+    const chainRunnerAddress = chainRunnerAddressList[chainID]
+    const consumerAddress = consumerAddressList[chainID]
 
     await hre.run("verify:verify", {
         address: consumerAddress,
@@ -20,7 +24,9 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
+verifyContracts().catch((error) => {
     console.error(error)
     process.exitCode = 1
 })
+
+module.exports.verifyContracts = verifyContracts

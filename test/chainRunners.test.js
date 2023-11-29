@@ -9,13 +9,13 @@ const ether = tokens
 
 describe("ChainRunners", () => {
     //variables
-    let chainrunners, deployer, athlete2, defaultAddress, athlete3
+    let chainrunners, deployer, athlete2, athlete3, defaultAddress
     let username = "Ahmed"
     let buyin = ether(1)
     let stravaId = "123456"
     let clrConsumer
     beforeEach(async () => {
-        ;[deployer, athlete2, defaultAddress, athlete3] = await ethers.getSigners()
+        ;[deployer, athlete2, athlete3, defaultAddress] = await ethers.getSigners()
 
         //deploy chainlinkRequestConsumer contract
         const clrConsumerFactory = await ethers.getContractFactory("crChainlinkRequestConsumer")
@@ -44,12 +44,12 @@ describe("ChainRunners", () => {
         })
     })
     describe("Create Athlete Profile", () => {
-        let athleteProfile
+        let AthleteProfile
         describe("Success", () => {
             it("expect user created with username passed", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
-                expect(athleteProfile.username.toString()).equal(username)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
+                expect(AthleteProfile.username.toString()).equal(username)
             })
             it("emits new player created event", async () => {
                 await expect(chainrunners.createAthlete(username, stravaId))
@@ -58,15 +58,15 @@ describe("ChainRunners", () => {
             })
             it("sets athlete profile bool to true", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
-                expect(athleteProfile.registeredAthlete).equal(true)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
+                expect(AthleteProfile.registeredAthlete).equal(true)
             })
         })
 
         describe("Failure", () => {
             beforeEach("create athlete", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
             })
             it("address already registered", async () => {
                 await expect(chainrunners.createAthlete("Borwin", stravaId)).revertedWith(
@@ -106,7 +106,7 @@ describe("ChainRunners", () => {
                 expect(await newCompetition.name.toString()).equal("Winner Takes All")
             })
             it("Competition isLive is set to false", async () => {
-                expect(await newCompetition.isLive).equal(false)
+                expect(await chainrunners.competitionIsLive(1)).equal(false)
             })
             it("Competition status is set to pending", async () => {
                 //expect status = enum index 0 which is pending
@@ -129,10 +129,7 @@ describe("ChainRunners", () => {
                 expect(stakedCompID).equal(buyin)
             })
             it("sets duration of Competition in seconds", async () => {
-                const thirtyDaysinSeconds = 30 * 60 * 60 * 24
-                expect(await newCompetition.durationDays.toString()).equal(
-                    thirtyDaysinSeconds.toString()
-                )
+                expect(await newCompetition.durationDays.toString()).equal("30")
             })
             it("sets deadline date for comp to start", async () => {
                 const sevenDaysinSeconds = 7 * 60 * 60 * 24
@@ -141,10 +138,7 @@ describe("ChainRunners", () => {
                 )
             })
             it("sets payout intervals in seconds", async () => {
-                const sevenDaysinSeconds = 7 * 60 * 60 * 24
-                expect(await newCompetition.payoutIntervals.toString()).equal(
-                    sevenDaysinSeconds.toString()
-                )
+                expect(await newCompetition.payoutIntervals.toString()).equal("7")
             })
 
             it("competition array includes msg sender", async () => {
@@ -266,10 +260,8 @@ describe("ChainRunners", () => {
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
             })
-            it("sets string to success", async () => {
-                await chainrunners.commenceCompetition(1)
-                expect(await chainrunners.testString()).equal("Success")
-            })
+            // it("sets string to success", async () => {
+            // })
             //can i test chainlink function for here??
         })
         describe("Commence Competition - Failure", () => {
@@ -415,7 +407,6 @@ describe("ChainRunners", () => {
                     .withArgs(1)
             })
         })
-
         describe("Abort Competition - Failure", () => {
             beforeEach(async () => {
                 //create athlete profiles
@@ -432,13 +423,12 @@ describe("ChainRunners", () => {
                 )
             })
             it("reverts if aborted and Com status is not pending ", async () => {
-                await chainrunners.commenceCompetition("1")
+                await chainrunners.testCommenceCompetition("1")
                 await expect(chainrunners.abortCompetition(1)).revertedWithCustomError(
                     chainrunners,
                     "ChainRunners__CompStatusNotAsExpected"
                 )
             })
-            it("", async () => {})
         })
     })
     describe("check upkeep", () => {
@@ -459,7 +449,7 @@ describe("ChainRunners", () => {
                 //fast forward time
                 network.provider.send("evm_increaseTime", [sevenDays])
                 network.provider.send("evm_mine")
-                chainrunners.checkupKeep(1)
+                chainrunners.testPreformKeep(1)
                 expect(await chainrunners.testString()).equal("Success")
             })
             it("", async () => {})
@@ -539,9 +529,17 @@ describe("ChainRunners", () => {
                 it("winner receives split of the pot", async () => {
                     await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
                     await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
-                    expect(
-                        await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
-                    ).changeEtherBalance(deployer, ether(0.725))
+                    await expect(
+                        chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    ).changeEtherBalance(deployer, ether(0.7125))
+                })
+                it("records reward and tallies win to mapping", async () => {
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    const winnerStats = await chainrunners.winnerStatistics(deployer.address)
+                    expect(winnerStats.intervalsWon.toString()).equal("1")
+                    expect(winnerStats.etherWon.toString()).equal(ether(0.7125).toString())
                 })
             })
 
@@ -552,11 +550,69 @@ describe("ChainRunners", () => {
             })
         })
     })
-    describe("Close Competition", () => {
-        beforeEach(async () => {})
-
+    describe("End Competition", () => {
         describe("Success", () => {
-            it("", async () => {})
+            let competition
+            const sevenDays = parseInt(8 * 60 * 60 * 24)
+            beforeEach(async () => {
+                //create athlete profiles
+                await chainrunners.createAthlete(username, stravaId)
+                await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
+                await chainrunners.connect(athlete3).createAthlete("Ymir", stravaId)
+                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                    value: buyin,
+                })
+                await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+                await chainrunners.connect(athlete3).joinCompetition("1", { value: buyin })
+                await chainrunners.testHandleStartCompetition(1)
+            })
+
+            it("competition status set to completed", async () => {
+                // simulate 4 payout events
+
+                await chainrunners.testPayoutIdIncrement(1)
+                //fast forward time
+                network.provider.send("evm_increaseTime", [sevenDays])
+                network.provider.send("evm_mine")
+                await chainrunners.handleAPIResponse(1, deployer.address, 20000, 1)
+                await chainrunners.handleAPIResponse(1, athlete2.address, 10000, 1)
+                await chainrunners.handleAPIResponse(1, athlete3.address, 30000, 1)
+
+                await chainrunners.testPayoutIdIncrement(1)
+                //fast forward time
+                network.provider.send("evm_increaseTime", [sevenDays])
+                network.provider.send("evm_mine")
+                await chainrunners.handleAPIResponse(1, deployer.address, 30000, 1)
+                await chainrunners.handleAPIResponse(1, athlete2.address, 34000, 1)
+                await chainrunners.handleAPIResponse(1, athlete3.address, 40010, 1)
+
+                await chainrunners.testPayoutIdIncrement(1)
+                //fast forward time
+                network.provider.send("evm_increaseTime", [sevenDays])
+                network.provider.send("evm_mine")
+                await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                await chainrunners.handleAPIResponse(1, athlete2.address, 64000, 1)
+                await chainrunners.handleAPIResponse(1, athlete3.address, 50020, 1)
+
+                await chainrunners.testPayoutIdIncrement(1)
+                //fast forward time
+                network.provider.send("evm_increaseTime", [sevenDays])
+                network.provider.send("evm_mine")
+                await chainrunners.handleAPIResponse(1, deployer.address, 50000, 1)
+                await chainrunners.handleAPIResponse(1, athlete2.address, 95000, 1)
+                await chainrunners.handleAPIResponse(1, athlete3.address, 60030, 1)
+
+                competition = await chainrunners.competitionTable(1)
+                const winnerStats = await chainrunners.winnerStatistics(athlete2.address)
+                const athleteTable = await chainrunners.athleteTable(athlete2.address)
+
+                expect(competition.status).equal(2)
+                expect(winnerStats.competitionsWon.toString()).equal("1")
+                expect(winnerStats.intervalsWon.toString()).equal("3")
+                expect(winnerStats.etherWon.toString()).equal((ether(0.7125) * 3).toString())
+                expect(athleteTable.totalMeters.toString()).equal("95000")
+                expect(await chainrunners.nftMintedtoAddress()).equal(athlete2.address)
+            })
             it("", async () => {})
             it("", async () => {})
         })

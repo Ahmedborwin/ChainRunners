@@ -2,7 +2,7 @@ const hre = require("hardhat")
 const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
-const chainLinkFunctions = require("./chainlinkFunctions")
+// const chainLinkFunctions = require("./chainlinkFunctions")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
 
 async function main() {
@@ -19,19 +19,22 @@ async function main() {
     } else {
         rpcUrl = `https://polygon-mumbai.g.alchemy.com/v2/${API_Key}`
 
+        console.log("Test 2", rpcUrl)
+
         const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
 
-        const wallet_2 = new hre.ethers.Wallet(privateKey_2)
+        const wallet_2 = new hre.ethers.Wallet(
+            privateKey_2 //hardhat private key
+        )
         athlete_2 = wallet_2.connect(provider)
     }
     // Initialize functions settings
     const getAthleteData = fs
         .readFileSync(path.resolve(__dirname, "../scripts/APICalls/getAthleteData.js"))
         .toString()
-    if (chainID == "31337") {
-        //upload secrets and get secretsVersion
-        const donHostedSecretsVersion = await chainLinkFunctions()
-    }
+
+    //upload secrets and get secretsVersion
+    // const donHostedSecretsVersion = await chainLinkFunctions()
 
     const donId = hre.ethers.utils.formatBytes32String("fun-polygon-mumbai-1")
     const subId = 584

@@ -41,12 +41,13 @@ contract ChainRunners is Ownable {
     }
 
     //Athlete Struct
-    struct athleteProfile {
+    struct AthleteProfile {
         string username;
         string stravaUserId;
-        uint256 competitionsWon;
+        uint128 winTally;
         uint256 totalMeters;
         bool registeredAthlete;
+        uint256 totalWinnings;
     }
 
     struct EventResults {
@@ -54,7 +55,13 @@ contract ChainRunners is Ownable {
         uint256 metersLogged;
     }
 
-    struct competitionForm {
+    struct WinnerStats {
+        uint256 competitionsWon;
+        uint256 intervalsWon;
+        uint256 etherWon;
+    }
+
+    struct CompetitionForm {
         uint256 id;
         string name;
         CompetitionStatus status;
@@ -78,13 +85,14 @@ contract ChainRunners is Ownable {
     uint256 public dappFee;
 
     //initialise structs
-    competitionForm competition;
-    athleteProfile athlete;
+    CompetitionForm competition;
+    AthleteProfile athlete;
     EventResults eventresults;
+    WinnerStats winnerstats;
 
     //arrays
-    competitionForm[] public competitionList;
-    athleteProfile[] public athleteList;
+    CompetitionForm[] public competitionList;
+    AthleteProfile[] public athleteList;
 
     //chainlink Variables
     // Apps Chainlink SlotId
@@ -98,25 +106,28 @@ contract ChainRunners is Ownable {
     string public testString;
     address public testAddress;
     requestType public requesttype;
+    address public nftMintedtoAddress;
 
     //----------------------------------------
     //----------------------------------------
 
     //Mapings
-    mapping(address => athleteProfile) public athleteTable; //Athlete mapping - address to Struct
+    mapping(address => AthleteProfile) public athleteTable; //Athlete mapping - address to Struct
     mapping(uint256 => address[]) public athleteListByComp;
     mapping(address => uint8[]) public athleteToCompIdList; //Allow front end to access competition info using athlete address
+    mapping(address => WinnerStats) public winnerStatistics;
+    mapping(uint256 => mapping(address => uint256)) public winTallyComp;
     mapping(uint256 => bool) public competitionIsLive;
-    mapping(uint256 => competitionForm) public competitionTable; //Comp Id to CompForm
+    mapping(uint256 => CompetitionForm) public competitionTable; //Comp Id to CompForm
     mapping(string => bool) public usernameTable; //username to bool
     mapping(address => mapping(uint256 => uint256)) public stakedByAthleteByComp;
     mapping(address => uint256) public refundBalanceOwedToAthlete;
     mapping(address => uint256) public rewardBalanceOwedToAthlete;
     mapping(uint256 => uint8) public startCompCallCounter;
     mapping(uint256 => uint8) public payoutEventAPIResponseCounter; //count the payoutEvent responses by compId
-    //trying something.......
-    mapping(uint256 => uint8) public compPayoutId; //count the number of payoutEvents recorded by compId
+    mapping(uint256 => uint8) public compPayoutId; //count the number of payoutEvents recorded by compId During a competition life cycle
     mapping(uint256 => mapping(uint8 => EventResults)) public eventResultsMapping; //compId to payoutId to event results
+
     //events
     event athleteProfileCreated(address indexed athlete, string indexed username);
     event UsernameTaken(string username);
@@ -226,7 +237,7 @@ contract ChainRunners is Ownable {
      * @dev emit athleteJoinedCompetition event
      */
     function joinCompetition(uint256 _compId) external payable isRegisteredAthlete(msg.sender) {
-        competitionForm storage _competition = competitionTable[_compId];
+        CompetitionForm storage _competition = competitionTable[_compId];
         require(msg.value == competition.buyIn, "Incorrect BuyIn Amount");
 
         //update total staked
@@ -317,7 +328,7 @@ contract ChainRunners is Ownable {
 
     function checkupKeep(uint256 _compId) external {
         for (uint256 i = 1; i <= competitionId; i++) {
-            competitionForm memory _competition = competitionTable[i];
+            CompetitionForm memory _competition = competitionTable[i];
             address[] memory athleteListbyComp = athleteListByComp[i];
 
             //check if competitionId is set to live on isLive mapping
@@ -359,7 +370,6 @@ contract ChainRunners is Ownable {
         uint256 _compId
     ) external {
         //needs to be only consumer
-        //require(msg.sender == address(i_linkReq), "Only Consumer can call this function");
         // check requestType
         if (requestType(_requestType) == requestType.beginCompetition) {
             //update athletes distance logged
@@ -381,28 +391,37 @@ contract ChainRunners is Ownable {
         if (athleteTable[_athlete].totalMeters == 0) {
             metersLogged = _distance;
         } else {
-            metersLogged = athleteTable[_athlete].totalMeters - _distance;
+            metersLogged = _distance - athleteTable[_athlete].totalMeters;
         }
 
+        athleteTable[_athlete].totalMeters = _distance;
+
         EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
+
         //check distance is greater, if so set as new winner
         if (results.metersLogged < metersLogged) {
             results.metersLogged = metersLogged; //current winning meters logged
             results.winnnersAddress = _athlete; //current winners address
+
             eventResultsMapping[_compId][compPayoutId[_compId]] = results;
         }
+
+        payoutEventAPIResponseCounter[_compId]++; //record API responses received
         //check if final response for this event call
-        payoutEventAPIResponseCounter[_compId]++;
         if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
             //handle winner
             handleWinner(_compId);
             //reset variables
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
-            competitionForm memory _competition = competitionTable[_compId];
-            _competition.nextPayoutDate =
-                _competition.nextPayoutDate +
-                (competition.payoutIntervals * 60 * 60 * 24);
+            CompetitionForm memory _competition = competitionTable[_compId];
+            if (block.timestamp >= _competition.endDate) {
+                endCompetition(_compId);
+            } else {
+                _competition.nextPayoutDate =
+                    _competition.nextPayoutDate +
+                    (competition.payoutIntervals * 60 * 60 * 24);
+            }
         }
     }
 
@@ -410,11 +429,15 @@ contract ChainRunners is Ownable {
         //the winners details
         EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
         uint256 reward = competitionTable[_compId].rewardPot / 1 ether;
+
+        winnerStatistics[results.winnnersAddress].intervalsWon++;
+        winnerStatistics[results.winnnersAddress].etherWon += reward;
+
+        winTallyComp[_compId][results.winnnersAddress]++;
+
         (bool sent, ) = results.winnnersAddress.call{value: reward}("");
         if (!sent) {
-            //save rewards for user
-            rewardBalanceOwedToAthlete[results.winnnersAddress] += reward;
-            //emit event
+            rewardBalanceOwedToAthlete[results.winnnersAddress] += reward; //save rewards for user
             //emit event to signal failed transaction and reward owed?
         } else {
             emit winnerPicked(results.winnnersAddress, reward);
@@ -422,8 +445,27 @@ contract ChainRunners is Ownable {
         }
     }
 
-    function endCompetition() public {
-        //
+    function endCompetition(uint256 _compId) public {
+        //get athlete list for this competition
+        address[] memory _athleteList = athleteListByComp[_compId];
+        //assign winner address and winningTally to first athlete
+        address overallWinner = _athleteList[0];
+        uint8 tempWinTally = uint8(winTallyComp[_compId][_athleteList[0]]);
+        //check winsTally of other addresses to find overall winner
+        for (uint8 i = 1; i < _athleteList.length; i++) {
+            //get address for competing athletes from second athlete onwards
+            if (winTallyComp[_compId][_athleteList[i]] > tempWinTally) {
+                //set athlete with highest wins to local variable
+                overallWinner = _athleteList[i];
+                tempWinTally = uint8(winTallyComp[_compId][_athleteList[i]]);
+            }
+        }
+        //end competition
+        competitionTable[_compId].status = CompetitionStatus.completed;
+        //increment tally for winner
+        winnerStatistics[overallWinner].competitionsWon++;
+        //mint NFT for winner overallWinner
+        nftMintedtoAddress = overallWinner;
     }
 
     function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {
@@ -432,7 +474,7 @@ contract ChainRunners is Ownable {
         }
 
         //retrieve comp tables
-        competitionForm storage _competition = competitionTable[competitionId];
+        CompetitionForm storage _competition = competitionTable[competitionId];
 
         //update status
         _competition.status = CompetitionStatus.aborted;
@@ -500,7 +542,11 @@ contract ChainRunners is Ownable {
         stakedByAthleteByComp[_athlete][_compId];
     }
 
-    //FUNCTIONS TO HELP WITH TESTs
+    //---------------------------------
+    //---------------------------------
+    //FUNCTIONS TO ALLOW LOCAL UNIT TESTS
+    //---------------------------------
+    //---------------------------------
     function setCompStatus(uint256 _compId) external {
         competitionTable[_compId].status = CompetitionStatus.inProgress;
     }
@@ -510,6 +556,35 @@ contract ChainRunners is Ownable {
             revert ChainRunners__CompStatusNotAsExpected(uint8(competitionTable[_compId].status));
         }
         handleStartCompetition(_compId);
+    }
+
+    function testPreformKeep(uint256 _compId) external {
+        for (uint256 i = 1; i <= competitionId; i++) {
+            CompetitionForm memory _competition = competitionTable[i];
+            address[] memory athleteListbyComp = athleteListByComp[i];
+
+            //check if competitionId is set to live on isLive mapping
+            if (competitionIsLive[i] == true && block.timestamp >= _competition.nextPayoutDate) {
+                //increment payoutId to reflect a new payout event triggered
+                compPayoutId[_compId]++;
+                testString = "Success";
+            }
+        }
+    }
+
+    function testCommenceCompetition(uint256 _compId) external onlyAdmin(msg.sender, _compId) {
+        require(athleteListByComp[_compId].length >= 2, "Atleast two competitors required");
+
+        //populate mapping with new competition struct
+        competition = competitionTable[_compId];
+
+        if (competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
+        }
+        competitionIsLive[_compId] = true;
+
+        //set comp status to inprogress for testing
+        competition.status = CompetitionStatus.inProgress;
     }
 
     function testHandleAPICall(

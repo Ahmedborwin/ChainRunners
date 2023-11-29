@@ -4,11 +4,12 @@ import styled from 'styled-components';
 
 // Components
 import Dashboard from './Dashboard';
+import Greeter from './Greeter';
 import Navigation from './Navigation';
 import Loading from './Loading';
 import StravaAccountCreation from './StravaAccount';
 
-import mapsImage from '../assets/images/maps.jpg';
+import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
 import { useSelector } from 'react-redux';
@@ -34,7 +35,7 @@ const LeftVerticalLine = styled("div")`
     position: absolute;
     height: 100%;
     width: 2px;
-    background-color: #fc4c02; /* Orange color */
+    background-color: #0d2137; /* Orange color */
     left: 0;
     top: 0;
 `;
@@ -43,7 +44,7 @@ const RightVerticalLine = styled("div")`
     position: absolute;
     height: 100%;
     width: 2px;
-    background-color: #ffd700; /* Gold color */
+    background-color: #19ddd3; /* Gold color */
     right: 0;
     top: 0;
 `;
@@ -58,7 +59,7 @@ function App() {
   const loadBlockchainData = async () => {
     // Initiate provider
     const provider = new ethers.providers.Web3Provider(window.ethereum)
-
+    console.log(provider)
     // Fetch accounts
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
     const account = ethers.utils.getAddress(accounts[0])
@@ -89,18 +90,7 @@ function App() {
       <LeftVerticalLine />
       <RightVerticalLine />
 
-      <h1
-        className='my-4 text-center'
-        style={{
-          padding: '2%',
-          background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
-          color: '#ffffff', // White text color
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
-          borderRadius: '12px', // Border radius for rounded corners
-        }}
-      >
-        Welcome to ChainRunners
-      </h1>
+      <Greeter />
 
       {isLoading
         ? <Loading />

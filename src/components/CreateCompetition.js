@@ -3,10 +3,11 @@ import { Form, Button } from 'react-bootstrap';
 import styled from 'styled-components';
 
 // Components
+import Greeter from './Greeter';
 import Navigation from './Navigation';
 
 // Images
-import mapsImage from '../assets/images/maps.jpg';
+import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
 import { useSelector } from 'react-redux';
@@ -39,8 +40,12 @@ const CustomForm = styled(Form)`
 `
 
 const CreateButton = styled(Button)`
-    background-color: #fc4c02;
-    border-color: #fc4c02;
+    background-color: #18729c;
+    border-color: #0d6efd;
+
+    &:hover {
+        color: #38ff7f;
+    }
 `
 
 const LeftVerticalLine = styled("div")`
@@ -82,18 +87,7 @@ const CompetitionCreation = () => {
             <LeftVerticalLine />
             <RightVerticalLine />
 
-            <h1
-                className='my-4 text-center'
-                style={{
-                    padding: '2%',
-                    background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
-                    color: '#ffffff', // White text color
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
-                    borderRadius: '12px', // Border radius for rounded corners
-                }}
-            >
-                Welcome to ChainRunners
-            </h1>
+            <Greeter />
 
             <Title>Create a New Competition</Title>
 

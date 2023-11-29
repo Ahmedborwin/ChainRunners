@@ -17,6 +17,14 @@ const DashboardContainer = styled("div")`
     align-items: center;
 `;
 
+const StyledButton = styled(Button)`
+    background-color: #18729c;
+
+    &:hover {
+        color: #38ff7f;
+    }
+`
+
 const Dashboard = () => {
     const joinedCompetitions = [
         { id: 1, name: 'Morning Run Challenge' },
@@ -51,11 +59,11 @@ const Dashboard = () => {
 
             <div className="text-center my-4">
                 <Link to="/create-competition" className="mx-4">
-                    <Button style={{ backgroundColor: "#fc4c02" }}>Create Competition</Button>
+                    <StyledButton>Create Competition</StyledButton>
                 </Link>
 
                 <Link to="/joined-competitions" className="mx-4">
-                    <Button style={{ backgroundColor: "#ffd700" }}>Join Competition</Button>
+                    <StyledButton>Join Competition</StyledButton>
                 </Link>
             </div>
         </DashboardContainer>

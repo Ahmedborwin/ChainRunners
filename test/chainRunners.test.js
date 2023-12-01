@@ -296,7 +296,7 @@ describe("ChainRunners", () => {
             })
             it("reverts if comp status anything other then pending", async () => {
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
-                await chainrunners.setCompStatus(1)
+                await chainrunners.testSetCompStatus(1)
                 await expect(chainrunners.commenceCompetition("1")).revertedWithCustomError(
                     chainrunners,
                     "ChainRunners__CompStatusNotAsExpected"
@@ -360,7 +360,7 @@ describe("ChainRunners", () => {
             })
             it("reverts if comp status anything other then pending", async () => {
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
-                await chainrunners.setCompStatus(1)
+                await chainrunners.testSetCompStatus(1)
                 await expect(
                     chainrunners.callHandleStartCompetitionTest("1")
                 ).revertedWithCustomError(chainrunners, "ChainRunners__CompStatusNotAsExpected")
@@ -441,7 +441,7 @@ describe("ChainRunners", () => {
             it("", async () => {})
         })
     })
-    describe("check upkeep", () => {
+    describe("Test PreformUpkeep", () => {
         describe("Success", () => {
             let competition
             beforeEach(async () => {
@@ -459,8 +459,8 @@ describe("ChainRunners", () => {
                 //fast forward time
                 network.provider.send("evm_increaseTime", [sevenDays])
                 network.provider.send("evm_mine")
-                chainrunners.checkupKeep(1)
-                expect(await chainrunners.testString()).equal("Success")
+                chainrunners.testPreformKeep()
+                expect(await chainrunners.apiCallBool(1)).equal(true)
             })
             it("", async () => {})
             it("", async () => {})

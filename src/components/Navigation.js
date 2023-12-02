@@ -58,7 +58,7 @@ const Navigation = ({ account }) => {
       </BrandText>
 
       <Navbar.Collapse className="justify-content-end">
-        <UppercaseAccountText href="/">
+        <UppercaseAccountText href="/user-profile">
           {account}
         </UppercaseAccountText>
       </Navbar.Collapse>

@@ -6,6 +6,11 @@ import styled from 'styled-components';
 // Components
 import JoinedCompetitions from './JoinedCompetitions';
 
+// Hooks
+import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
+import useGetAthleteTable from '../hooks/useGetAthleteTable';
+import useGetAthleteLiveCompetitions from '../hooks/useGetAthleteLiveCompetitions';
+
 const DashboardContainer = styled("div")`
     position: relative;
     padding-left: 20px; /* Adjust as needed */
@@ -26,6 +31,10 @@ const StyledButton = styled(Button)`
 `
 
 const Dashboard = () => {
+    const { chainRunner, account, signer } = useLoadBlockchainData();
+    const athleteTable = useGetAthleteTable();
+    const athleteLiveCompetitions = useGetAthleteLiveCompetitions();
+    
     const joinedCompetitions = [
         { id: 1, name: 'Morning Run Challenge' },
         { id: 2, name: 'Weekend Cycling Marathon' },

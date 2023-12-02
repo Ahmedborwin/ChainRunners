@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { ethers } from 'ethers'
 import styled from 'styled-components';
 
 // Components
@@ -16,12 +15,6 @@ import { useSelector } from 'react-redux';
 
 // Store
 import { selectUserData } from '../store/reducers/tokenExchangeReducer';
-
-// ABIs: Import your contract ABIs here
-// import TOKEN_ABI from '../abis/Token.json'
-
-// Config: Import your network config here
-// import config from '../config.json';
 
 const AppContainer = styled("div")`
   position: relative;
@@ -50,40 +43,20 @@ const RightVerticalLine = styled("div")`
 `;
 
 function App() {
-  const [account, setAccount] = useState(null)
   const [isLoading, setIsLoading] = useState(true);
-  const [dataLoaded, setDataLoaded] = useState(false);
 
   const { data } = useSelector(selectUserData);
 
-  const loadBlockchainData = async () => {
-    // Initiate provider
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    console.log(provider)
-    // Fetch accounts
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-    const account = ethers.utils.getAddress(accounts[0])
-    setAccount(account)
-
-    setIsLoading(false)
-  }
-
-  useEffect(() => {
-    if (isLoading) {
-      loadBlockchainData()
-    }
-  }, [isLoading]);
-
   useEffect(() => {
     if (Object.keys(data).length > 0)
-      setDataLoaded(true);
-    else setDataLoaded(false);
+      setIsLoading(false);
+    else setIsLoading(true);
   }, [data])
 
   return (
     <AppContainer>
 
-      {dataLoaded &&
+      {!isLoading &&
         <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
       }
 
@@ -93,11 +66,10 @@ function App() {
       <Greeter />
 
       {isLoading
-        ? <Loading />
-        : !dataLoaded && <StravaAccountCreation userAccountDetails={data} />
+        ? <StravaAccountCreation userAccountDetails={data} />
+        : <Dashboard />
       }
 
-      {!isLoading && dataLoaded && <Dashboard />}
     </AppContainer>
   )
 }

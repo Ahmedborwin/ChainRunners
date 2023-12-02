@@ -548,4 +548,8 @@ contract ChainRunners is Ownable {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Unable to withdraw funds");
     }
+
+    function listAthleteCompetitions(address _athlete) external view returns (uint8[] memory) {
+        return athleteToCompIdList[_athlete];
+    }
 }

@@ -1,10 +1,10 @@
 const fs = require("fs")
 const { ethers, network } = require("hardhat")
 
-const CHAINRUNNER_ADDRESS_FILE = "config/chainRunnerAddress.json"
-const CONSUMER_ADDRESS_FILE = "config/consumerAddress.json"
-const CONSUMER_ABI_FILE = "config/consumerAbi.json"
-const CHAINRUNNER_ABI_FILE = "config/chainRunnerAbi.json"
+const CHAINRUNNER_ADDRESS_FILE = "src/config/chainRunnerAddress.json"
+const CONSUMER_ADDRESS_FILE = "src/config/consumerAddress.json"
+const CONSUMER_ABI_FILE = "src/config/consumerAbi.json"
+const CHAINRUNNER_ABI_FILE = "src/config/chainRunnerAbi.json"
 
 module.exports = async (chainRunnersAddress, chainFunctionsConsumerAddress) => {
     //need chainId

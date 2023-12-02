@@ -1,7 +1,17 @@
 // Import necessary React components and hooks
 import React, { useState, useEffect } from 'react';
+
+// Redux
 import { useDispatch } from 'react-redux';
-import { tokenExchangeSuccess, tokenExchangeFailure } from '../store/actions';
+
+// Store
+import {
+    tokenExchangeSuccess,
+    tokenExchangeFailure
+} from '../store/actions';
+
+// Hooks
+import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
 
 const CLIENT_ID = '117193';
 const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
@@ -46,6 +56,9 @@ const styles = {
 // Define the StravaAccountCreation component
 const StravaAccountCreation = ({ userAccountDetails }) => {
     const dispatch = useDispatch();
+
+    const { chainRunner, consumer, account } = useLoadBlockchainData();
+
     const [isLoading, setIsLoading] = useState(false);
 
     // Function to handle the button click and redirect to the Strava authorization page
@@ -83,6 +96,13 @@ const StravaAccountCreation = ({ userAccountDetails }) => {
                 dispatch(tokenExchangeSuccess(data));
                 // Handle the response data as needed
                 console.log('Token exchange successful:', data);
+            })
+            .then((data) => {
+                // Create athlete on blockchain
+                chainRunner.connect(account).createAthlete(
+                    data.athlete.username,
+                    data.athlete.id
+                );
             })
             .catch((error) => {
                 dispatch(tokenExchangeFailure(error));

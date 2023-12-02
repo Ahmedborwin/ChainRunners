@@ -5,7 +5,7 @@ const stravaGetAtheleteRequest = Functions.makeHttpRequest({
     url: `https://www.strava.com/api/v3/athletes/${athleteId}/stats`,
     headers: {
         "Content-Type": `application/json`,
-        Authorization: `Bearer c69dd19fa9f3c8a2258c8e0e27b2b0b7c081dab0`,
+        Authorization: `Bearer ${secrets.accessToken}`,
     },
 })
 

@@ -73,7 +73,6 @@ contract ChainRunners is Ownable {
         string name;
         CompetitionStatus status;
         address administrator;
-        uint256 stake;
         uint256 startDate;
         uint256 durationDays;
         uint256 endDate;
@@ -146,6 +145,7 @@ contract ChainRunners is Ownable {
         address indexed athleteAddress,
         uint256 indexed stake
     );
+    event competitionReady(uint256 _compId);
     event competitionStarted(
         uint256 compId,
         address[] competingAthletes,
@@ -276,6 +276,19 @@ contract ChainRunners is Ownable {
             revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
         }
 
+        //get competition Struct from mapping
+        competition = competitionTable[_compId];
+        // take fee
+        uint256 _fee = (competition.totalStaked * 5) / 100;
+        competition.totalStaked -= _fee;
+        dappFee += _fee;
+        //reward per payout Interval
+        competition.rewardPot =
+            (competition.totalStaked * 1 ether) /
+            (competition.durationDays / competition.payoutIntervals);
+        //Assign updated Competition Form back to mapping
+        competitionTable[competitionId] = competition;
+
         //Need to get the atheletes current Miles logged
         //************************
         for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
@@ -290,12 +303,15 @@ contract ChainRunners is Ownable {
         }
     }
 
-    function handleStartCompetition(uint256 _compId) internal {
+    function handleStartCompetition(uint256 _compId) public {
+        //get competition Struct from mapping
+        competition = competitionTable[_compId];
+
+        //check totatStaked is not 0
+        //check comp Status is pending
         if (competition.status != CompetitionStatus.pending) {
             revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
         }
-        //populate mapping with new competition struct
-        competition = competitionTable[_compId];
         //set Comp Status
         competition.status = CompetitionStatus.inProgress;
         //set start date
@@ -304,16 +320,6 @@ contract ChainRunners is Ownable {
         competition.endDate = block.timestamp + (competition.durationDays * 60 * 60 * 24);
         //set next reward interval
         competition.nextPayoutDate = block.timestamp + (competition.payoutIntervals * 60 * 60 * 24);
-        // take fee
-        uint256 fee = (competition.totalStaked * 5) / 100;
-        competition.totalStaked -= fee;
-        dappFee += fee;
-
-        //reward per payout Interval
-        uint256 _rewardPot = competition.totalStaked * 1 ether;
-        competition.rewardPot =
-            _rewardPot /
-            (competition.durationDays / competition.payoutIntervals);
 
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
@@ -408,6 +414,7 @@ contract ChainRunners is Ownable {
             //if final response for comp received then start Comp
             if (startCompCallCounter[_compId] == athleteListByComp[_compId].length) {
                 //start competition
+                emit competitionReady(_compId);
                 handleStartCompetition(_compId);
             }
         } else if (requestType(_requestType) == requestType.payoutEvent) {

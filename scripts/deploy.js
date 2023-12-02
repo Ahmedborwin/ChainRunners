@@ -3,10 +3,10 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const { verify } = require("./verify")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
 
 async function main() {
+    let donHostedSecretsVersion, provider
     const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
     // Initialize functions settings
     const getAthleteData = fs
@@ -14,7 +14,9 @@ async function main() {
         .toString()
 
     //upload secrets and get secretsVersion
-    const donHostedSecretsVersion = await chainLinkFunctions()
+    if (chainID !== "31337") {
+        donHostedSecretsVersion = await chainLinkFunctions()
+    }
 
     const donId = hre.ethers.utils.formatBytes32String("fun-polygon-mumbai-1")
     const subId = 584
@@ -33,7 +35,9 @@ async function main() {
     await consumer.populateDonId(donId)
     //populate subId
     await consumer.populateSubId(subId)
-    await consumer.populateVersionSecret(donHostedSecretsVersion)
+    if (chainID !== "31337") {
+        await consumer.populateVersionSecret(donHostedSecretsVersion)
+    }
     await consumer.populateDONSlotID(slotId)
 
     console.log(` /n ------------------------------------`)
@@ -48,14 +52,18 @@ async function main() {
 
     //set up chainrunners for testing
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
-    const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE_KEY
+    const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account
+    const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
     const rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
 
-    const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
-    const wallet = new hre.ethers.Wallet(privateKey)
+    if (chainID !== "31337") {
+        provider = hre.network.provider
+    } else {
+        provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    }
     const wallet_2 = new hre.ethers.Wallet(privateKey_2)
-    const athlete_1 = wallet.connect(provider)
     const athlete_2 = wallet_2.connect(provider)
+
     //create two athletes
     await chainrunner.createAthlete("Ahmed", "62612170")
     await chainrunner.connect(athlete_2).createAthlete("Bolt", "62612170")
@@ -77,13 +85,6 @@ async function main() {
 
     //record new contract address and ABI
     await updateContractInfo(chainrunner.address, consumer.address)
-
-    await verify()
-}
-
-async function verifyContracts() {
-    //how to run verify after the async deploy functions
-    await verify()
 }
 
 // We recommend this pattern to be able to use async/await everywhere

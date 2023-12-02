@@ -5,11 +5,7 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "./ChainRunnersInterface.sol";
-/**
- * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
- * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
- * DO NOT USE THIS CODE IN PRODUCTION.
- */
+
 error UnexpectedRequestID(bytes32 requestId);
 
 contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
@@ -21,6 +17,7 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         }
         _;
     }
+
     enum requestType {
         beginCompeition,
         payoutEvent
@@ -47,6 +44,7 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     mapping(bytes32 => uint256) public requestIdToCompId;
 
     //events
+    event Request(address athlete, string stravaId, uint256 compId);
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
     constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
@@ -62,17 +60,18 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         uint256 _compId
     ) external returns (bytes32 requestId) {
         FunctionsRequest.Request memory req;
+
         req.initializeRequestForInlineJavaScript(getAthleteStatsJS);
-        if (donHostedSecretsVersion > 0) {
-            req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
-        }
-        if (args.length > 0) req.setArgs(args);
+        req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
+        req.setArgs(args);
+
         s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, DEFAULT_GAS_LIMIT, donID);
 
         requestIdToAthleteAddress[s_lastRequestId] = _athleteAddress;
         requestIdToRequestType[s_lastRequestId] = requestType(_requestType);
         requestIdToCompId[s_lastRequestId] = _compId;
 
+        emit Request(_athleteAddress, args[0], _compId);
         return s_lastRequestId;
     }
 
@@ -93,6 +92,8 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
 
         uint256 distance = bytesToUint(s_lastResponse);
 
+        emit Response(requestId, s_lastResponse, s_lastError);
+
         //call chainrunners and pass back athlete address and distance
         i_chainrunners.handleAPIResponse(
             uint8(requestIdToRequestType[requestId]),
@@ -100,8 +101,6 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
             distance,
             requestIdToCompId[requestId]
         );
-
-        emit Response(requestId, s_lastResponse, s_lastError);
     }
 
     //Helper functions

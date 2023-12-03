@@ -1,36 +1,46 @@
 import React from 'react';
-import Navbar from 'react-bootstrap/Navbar';
-import logo from '../assets/images/logo.png';
 import { Link } from 'react-router-dom';
+
+// Components
+import Navbar from 'react-bootstrap/Navbar';
 import styled from 'styled-components';
 
-// Create styled components with updated styles
+// Images
+import logo from '../assets/images/image.png';
+
 const CustomNavbar = styled(Navbar)`
-  background-color: #fc4c02; /* Orange background color */
+  background-color: #0d2137;
 `;
 
 const LogoImg = styled.img`
   transition: transform 0.3s ease-in-out;
   
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.5);
   }
 `;
 
 const BrandText = styled(Link)`
-  font-family: 'YourCustomFont', sans-serif;
-  color: #ffffff; /* White text color */
-  text-decoration: none; /* Remove underline on the link */
+  font-family: sans-serif;
+  font-weight: bold;
+  color: #b7ff00;
+  text-decoration: none;
 
   &:hover {
-    color: #000000; /* Black text color on hover */
+    color: #38ff7f;
   }
 `;
 
 const UppercaseAccountText = styled(Navbar.Brand)`
   text-transform: uppercase;
-  color: #ffffff;
+  font-family: sans-serif;
+  font-weight: bold;
+  color: #b7ff00;
   margin-right: 2%;
+
+  &:hover {
+    color: #38ff7f;
+  }
 `;
 
 const Navigation = ({ account }) => {
@@ -39,16 +49,16 @@ const Navigation = ({ account }) => {
       <LogoImg
         alt="logo"
         src={logo}
-        width="80"
+        width="40"
         height="40"
         className="d-inline-block align-top mx-3"
       />
       <BrandText to="/" >
-        STRAVA
+        CHAIN-RUNNERS
       </BrandText>
 
       <Navbar.Collapse className="justify-content-end">
-        <UppercaseAccountText href="#">
+        <UppercaseAccountText href="/user-profile">
           {account}
         </UppercaseAccountText>
       </Navbar.Collapse>

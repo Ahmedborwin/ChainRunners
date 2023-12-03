@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { ethers } from 'ethers'
 import styled from 'styled-components';
 
 // Components
+import { Form, Button } from 'react-bootstrap';
+import Greeter from './Greeter';
 import Navigation from './Navigation';
 
 // Images
-import mapsImage from '../assets/images/maps.jpg';
+import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
 import { useSelector } from 'react-redux';
 
 // Store
 import { selectUserData } from '../store/reducers/tokenExchangeReducer';
+
+// hooks
+import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
 
 const CompetitionContainer = styled("div")`
     position: relative;
@@ -39,8 +44,12 @@ const CustomForm = styled(Form)`
 `
 
 const CreateButton = styled(Button)`
-    background-color: #fc4c02;
-    border-color: #fc4c02;
+    background-color: #18729c;
+    border-color: #0d6efd;
+
+    &:hover {
+        color: #38ff7f;
+    }
 `
 
 const LeftVerticalLine = styled("div")`
@@ -62,6 +71,9 @@ const RightVerticalLine = styled("div")`
 `;
 
 const CompetitionCreation = () => {
+    // Smart contracts
+    const { chainRunner, account } = useLoadBlockchainData();
+
     const [competitionName, setCompetitionName] = useState("");
     const [buyIn, setBuyIn] = useState(0.01);
     const [durationDays, setDurationDays] = useState(28);
@@ -70,9 +82,15 @@ const CompetitionCreation = () => {
     const { data } = useSelector(selectUserData);
 
     const handleCreateCompetition = () => {
-        // TODO: Implement the logic to create a competition
-        // You might want to use a state management library (e.g., Redux) or API calls here
-        console.log('Competition created:', competitionName, buyIn, durationDays, payoutIntervals);
+        if (competitionName && buyIn && durationDays && payoutIntervals)
+            chainRunner.connect(account).createCompetition(
+                competitionName,
+                ethers.utils.parseEther(buyIn.toString()),
+                durationDays,
+                payoutIntervals
+            );
+        else
+            window.alert('Please fill in all the details in order to create a competition');
     };
 
     return (
@@ -82,18 +100,7 @@ const CompetitionCreation = () => {
             <LeftVerticalLine />
             <RightVerticalLine />
 
-            <h1
-                className='my-4 text-center'
-                style={{
-                    padding: '2%',
-                    background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
-                    color: '#ffffff', // White text color
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
-                    borderRadius: '12px', // Border radius for rounded corners
-                }}
-            >
-                Welcome to ChainRunners
-            </h1>
+            <Greeter />
 
             <Title>Create a New Competition</Title>
 
@@ -110,7 +117,7 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="buyIn">
-                        <Form.Label>Buy-In</Form.Label>
+                        <Form.Label>Buy-In (ETH)</Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter Buy-In Amount"

@@ -6,6 +6,11 @@ import styled from 'styled-components';
 // Components
 import JoinedCompetitions from './JoinedCompetitions';
 
+// Hooks
+import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
+import useGetAthleteTable from '../hooks/useGetAthleteTable';
+import useGetAthleteLiveCompetitions from '../hooks/useGetAthleteLiveCompetitions';
+
 const DashboardContainer = styled("div")`
     position: relative;
     padding-left: 20px; /* Adjust as needed */
@@ -17,7 +22,19 @@ const DashboardContainer = styled("div")`
     align-items: center;
 `;
 
+const StyledButton = styled(Button)`
+    background-color: #18729c;
+
+    &:hover {
+        color: #38ff7f;
+    }
+`
+
 const Dashboard = () => {
+    const { chainRunner, account, signer } = useLoadBlockchainData();
+    const athleteTable = useGetAthleteTable();
+    const athleteLiveCompetitions = useGetAthleteLiveCompetitions();
+    
     const joinedCompetitions = [
         { id: 1, name: 'Morning Run Challenge' },
         { id: 2, name: 'Weekend Cycling Marathon' },
@@ -51,11 +68,11 @@ const Dashboard = () => {
 
             <div className="text-center my-4">
                 <Link to="/create-competition" className="mx-4">
-                    <Button style={{ backgroundColor: "#fc4c02" }}>Create Competition</Button>
+                    <StyledButton>Create Competition</StyledButton>
                 </Link>
 
                 <Link to="/joined-competitions" className="mx-4">
-                    <Button style={{ backgroundColor: "#ffd700" }}>Join Competition</Button>
+                    <StyledButton>Join Competition</StyledButton>
                 </Link>
             </div>
         </DashboardContainer>

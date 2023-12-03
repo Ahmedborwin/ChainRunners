@@ -3,10 +3,11 @@ import { Form, Button, Card } from 'react-bootstrap';
 import styled from 'styled-components';
 
 // Components
+import Greeter from './Greeter';
 import Navigation from './Navigation';
 
 // Images
-import mapsImage from '../assets/images/maps.jpg';
+import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
 import { useSelector } from 'react-redux';
@@ -69,18 +70,7 @@ const JoinNewCompetition = () => {
             <LeftVerticalLine />
             <RightVerticalLine />
 
-            <h1
-                className='my-4 text-center'
-                style={{
-                    padding: '2%',
-                    background: 'linear-gradient(to right, #fc4C02, #ffd700)', // Orange to gold gradient
-                    color: '#ffffff', // White text color
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Box shadow
-                    borderRadius: '12px', // Border radius for rounded corners
-                }}
-            >
-                Welcome to ChainRunners
-            </h1>
+            <Greeter />
 
             <h2 className="text-center mt-4 mb-4">Join a New Competition</h2>
 
@@ -94,7 +84,7 @@ const JoinNewCompetition = () => {
                     />
                 </Form.Group>
 
-                <Button style={{ backgroundColor: "#fc4c02" }} onClick={handleSearch}>
+                <Button style={{ backgroundColor: "#18729c" }} onClick={handleSearch}>
                     Search
                 </Button>
             </Form>
@@ -106,7 +96,7 @@ const JoinNewCompetition = () => {
                         <Card key={competition.id} className="m-4">
                             <Card.Body>
                                 <h5>{competition.name}</h5>
-                                <Button style={{ backgroundColor: "#fc4c02" }} onClick={() => handleJoin(competition.id)}>
+                                <Button style={{ backgroundColor: "#18729c" }} onClick={() => handleJoin(competition.id)}>
                                     Join
                                 </Button>
                             </Card.Body>

@@ -125,6 +125,7 @@ contract ChainRunners is Ownable {
     mapping(address => uint8[]) public athleteToCompIdList; //Allow front end to access competition info using athlete address
     mapping(address => WinnerStats) public winnerStatistics;
     mapping(uint256 => mapping(address => uint256)) public winTallyComp;
+    mapping(uint256 => address) public overAllWinnerByComp;
     mapping(uint256 => bool) public competitionIsLive;
     mapping(uint256 => CompetitionForm) public competitionTable; //Comp Id to CompForm
     mapping(string => bool) public usernameTable; //username to bool
@@ -288,11 +289,12 @@ contract ChainRunners is Ownable {
             (competition.durationDays / competition.payoutIntervals);
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
-
         //Need to get the atheletes current Miles logged
         //************************
         for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
             address[] memory listAthletes = athleteListByComp[_compId];
+            //Add competition to the athletes competitions Array
+            athleteToCompIdList[listAthletes[i]].push(uint8(_compId));
             //Call handleAPIRequest and pass athletes address
             handleAPICall(
                 uint8(requestType.beginCompetition),
@@ -325,12 +327,6 @@ contract ChainRunners is Ownable {
         competitionTable[competitionId] = competition;
 
         competitionIsLive[_compId] = true;
-
-        //assign compId to athlete Address
-        for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
-            address[] memory listAthletes = athleteListByComp[_compId];
-            athleteToCompIdList[listAthletes[i]].push(uint8(_compId));
-        }
 
         emit competitionStarted(
             _compId,
@@ -439,16 +435,17 @@ contract ChainRunners is Ownable {
         if (results.metersLogged < metersLogged) {
             results.metersLogged = metersLogged; //current winning meters logged
             results.winnnersAddress = _athlete; //current winners address
-
             eventResultsMapping[_compId][compPayoutId[_compId]] = results;
         }
-
         payoutEventAPIResponseCounter[_compId]++; //record API responses received
+
+        //check if recent winner is new over all winner
+
         //check if final response for this event call
         if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
             //handle winner
             handleWinner(_compId);
-            //reset variables
+            //reset API Response counter
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
             CompetitionForm memory _competition = competitionTable[_compId];
@@ -472,6 +469,22 @@ contract ChainRunners is Ownable {
 
         winTallyComp[_compId][results.winnnersAddress]++;
 
+        //set overall winner
+        if (overAllWinnerByComp[_compId] == address(0)) {
+            // If first winners event then winner is set to overall winner for CompId
+            overAllWinnerByComp[_compId] = results.winnnersAddress;
+        } else {
+            //compare winning totals of new winner and current overall winner
+            address currentWinner = overAllWinnerByComp[_compId];
+            if (
+                winTallyComp[_compId][results.winnnersAddress] >
+                winTallyComp[_compId][currentWinner]
+            ) {
+                //if new winner has more wins they are set as overall winner
+                overAllWinnerByComp[_compId] = results.winnnersAddress;
+            }
+        }
+
         (bool sent, ) = results.winnnersAddress.call{value: reward}("");
         if (!sent) {
             rewardBalanceOwedToAthlete[results.winnnersAddress] += reward; //save rewards for user
@@ -483,26 +496,13 @@ contract ChainRunners is Ownable {
     }
 
     function endCompetition(uint256 _compId) public {
-        //get athlete list for this competition
-        address[] memory _athleteList = athleteListByComp[_compId];
-        //assign winner address and winningTally to first athlete
-        address overallWinner = _athleteList[0];
-        uint8 tempWinTally = uint8(winTallyComp[_compId][_athleteList[0]]);
-        //check winsTally of other addresses to find overall winner
-        for (uint8 i = 1; i < _athleteList.length; i++) {
-            //get address for competing athletes from second athlete onwards
-            if (winTallyComp[_compId][_athleteList[i]] > tempWinTally) {
-                //set athlete with highest wins to local variable
-                overallWinner = _athleteList[i];
-                tempWinTally = uint8(winTallyComp[_compId][_athleteList[i]]);
-            }
-        }
+        console.log(overAllWinnerByComp[_compId]);
         //end competition
         competitionTable[_compId].status = CompetitionStatus.completed;
         //increment tally for winner
-        winnerStatistics[overallWinner].competitionsWon++;
+        winnerStatistics[overAllWinnerByComp[_compId]].competitionsWon++;
         //mint NFT for winner overallWinner
-        nftMintedtoAddress = overallWinner;
+        nftMintedtoAddress = overAllWinnerByComp[_compId];
     }
 
     function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {

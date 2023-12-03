@@ -6,27 +6,50 @@ const chainLinkFunctions = require("./chainlinkFunctions")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
 
 async function main() {
-    let donHostedSecretsVersion, provider
+    let donHostedSecretsVersion, provider, donIDString, rpcUrl, subId
+
     const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
+
     // Initialize functions settings
     const getAthleteData = fs
         .readFileSync(path.resolve(__dirname, "../scripts/APICalls/getAthleteData.js"))
         .toString()
 
-    //upload secrets and get secretsVersion
-    if (chainID !== "31337") {
-        donHostedSecretsVersion = await chainLinkFunctions()
+    if (chainID === "80001") {
+        rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
+    } else if (chainID === "43113") {
+        console.log("FUJI RPC URL")
+        rpcUrl = "https://avalanche-fuji.drpc.org"
     }
 
-    const donId = hre.ethers.utils.formatBytes32String("fun-polygon-mumbai-1")
-    const subId = 584
-    const slotId = 0
+    if (chainID === "31337") {
+        provider = hre.network.provider
+    } else {
+        provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    }
 
-    const mumbaiRouter = chainLinkFunctionsRouterList[chainID]
+    //upload secrets and get secretsVersion
+    if (chainID !== "31337") {
+        donHostedSecretsVersion = await chainLinkFunctions(chainID)
+    }
+
+    if (chainID === "80001") {
+        donIDString = "fun-polygon-mumbai-1"
+        subId = 584
+    } else if (chainID === "43113") {
+        donIDString = "fun-avalanche-fuji-1"
+        subId = 1620
+    }
+
+    const donId = hre.ethers.utils.formatBytes32String(donIDString)
+    const slotId = 0
+    const functionsRouter = chainLinkFunctionsRouterList[chainID]
 
     //Deploy Token
 
-    const consumer = await hre.ethers.deployContract("crChainlinkRequestConsumer", [mumbaiRouter])
+    const consumer = await hre.ethers.deployContract("crChainlinkRequestConsumer", [
+        functionsRouter,
+    ])
     await consumer.deployed()
 
     // populate code for calling athlete stats
@@ -54,19 +77,13 @@ async function main() {
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
     const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account
     const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
-    const rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
 
-    if (chainID !== "31337") {
-        provider = hre.network.provider
-    } else {
-        provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
-    }
     const wallet_2 = new hre.ethers.Wallet(privateKey_2)
     const athlete_2 = wallet_2.connect(provider)
 
     //create two athletes
     await chainrunner.createAthlete("Ahmed", "62612170")
-    await chainrunner.connect(athlete_2).createAthlete("Bolt", "62612170")
+    await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
     //create competitions and join with other athlete
     await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
         value: buyIn,
@@ -83,8 +100,8 @@ async function main() {
     console.log(`Chainrunner deployed to: ${chainrunner.address}`)
     console.log(`------------------------------------ \n`)
 
-    //record new contract address and ABI
-    await updateContractInfo(chainrunner.address, consumer.address)
+    // //record new contract address and ABI
+    // await updateContractInfo(chainrunner.address, consumer.address)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

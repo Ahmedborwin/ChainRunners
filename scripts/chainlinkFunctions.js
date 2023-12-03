@@ -1,7 +1,7 @@
 const fs = require("fs")
 const path = require("path")
 const { SecretsManager } = require("@chainlink/functions-toolkit")
-const { ethers } = require("hardhat")
+const hre = require("hardhat")
 const hardhatConfig = require("../hardhat.config")
 const accessToken = require("../scripts/getAppAccessToken")
 const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
@@ -9,25 +9,37 @@ const consumerAddressList = require("../config/consumerAddress.json")
 const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
 require("@chainlink/env-enc").config()
 
-// Initialize functions settings
-// will need this make these dynamic - add to hardhat-config under networks
-
-const linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
-const donId = "fun-polygon-mumbai-1"
-const gatewayUrls = [
-    "https://01.functions-gateway.testnet.chain.link/",
-    "https://02.functions-gateway.testnet.chain.link/",
-]
-
 const getAthleteData = fs
     .readFileSync(path.resolve(__dirname, "APICalls/getAthleteData.js"))
     .toString()
 const slotIdNumber = 0 // slot ID where to upload the secrets
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
-async function chainLinkFunctions() {
-    let rpcUrl, chainID, routerAddress, chainRunnerAddress, consumerAddress
-    const network = await ethers.provider.getNetwork()
+async function chainLinkFunctions(chainID) {
+    console.log("chainlink functions", chainID)
+    let linkTokenAddress, donId, gatewayUrls
+    let rpcUrl, routerAddress, chainRunnerAddress, consumerAddress
+
+    //Chainlink Functions Variables if Matic Mumbai
+    if (chainID === "80001") {
+        linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
+        donId = "fun-polygon-mumbai-1"
+        gatewayUrls = [
+            "https://01.functions-gateway.testnet.chain.link/",
+            "https://02.functions-gateway.testnet.chain.link/",
+        ]
+        rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
+
+        //Chainlink Functions Variables if Avax Fuji
+    } else if (chainID === "43113") {
+        linkTokenAddress = "0xA9d587a00A31A52Ed70D6026794a8FC5E2F5dCb0"
+        donId = "fun-avalanche-fuji-1"
+        gatewayUrls = [
+            "https://01.functions-gateway.testnet.chain.link/",
+            "https://02.functions-gateway.testnet.chain.link/",
+        ]
+        rpcUrl = "https://api.avax-test.network/ext/bc/C/rpc"
+    }
 
     //get updated Access token
     const accessTokenString = await accessToken()
@@ -41,18 +53,15 @@ async function chainLinkFunctions() {
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
     if (!privateKey) throw new Error("private key not provided - check your environment variables")
 
-    rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
-
     if (!rpcUrl) throw new Error(`rpcUrl not provided  - check your environment variables`)
 
-    chainID = network.chainId
-
+    //get Contract Address's based on chainID
     routerAddress = chainLinkFunctionsRouterList[chainID]
     chainRunnerAddress = chainRunnerAddressList[chainID]
     consumerAddress = consumerAddressList[chainID]
 
-    const provider = new ethers.providers.JsonRpcProvider(rpcUrl)
-    const wallet = new ethers.Wallet(privateKey)
+    const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    const wallet = new hre.ethers.Wallet(privateKey)
     const signer = wallet.connect(provider)
 
     // First encrypt secrets and upload the encrypted secrets to the DON

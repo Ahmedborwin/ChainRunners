@@ -50,7 +50,7 @@ module.exports = {
             url: "https://api.avax-test.network/ext/bc/C/rpc",
             gasPrice: 500000,
             chainId: 43113,
-            accounts: [PRIVATE_KEY_2],
+            accounts: [PRIVATE_KEY],
         },
         AvalancheMainnet: {
             url: "https://api.avax.network/ext/bc/C/rpc",

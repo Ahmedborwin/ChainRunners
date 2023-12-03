@@ -547,18 +547,78 @@ describe("ChainRunners", () => {
         })
     })
     describe("Close Competition", () => {
-        beforeEach(async () => {})
-
         describe("Success", () => {
-            it("", async () => {})
-            it("", async () => {})
-            it("", async () => {})
-        })
+            describe("Success", () => {
+                let competition
+                let sevenDays = parseInt(8 * 60 * 60 * 24)
+                beforeEach(async () => {
+                    //create athlete profiles
+                    await chainrunners.createAthlete(username, stravaId)
+                    await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
+                    await chainrunners.connect(athlete3).createAthlete("Ymir", stravaId)
+                    await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                        value: buyin,
+                    })
+                    await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
+                    await chainrunners.connect(athlete3).joinCompetition("1", { value: buyin })
+                    await chainrunners.testHandleStartCompetition(1)
+                    //emulatate check upkeep
+                })
 
-        describe("Failure", () => {
-            it("", async () => {})
-            it("", async () => {})
-            it("", async () => {})
+                it("over all winner is set on first pass", async () => {
+                    //simulate API CALL AND Response X 1
+                    await chainrunners.testPayoutIdIncrement(1)
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 10000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 20000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 30000, 1)
+                    const overAllwinner = await chainrunners.overAllWinnerByComp(1)
+                    expect(overAllwinner).equal(athlete3.address)
+                })
+                it("overall winner when competition ends is:", async () => {
+                    //simulate API CALL AND Response X 1
+                    network.provider.send("evm_increaseTime", [sevenDays])
+                    network.provider.send("evm_mine")
+                    await chainrunners.testPayoutIdIncrement(1)
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 10000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 20000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 30000, 1)
+                    //simulate API CALL AND Response X 2
+                    network.provider.send("evm_increaseTime", [sevenDays])
+                    network.provider.send("evm_mine")
+                    await chainrunners.testPayoutIdIncrement(1)
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 20010, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 30000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 40000, 1)
+                    //simulate API CALL AND Response X 3
+                    network.provider.send("evm_increaseTime", [sevenDays])
+                    network.provider.send("evm_mine")
+                    await chainrunners.testPayoutIdIncrement(1)
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 30020, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 50000, 1)
+                    //simulate API CALL AND Response X 4
+                    network.provider.send("evm_increaseTime", [sevenDays])
+                    network.provider.send("evm_mine")
+                    await chainrunners.testPayoutIdIncrement(1)
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 40030, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 50000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 60000, 1)
+
+                    const overAllwinner = await chainrunners.overAllWinnerByComp(1)
+                    const nftmintedAddress = await chainrunners.nftMintedtoAddress()
+                    const winnerStats = await chainrunners.winnerStatistics(athlete2.address)
+                    expect(overAllwinner).equal(athlete2.address)
+                    expect(nftmintedAddress).equal(athlete2.address)
+                    expect(winnerStats.competitionsWon).equal("1")
+                })
+                it("", async () => {})
+            })
+
+            describe("Failure", () => {
+                it("", async () => {})
+                it("", async () => {})
+                it("", async () => {})
+            })
         })
     })
 })

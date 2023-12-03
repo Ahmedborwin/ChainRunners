@@ -3,7 +3,7 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
+const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 
 async function main() {
     let donHostedSecretsVersion, provider, donIDString, rpcUrl, subId
@@ -101,7 +101,7 @@ async function main() {
     console.log(`------------------------------------ \n`)
 
     // //record new contract address and ABI
-    // await updateContractInfo(chainrunner.address, consumer.address)
+    await updateContractInfo(chainrunner.address, consumer.address)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

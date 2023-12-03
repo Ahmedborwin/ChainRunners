@@ -1,9 +1,9 @@
 const { ethers } = require("hardhat")
 const hre = require("hardhat")
 
-const chainRunnerAddressList = require("../config/chainRunnerAddress.json")
-const consumerAddressList = require("../config/consumerAddress.json")
-const chainLinkFunctionsRouterList = require("../config/ChainlinkFunctionRouters.json")
+const chainRunnerAddressList = require("../src/config/chainRunnerAddress.json")
+const consumerAddressList = require("../src/config/consumerAddress.json")
+const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 
 async function verifyContracts() {
     const chainID = (await ethers.provider.getNetwork()).chainId.toString()

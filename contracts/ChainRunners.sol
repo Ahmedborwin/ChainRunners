@@ -289,6 +289,7 @@ contract ChainRunners is Ownable {
             (competition.durationDays / competition.payoutIntervals);
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
+
         //Need to get the atheletes current Miles logged
         //************************
         for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
@@ -319,9 +320,9 @@ contract ChainRunners is Ownable {
         //set start date
         competition.startDate = block.timestamp;
         //set end date
-        competition.endDate = block.timestamp + (competition.durationDays * 60 * 60 * 24);
+        competition.endDate = block.timestamp + 900;
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + (competition.payoutIntervals * 60 * 60 * 24);
+        competition.nextPayoutDate = block.timestamp + 225;
 
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
@@ -426,21 +427,24 @@ contract ChainRunners is Ownable {
         } else {
             metersLogged = _distance - athleteTable[_athlete].totalMeters;
         }
-
+        //------------------------
+        //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
+        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
+            _distance += _distance / 5;
+        }
+        //------------------------
+        //update athletes Total Meters as per the distance received form API Call
         athleteTable[_athlete].totalMeters = _distance;
-
+        //retrieve the current winners recorded distance from mapping
         EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
-
         //check distance is greater, if so set as new winner
         if (results.metersLogged < metersLogged) {
             results.metersLogged = metersLogged; //current winning meters logged
             results.winnnersAddress = _athlete; //current winners address
             eventResultsMapping[_compId][compPayoutId[_compId]] = results;
         }
-        payoutEventAPIResponseCounter[_compId]++; //record API responses received
-
-        //check if recent winner is new over all winner
-
+        //record API response received by incrementing counter
+        payoutEventAPIResponseCounter[_compId]++;
         //check if final response for this event call
         if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
             //handle winner
@@ -449,27 +453,28 @@ contract ChainRunners is Ownable {
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
             CompetitionForm memory _competition = competitionTable[_compId];
+            //Check if the competition has ended
             if (block.timestamp >= _competition.endDate) {
                 endCompetition(_compId);
             } else {
-                _competition.nextPayoutDate =
-                    _competition.nextPayoutDate +
-                    (competition.payoutIntervals * 60 * 60 * 24);
+                //otherwise calculcate new payoutDate
+                _competition.nextPayoutDate = _competition.nextPayoutDate + 225;
             }
         }
     }
 
     function handleWinner(uint256 _compId) internal {
-        //the winners details
+        //Retreive the winners details
         EventResults memory results = eventResultsMapping[_compId][compPayoutId[_compId]];
+        //divide the winenrs pot by 1e18 (used to avoid decimal places)
         uint256 reward = competitionTable[_compId].rewardPot / 1 ether;
 
         winnerStatistics[results.winnnersAddress].intervalsWon++;
         winnerStatistics[results.winnnersAddress].etherWon += reward;
-
+        //record athletes win for this comp/payoutevent using mapping
         winTallyComp[_compId][results.winnnersAddress]++;
 
-        //set overall winner
+        //Check who is the current overall winner for this competition
         if (overAllWinnerByComp[_compId] == address(0)) {
             // If first winners event then winner is set to overall winner for CompId
             overAllWinnerByComp[_compId] = results.winnnersAddress;
@@ -484,14 +489,13 @@ contract ChainRunners is Ownable {
                 overAllWinnerByComp[_compId] = results.winnnersAddress;
             }
         }
-
+        //transfer winnings to winner
         (bool sent, ) = results.winnnersAddress.call{value: reward}("");
         if (!sent) {
             rewardBalanceOwedToAthlete[results.winnnersAddress] += reward; //save rewards for user
-            //emit event to signal failed transaction and reward owed?
         } else {
-            emit winnerPicked(results.winnnersAddress, reward);
             // emit event to signal successfull payout
+            emit winnerPicked(results.winnnersAddress, reward);
         }
     }
 
@@ -542,6 +546,15 @@ contract ChainRunners is Ownable {
         require(sent, "Unable to withdraw funds");
     }
 
+    //winner to withdraw rewards
+    function withdrawWinnings() external {
+        require(rewardBalanceOwedToAthlete[msg.sender] > 0, "There are no winnings to withdraw");
+        uint256 rewardOwed = rewardBalanceOwedToAthlete[msg.sender];
+        rewardBalanceOwedToAthlete[msg.sender] = 0;
+        (bool sent, ) = msg.sender.call{value: rewardOwed}("");
+        require(sent, "Transaction failed");
+    }
+
     //---------------------------------
     //---------------------------------
     //helper function
@@ -559,15 +572,6 @@ contract ChainRunners is Ownable {
             number = number + uint(uint8(_bytes[i])) * (2 ** (8 * (_bytes.length - (i + 1))));
         }
         return number;
-    }
-
-    //winner to withdraw rewards
-    function withdrawWinnings() external {
-        require(rewardBalanceOwedToAthlete[msg.sender] > 0, "There are no winnings to withdraw");
-        uint256 rewardOwed = rewardBalanceOwedToAthlete[msg.sender];
-        rewardBalanceOwedToAthlete[msg.sender] = 0;
-        (bool sent, ) = msg.sender.call{value: rewardOwed}("");
-        require(sent, "Transaction failed");
     }
 
     //getter functions
@@ -657,9 +661,7 @@ contract ChainRunners is Ownable {
         compPayoutId[_compId]++;
     }
 
-    function testHandleStartCompetition(uint256 _compId) external onlyOwner {
-        handleStartCompetition(_compId);
-    }
+    function testHandleStartCompetition(uint256 _compId) external onlyOwner {}
 
     function withdrawBalanceTEST() external onlyOwner {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");

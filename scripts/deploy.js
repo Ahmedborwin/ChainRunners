@@ -6,31 +6,16 @@ const chainLinkFunctions = require("./chainlinkFunctions")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 
 async function main() {
-    let donHostedSecretsVersion, provider, donIDString, rpcUrl, subId
+    let donHostedSecretsVersion, provider, donIDString, rpcUrl, subId, donId, athlete_2
 
     const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
-
-    // Initialize functions settings
-    const getAthleteData = fs
-        .readFileSync(path.resolve(__dirname, "../scripts/APICalls/getAthleteData.js"))
-        .toString()
+    const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
 
     if (chainID === "80001") {
         rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
     } else if (chainID === "43113") {
         console.log("FUJI RPC URL")
         rpcUrl = "https://avalanche-fuji.drpc.org"
-    }
-
-    if (chainID === "31337") {
-        provider = hre.network.provider
-    } else {
-        provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
-    }
-
-    //upload secrets and get secretsVersion
-    if (chainID !== "31337") {
-        donHostedSecretsVersion = await chainLinkFunctions(chainID)
     }
 
     if (chainID === "80001") {
@@ -41,7 +26,14 @@ async function main() {
         subId = 1620
     }
 
-    const donId = hre.ethers.utils.formatBytes32String(donIDString)
+    if (chainID === "31337") {
+        provider = hre.network.provider
+    } else {
+        provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+        donHostedSecretsVersion = await chainLinkFunctions(chainID)
+        donId = hre.ethers.utils.formatBytes32String(donIDString)
+    }
+
     const slotId = 0
     const functionsRouter = chainLinkFunctionsRouterList[chainID]
 
@@ -52,16 +44,21 @@ async function main() {
     ])
     await consumer.deployed()
 
-    // populate code for calling athlete stats
-    await consumer.populateAPICallJS(getAthleteData)
-    //populate DonId bytes
-    await consumer.populateDonId(donId)
-    //populate subId
-    await consumer.populateSubId(subId)
+    // only populate on test net for now
     if (chainID !== "31337") {
+        // Initialize functions settings
+        const getAthleteData = fs
+            .readFileSync(path.resolve(__dirname, "./APICalls/getAthleteData.js"))
+            .toString()
+        // populate code for calling athlete stats
+        await consumer.populateAPICallJS(getAthleteData)
+        //populate DonId bytes
+        await consumer.populateDonId(donId)
+        //populate subId
+        await consumer.populateSubId(subId)
         await consumer.populateVersionSecret(donHostedSecretsVersion)
+        await consumer.populateDONSlotID(slotId)
     }
-    await consumer.populateDONSlotID(slotId)
 
     console.log(` /n ------------------------------------`)
     console.log(`Consumer deployed to: ${consumer.address}`)
@@ -74,27 +71,29 @@ async function main() {
     const buyIn = hre.ethers.utils.parseEther("0.01")
 
     //set up chainrunners for testing
-    const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
-    const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account
-    const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
+    if (chainID !== "31337") {
+        //create athlete 2 for testing
+        const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
+        const wallet_2 = new hre.ethers.Wallet(privateKey_2)
+        athlete_2 = wallet_2.connect(provider)
 
-    const wallet_2 = new hre.ethers.Wallet(privateKey_2)
-    const athlete_2 = wallet_2.connect(provider)
+        await chainrunner.createAthlete("Ahmed", "62612170")
+        await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
+        //create competitions and join with other athlete
+        await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
+            value: buyIn,
+        })
+        await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+        //begin competition
 
-    //create two athletes
-    await chainrunner.createAthlete("Ahmed", "62612170")
-    await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
-    //create competitions and join with other athlete
-    await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
-        value: buyIn,
-    })
-    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
-    //begin competition
-
-    //set chainrunner as admin
-    await consumer.setAdmin(chainrunner.address)
-    //set chainrunner interface
-    await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
+        //set chainrunner as admin
+        await consumer.setAdmin(chainrunner.address)
+        //set chainrunner interface
+        await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
+    } else {
+        const accounts = await hre.ethers.getSigners()
+        athlete_2 = accounts[1]
+    }
 
     console.log(` /n ------------------------------------`)
     console.log(`Chainrunner deployed to: ${chainrunner.address}`)

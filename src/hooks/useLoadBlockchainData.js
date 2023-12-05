@@ -18,6 +18,12 @@ const useLoadBlockchainData = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const loadBlockchainData = async () => {
+        // Check if MetaMask or a compatible Ethereum provider is available
+        if (!window.ethereum) {
+            setIsLoading(false);
+            return;
+        }
+
         // Initiate provider
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         setProvider(provider);

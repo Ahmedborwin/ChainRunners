@@ -44,12 +44,13 @@ const styles = {
     },
     loginBtn: {
         padding: '10px 20px',
-        backgroundColor: '#fc4c02',
         color: '#fff',
         fontSize: '16px',
         cursor: 'pointer',
         border: 'none',
         borderRadius: '5px',
+        backgroundColor: "#18729c",
+        borderColor: "#0d6efd",
     },
 };
 

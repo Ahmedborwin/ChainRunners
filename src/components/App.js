@@ -5,9 +5,9 @@ import styled from 'styled-components';
 import Dashboard from './Dashboard';
 import Greeter from './Greeter';
 import Navigation from './Navigation';
-import Loading from './Loading';
 import StravaAccountCreation from './StravaAccount';
 
+// Images
 import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
@@ -28,7 +28,7 @@ const LeftVerticalLine = styled("div")`
     position: absolute;
     height: 100%;
     width: 2px;
-    background-color: #0d2137; /* Orange color */
+    background-color: #0d2137;
     left: 0;
     top: 0;
 `;
@@ -37,7 +37,7 @@ const RightVerticalLine = styled("div")`
     position: absolute;
     height: 100%;
     width: 2px;
-    background-color: #19ddd3; /* Gold color */
+    background-color: #19ddd3;
     right: 0;
     top: 0;
 `;
@@ -48,7 +48,7 @@ function App() {
   const { data } = useSelector(selectUserData);
 
   useEffect(() => {
-    if (Object.keys(data).length > 0)
+    if (data && Object.keys(data).length > 0)
       setIsLoading(false);
     else setIsLoading(true);
   }, [data])

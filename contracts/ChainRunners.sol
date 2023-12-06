@@ -51,10 +51,8 @@ contract ChainRunners is Ownable {
     struct AthleteProfile {
         string username;
         string stravaUserId;
-        uint128 winTally;
         uint256 totalMeters;
         bool registeredAthlete;
-        uint256 totalWinnings;
     }
 
     struct EventResults {

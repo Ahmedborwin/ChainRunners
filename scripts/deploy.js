@@ -3,7 +3,7 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const { SecretsManager } = require("@chainlink/functions-toolkit")
+const { SubscriptionManager } = require("@chainlink/functions-toolkit")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 
 async function main() {
@@ -76,17 +76,23 @@ async function main() {
         await consumer.populateDONSlotID(slotId, athlete_2.address)
         //populate subId
         await consumer.populateSubId(subId)
+
         // Add consumer to subscription
-        // const secretsManager = new SecretsManager({
-        //     signer: athlete,
-        //     functionsRouterAddress: functionsRouter,
-        //     donId: donId,
-        // })
-        // await secretsManager.initialize()
-        // await secretsManager.addConsumer(subId, consumer.address)
+        const subManager = new SubscriptionManager({
+            signer: athlete,
+            linkTokenAddress: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
+            functionsRouterAddress: functionsRouter,
+        })
+        const txOptions = {}
+        await subManager.initialize()
+        await subManager.addConsumer({
+            subscriptionId: subId,
+            consumerAddress: consumer.address,
+            txOptions,
+        })
     }
 
-    console.log(` /n ------------------------------------`)
+    console.log(`\n ------------------------------------`)
     console.log(`Consumer deployed to: ${consumer.address}`)
     console.log(`------------------------------------ \n`)
 
@@ -116,9 +122,9 @@ async function main() {
         athlete_2 = accounts[1]
     }
 
-    console.log(` /n ------------------------------------`)
+    console.log(`\n ------------------------------------`)
     console.log(`Chainrunner deployed to: ${chainrunner.address}`)
-    console.log(`------------------------------------ \n`)
+    console.log(`------------------------------------\n`)
 
     // //record new contract address and ABI
     await updateContractInfo(chainrunner.address, consumer.address)

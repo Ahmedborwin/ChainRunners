@@ -42,19 +42,19 @@ async function chainLinkFunctions(chainID) {
     }
 
     //get updated Access token
-    const accessTokenString = await accessToken()
+    const accessTokens = await accessToken()
 
     //Secrets for athlete 1
     const secrets = {
         clientId: "116415",
         clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
-        accessToken: accessTokenString,
+        accessToken: accessTokens.accessTokenAthlete1,
     }
 
     const secrets_2 = {
         clientId: "116415",
         clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
-        accessToken: accessTokenString,
+        accessToken: accessTokens.accessTokenAthlete2,
     }
 
     // Initialize ethers signer and provider to interact with the contracts onchain
@@ -68,8 +68,6 @@ async function chainLinkFunctions(chainID) {
 
     //get Contract Address's based on chainID
     routerAddress = chainLinkFunctionsRouterList[chainID]
-    chainRunnerAddress = chainRunnerAddressList[chainID]
-    consumerAddress = consumerAddressList[chainID]
 
     const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
     const wallet = new hre.ethers.Wallet(privateKey)

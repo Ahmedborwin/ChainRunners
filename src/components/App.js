@@ -14,13 +14,14 @@ import mapsImage from '../assets/images/chain.jpg';
 import { useSelector } from 'react-redux';
 
 // Store
-import { selectUserData } from '../store/reducers/tokenExchangeReducer';
+import { selectAuthDetails } from '../store/tokenExchange';
+import WalletConnect from './WalletConnect';
+import useWalletConnected from '../hooks/useAccount';
 
 const AppContainer = styled("div")`
   position: relative;
   background-image: url(${mapsImage});
   background-size: cover;
-  background-position: center;
   min-height: 100vh;
 `;
 
@@ -43,33 +44,33 @@ const RightVerticalLine = styled("div")`
 `;
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  const { data } = useSelector(selectUserData);
-
-  useEffect(() => {
-    if (data && Object.keys(data).length > 0)
-      setIsLoading(false);
-    else setIsLoading(true);
-  }, [data])
+  const authDetails = useSelector(selectAuthDetails);
+  const { address: walletConnected } = useWalletConnected();
 
   return (
     <AppContainer>
 
-      {!isLoading &&
-        <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
+      {walletConnected && (
+        <>
+          <Navigation account={authDetails ? `${authDetails?.athlete.firstname} ${authDetails?.athlete.lastname}` : null} />
+          <LeftVerticalLine />
+          <RightVerticalLine />
+        </>
+      )}
+
+      {/* <Greeter /> */}
+
+      {!walletConnected
+        ? <WalletConnect />
+        : (
+          !authDetails
+            ? <StravaAccountCreation userAccountDetails={authDetails} />
+            : <Dashboard
+              athlete={authDetails?.athlete}
+              address={walletConnected}
+            />
+        )
       }
-
-      <LeftVerticalLine />
-      <RightVerticalLine />
-
-      <Greeter />
-
-      {isLoading
-        ? <StravaAccountCreation userAccountDetails={data} />
-        : <Dashboard />
-      }
-
     </AppContainer>
   )
 }

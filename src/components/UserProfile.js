@@ -8,8 +8,7 @@ import mapsImage from '../assets/images/chain.jpg';
 import { useSelector } from "react-redux/es/hooks/useSelector";
 
 // Store
-import { selectUserData } from '../store/reducers/tokenExchangeReducer';
-import { persistor } from '../store';
+import { selectAuthDetails } from "../store/tokenExchange";
 
 import styled from "styled-components";
 
@@ -70,7 +69,7 @@ const LogoutButton = styled(Button)`
 `
 
 const UserProfile = () => {
-    const { data } = useSelector(selectUserData);
+    const data = useSelector(selectAuthDetails);
 
     const DEAUTHORIZE_URL = "https://www.strava.com/oauth/deauthorize";
 
@@ -85,24 +84,24 @@ const UserProfile = () => {
             }),
         };
 
-        fetch(DEAUTHORIZE_URL, requestOptions)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok. Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(() => {
-                // Deauthorize successful, purge the Redux store
-                persistor.purge();
-            })
-            .catch((error) => {
-                // Handle errors as needed
-                console.error('Error while trying to deauthorize:', error);
-            })
-            .finally(() => {
+        // fetch(DEAUTHORIZE_URL, requestOptions)
+        //     .then((response) => {
+        //         if (!response.ok) {
+        //             throw new Error(`Network response was not ok. Status: ${response.status}`);
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(() => {
+        //         // Deauthorize successful, purge the Redux store
+        //         persistor.purge();
+        //     })
+        //     .catch((error) => {
+        //         // Handle errors as needed
+        //         console.error('Error while trying to deauthorize:', error);
+        //     })
+        //     .finally(() => {
 
-            })
+        //     })
     }
 
     return (
@@ -150,7 +149,7 @@ const UserProfile = () => {
 
                 </CustomForm>
 
-                <LogoutButton variant="primary" onClick={handleLogout}>
+                <LogoutButton onClick={handleLogout}>
                     Log Out
                 </LogoutButton>
             </div>

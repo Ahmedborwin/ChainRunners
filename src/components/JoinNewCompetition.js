@@ -13,7 +13,7 @@ import mapsImage from '../assets/images/chain.jpg';
 import { useSelector } from 'react-redux';
 
 // Store
-import { selectUserData } from '../store/reducers/tokenExchangeReducer';
+import { selectAuthDetails } from '../store/tokenExchange';
 
 const Container = styled("div")`
   position: relative;
@@ -45,7 +45,7 @@ const JoinNewCompetition = () => {
     const [searchText, setSearchText] = useState('');
     const [searchResults, setSearchResults] = useState([]);
 
-    const { data } = useSelector(selectUserData);
+    const data = useSelector(selectAuthDetails);
 
     const handleSearch = () => {
         // TODO: Implement the logic to search for competitions

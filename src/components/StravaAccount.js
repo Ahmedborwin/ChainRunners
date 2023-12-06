@@ -1,146 +1,142 @@
-// Import necessary React components and hooks
 import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+
+// ABIs
+import ChainRunners_ABI from "../config/chainRunnerAbi.json";
+import ChainRunnersAddresses from "../config/chainRunnerAddress.json";
+
+// Hooks
+import { useContractWrite, usePrepareContractWrite } from 'wagmi';
+import useWalletConnected from '../hooks/useAccount';
+
+// Images
+import mapsImage from '../assets/images/chain.jpg';
 
 // Redux
 import { useDispatch } from 'react-redux';
 
 // Store
-import {
-    tokenExchangeSuccess,
-    tokenExchangeFailure
-} from '../store/actions';
+import { exchangeToken } from '../store/tokenExchange';
 
-// Hooks
-import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
 
-const CLIENT_ID = '117193';
-const CLIENT_SECRET = '3346a21a1dcbebb5baa4dc7b780177338d398160';
+const CLIENT_ID = '116415';
+const CLIENT_SECRET = '4784e5e419141ad81ecaac028eb765f0311ee0af';
 const REDIRECT_URI = 'http://localhost:3000'; // Replace with your actual redirect URI
 const SCOPE = 'read,activity:read_all';
 
-// Set up the authorization URL
 const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
 
-// Set up the token exchange URL
-const TOKEN_EXCHANGE_URL = 'https://www.strava.com/oauth/token';
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(to right, #0d2137, #19ddd3);
+  color: #ffffff;
+`;
 
-// Styles (you can use a separate CSS file if needed)
-const styles = {
-    body: {
-        fontFamily: 'Arial, sans-serif',
-        margin: 0,
-        padding: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: '#f4f4f4',
-    },
-    container: {
-        textAlign: 'center',
-    },
-    h1: {
-        color: '#333',
-    },
-    loginBtn: {
-        padding: '10px 20px',
-        color: '#fff',
-        fontSize: '16px',
-        cursor: 'pointer',
-        border: 'none',
-        borderRadius: '5px',
-        backgroundColor: "#18729c",
-        borderColor: "#0d6efd",
-    },
-};
+const Body = styled.div`
+  font-family: 'Arial, sans-serif';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 800px;
+  width: 80%; /* Adjust the width as needed */
+  max-width: 400px; /* Set a maximum width */
+  background-image: url(${mapsImage});
+  background-color: #f2f2f2; /* Light gray background color */
+  border-radius: 20px; /* Rounded corners */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
+`;
 
-// Define the StravaAccountCreation component
+const ContentContainer = styled.div`
+  text-align: center;
+`;
+
+const Title = styled.h1`
+  color: #ffffff;
+`;
+
+const LoginButton = styled.button`
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #18729c;
+  border-color: #0d6efd;
+`;
+
 const StravaAccountCreation = ({ userAccountDetails }) => {
     const dispatch = useDispatch();
 
-    const { chainRunner, consumer, account } = useLoadBlockchainData();
-
     const [isLoading, setIsLoading] = useState(false);
+    const [athlete, setAthlete] = useState(null);
 
-    // Function to handle the button click and redirect to the Strava authorization page
+    const { chain } = useWalletConnected();
+
+    // Prepare contract write
+    const { config } = usePrepareContractWrite({
+        address: ChainRunnersAddresses[chain],
+        abi: ChainRunners_ABI,
+        functionName: 'createAthlete',
+        args: [athlete?.username, athlete?.id],
+        enabled: Boolean(userAccountDetails)
+    });
+    
+    // Write contract
+    useContractWrite(config);
+
     const redirectToStravaAuthorization = () => {
-        // Redirect the user to Strava authorization page
         window.location.href = STRAVA_AUTH_URL;
     };
 
     const handleTokenExchange = (code) => {
         setIsLoading(true);
 
-        // Set up the request parameters
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                code: code,
-                grant_type: 'authorization_code',
-                redirect_uri: REDIRECT_URI
-            }),
-        };
-
-        fetch(TOKEN_EXCHANGE_URL, requestOptions)
+        dispatch(exchangeToken({
+            clientId: CLIENT_ID,
+            clientSecret: CLIENT_SECRET,
+            redirectUri: REDIRECT_URI,
+            authorizationCode: code
+        }))
             .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok. Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                dispatch(tokenExchangeSuccess(data));
-                // Handle the response data as needed
-                console.log('Token exchange successful:', data);
-            })
-            .then((data) => {
-                // Create athlete on blockchain
-                chainRunner.connect(account).createAthlete(
-                    data.athlete.username,
-                    data.athlete.id
-                );
+                console.log('Token exchange successful:', response);
+                setAthlete(response.athlete);
             })
             .catch((error) => {
-                dispatch(tokenExchangeFailure(error));
-                // Handle errors as needed
                 console.error('Token exchange error:', error);
             })
             .finally(() => {
-                // Do cleanup or additional actions if needed
                 setIsLoading(false);
             });
-
     };
 
     useEffect(() => {
-        if (userAccountDetails && Object.keys(userAccountDetails) == 0) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const authorizationCode = urlParams.get('code');
-
-            if (authorizationCode) {
-                // Now you have the authorization code, proceed to token exchange
-                handleTokenExchange(authorizationCode);
-            } else {
-                console.error('Authorization code not found in URL parameters.');
-            }
+        const urlParams = new URLSearchParams(window.location.search);
+        const authorizationCode = urlParams ? urlParams.get('code') : null;
+        
+        if (authorizationCode) {
+            handleTokenExchange(authorizationCode);
+        } else {
+            console.error('Authorization code not found in URL parameters.');
         }
-    }, [userAccountDetails]);
+    }, []);
 
     return (
-        <div style={styles.body}>
-            <div style={styles.container}>
-                <h1 style={styles.h1}>Create Your Strava Account</h1>
-                <p>Connect with Strava to start tracking your activities!</p>
-                <button style={styles.loginBtn} onClick={redirectToStravaAuthorization} disabled={isLoading}>
-                    {isLoading ? 'Connecting...' : 'Connect with Strava'}
-                </button>
-            </div>
-        </div>
+        <Container>
+            <Body>
+                <ContentContainer>
+                    <Title>Create Your Strava Account</Title>
+                    <p>Connect with Strava to start tracking your activities!</p>
+                    <LoginButton onClick={redirectToStravaAuthorization} disabled={isLoading}>
+                        {isLoading ? 'Connecting...' : 'Connect with Strava'}
+                    </LoginButton>
+                </ContentContainer>
+            </Body>
+        </Container>
     );
 };
 

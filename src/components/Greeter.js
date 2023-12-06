@@ -21,7 +21,7 @@ const colorRun = keyframes`
 
 const StyledGreeter = styled.h1`
     padding: 2%;
-    background: linear-gradient(to right, #0d2137, #19ddd3);
+    // background: linear-gradient(to right, #0d2137, #19ddd3);
     color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 12px;

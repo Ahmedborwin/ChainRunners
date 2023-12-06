@@ -1,15 +1,28 @@
-import { createStore } from 'redux';
+import { createStore, applyMiddleware } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 
-import rootReducer from './reducers'; // Combine your reducers here
+import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import storeReducer from "./reducer";
+import tokenExchange from './tokenExchange';
+
+import logger from "redux-logger";
+import thunk from "redux-thunk";
 
 const persistConfig = {
   key: 'root',
+  whitelist: [tokenExchange.name],
   storage,
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const configureStore = () => {
+  const middleware = [thunk, logger];
+  const initState = {};
 
-export const store = createStore(persistedReducer);
-export const persistor = persistStore(store);
+  const persistedReducer = persistReducer(persistConfig, storeReducer);
+  const store = createStore(persistedReducer, initState, applyMiddleware(...middleware));
+  const persistor = persistStore(store);
+
+  return { store, persistor };
+}
+
+export default configureStore;

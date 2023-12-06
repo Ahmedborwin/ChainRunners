@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 // Components
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Navbar from 'react-bootstrap/Navbar';
 import styled from 'styled-components';
 
@@ -9,7 +10,7 @@ import styled from 'styled-components';
 import logo from '../assets/images/image.png';
 
 const CustomNavbar = styled(Navbar)`
-  background-color: #0d2137;
+  background: #0d2137;
 `;
 
 const LogoImg = styled.img`
@@ -58,9 +59,18 @@ const Navigation = ({ account }) => {
       </BrandText>
 
       <Navbar.Collapse className="justify-content-end">
-        <UppercaseAccountText href="/user-profile">
-          {account}
-        </UppercaseAccountText>
+        {/* {account ? (
+          <UppercaseAccountText href="/user-profile">
+            {account}
+          </UppercaseAccountText>
+        ) : (
+          <ConnectButton>
+            Connect Wallet
+          </ConnectButton>
+        )} */}
+        <ConnectButton>
+            Connect Wallet
+          </ConnectButton>
       </Navbar.Collapse>
     </CustomNavbar>
   );

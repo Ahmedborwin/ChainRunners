@@ -14,10 +14,7 @@ import mapsImage from '../assets/images/chain.jpg';
 import { useSelector } from 'react-redux';
 
 // Store
-import { selectUserData } from '../store/reducers/tokenExchangeReducer';
-
-// hooks
-import useLoadBlockchainData from '../hooks/useLoadBlockchainData';
+import { selectAuthDetails } from '../store/tokenExchange';
 
 const CompetitionContainer = styled("div")`
     position: relative;
@@ -71,26 +68,23 @@ const RightVerticalLine = styled("div")`
 `;
 
 const CompetitionCreation = () => {
-    // Smart contracts
-    const { chainRunner, account } = useLoadBlockchainData();
-
     const [competitionName, setCompetitionName] = useState("");
     const [buyIn, setBuyIn] = useState(0.01);
     const [durationDays, setDurationDays] = useState(28);
     const [payoutIntervals, setPayoutIntervals] = useState(7);
 
-    const { data } = useSelector(selectUserData);
+    const data = useSelector(selectAuthDetails);
 
     const handleCreateCompetition = () => {
-        if (competitionName && buyIn && durationDays && payoutIntervals)
-            chainRunner.connect(account).createCompetition(
-                competitionName,
-                ethers.utils.parseEther(buyIn.toString()),
-                durationDays,
-                payoutIntervals
-            );
-        else
-            window.alert('Please fill in all the details in order to create a competition');
+        // if (competitionName && buyIn && durationDays && payoutIntervals)
+        //     chainRunner.connect(account).createCompetition(
+        //         competitionName,
+        //         ethers.utils.parseEther(buyIn.toString()),
+        //         durationDays,
+        //         payoutIntervals
+        //     );
+        // else
+        //     window.alert('Please fill in all the details in order to create a competition');
     };
 
     return (
@@ -146,7 +140,7 @@ const CompetitionCreation = () => {
                         />
                     </Form.Group>
 
-                    <CreateButton variant="primary" onClick={handleCreateCompetition}>
+                    <CreateButton onClick={handleCreateCompetition}>
                         Create Competition
                     </CreateButton>
                 </CustomForm>

@@ -27,8 +27,10 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
     string public getAthleteStatsJS;
     bytes32 public donID;
     uint64 public subscriptionId;
-    uint64 public donHostedSecretsVersion;
-    uint8 public donHostedSecretsSlotID;
+
+    mapping(address => uint64) public donHostedSecretsVersion;
+    mapping(address => uint8) public donHostedSecretsSlotID;
+
     uint32 constant DEFAULT_GAS_LIMIT = 300000;
 
     // state variables
@@ -62,7 +64,10 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         FunctionsRequest.Request memory req;
 
         req.initializeRequestForInlineJavaScript(getAthleteStatsJS);
-        req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
+        req.addDONHostedSecrets(
+            donHostedSecretsSlotID[_athleteAddress],
+            donHostedSecretsVersion[_athleteAddress]
+        );
         req.setArgs(args);
 
         s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, DEFAULT_GAS_LIMIT, donID);
@@ -117,12 +122,12 @@ contract crChainlinkRequestConsumer is FunctionsClient, ConfirmedOwner {
         subscriptionId = _subscriptionId;
     }
 
-    function populateVersionSecret(uint64 _secretsVersion) external {
-        donHostedSecretsVersion = _secretsVersion;
+    function populateVersionSecret(uint64 _secretsVersion, address _athleteAddress) external {
+        donHostedSecretsVersion[_athleteAddress] = _secretsVersion;
     }
 
-    function populateDONSlotID(uint8 _slotId) external {
-        donHostedSecretsSlotID = _slotId;
+    function populateDONSlotID(uint8 _slotId, address _athleteAddress) external {
+        donHostedSecretsSlotID[_athleteAddress] = _slotId;
     }
 
     function setAdmin(address _chainRunnersAddress) external onlyOwner {

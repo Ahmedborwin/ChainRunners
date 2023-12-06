@@ -6,7 +6,7 @@ async function getAccessToken() {
     const url = "https://www.strava.com/api/v3/oauth/token"
     const clientId = "116415"
     const clientSecret = "4784e5e419141ad81ecaac028eb765f0311ee0af"
-    const refreshToken = "5dbe5a90769790da6ef3810118e407517e06050a"
+    const refreshToken = "07312fda12e0099cfc5b89beba8a06fb1debc72b"
 
     const formData = new URLSearchParams()
     formData.append("client_id", clientId)
@@ -24,6 +24,7 @@ async function getAccessToken() {
         })
 
         const data = await response.json()
+        console.log(data)
         return data.access_token.toString()
     } catch (error) {
         console.error("Error:", error)

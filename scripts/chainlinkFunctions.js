@@ -12,12 +12,12 @@ require("@chainlink/env-enc").config()
 const getAthleteData = fs
     .readFileSync(path.resolve(__dirname, "APICalls/getAthleteData.js"))
     .toString()
-const slotIdNumber = 0 // slot ID where to upload the secrets
+
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
 async function chainLinkFunctions(chainID) {
     console.log("chainlink functions", chainID)
-    let linkTokenAddress, donId, gatewayUrls
+    let linkTokenAddress, donId, gatewayUrls, slotIdNumber
     let rpcUrl, routerAddress, chainRunnerAddress, consumerAddress
 
     //Chainlink Functions Variables if Matic Mumbai
@@ -43,7 +43,15 @@ async function chainLinkFunctions(chainID) {
 
     //get updated Access token
     const accessTokenString = await accessToken()
+
+    //Secrets for athlete 1
     const secrets = {
+        clientId: "116415",
+        clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
+        accessToken: accessTokenString,
+    }
+
+    const secrets_2 = {
         clientId: "116415",
         clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
         accessToken: accessTokenString,
@@ -51,7 +59,10 @@ async function chainLinkFunctions(chainID) {
 
     // Initialize ethers signer and provider to interact with the contracts onchain
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
+    const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
     if (!privateKey) throw new Error("private key not provided - check your environment variables")
+    if (!privateKey_2)
+        throw new Error("private key not provided - check your environment variables")
 
     if (!rpcUrl) throw new Error(`rpcUrl not provided  - check your environment variables`)
 
@@ -63,6 +74,8 @@ async function chainLinkFunctions(chainID) {
     const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
     const wallet = new hre.ethers.Wallet(privateKey)
     const signer = wallet.connect(provider)
+    const wallet_2 = new hre.ethers.Wallet(privateKey_2)
+    const athlete_2 = wallet_2.connect(provider)
 
     // First encrypt secrets and upload the encrypted secrets to the DON
     const secretsManager = new SecretsManager({
@@ -74,6 +87,7 @@ async function chainLinkFunctions(chainID) {
     // Encrypt secrets and upload to DON
     const encryptedSecretsObj = await secretsManager.encryptSecrets(secrets)
     // Upload secrets
+    slotIdNumber = 0
     const uploadResult = await secretsManager.uploadEncryptedSecretsToDON({
         encryptedSecretsHexstring: encryptedSecretsObj.encryptedSecrets,
         gatewayUrls: gatewayUrls, //where to get the relevant gateways from?
@@ -87,9 +101,28 @@ async function chainLinkFunctions(chainID) {
         `\n✅ Secrets uploaded properly to gateways ${gatewayUrls}! Gateways response: `,
         uploadResult
     )
+    // Encrypt secrets and upload to DON
+    const encryptedSecretsObj_2 = await secretsManager.encryptSecrets(secrets_2)
+    slotIdNumber++
+    // Upload secrets
+    const uploadResult_2 = await secretsManager.uploadEncryptedSecretsToDON({
+        encryptedSecretsHexstring: encryptedSecretsObj_2.encryptedSecrets,
+        gatewayUrls: gatewayUrls, //where to get the relevant gateways from?
+        slotId: slotIdNumber, //this will need to be dynamic + will increment work?
+        minutesUntilExpiration: expirationTimeMinutes,
+    })
+
+    if (!uploadResult_2.success) throw new Error(`Encrypted secrets not uploaded to ${gatewayUrls}`)
+
+    console.log(
+        `\n✅ Secrets for Athlete 2 uploaded properly to gateways ${gatewayUrls}! Gateways response: `,
+        uploadResult
+    )
 
     const donHostedSecretsVersion = parseInt(uploadResult.version) // fetch the reference of the encrypted secrets
-    return donHostedSecretsVersion
+    const donHostedSecretsVersion_2 = parseInt(uploadResult_2.version) // fetch the reference of the encrypted secrets
+
+    return { donHostedSecretsVersion, donHostedSecretsVersion_2 }
 }
 
 // chainLinkFunctions().catch((e) => {

@@ -3,10 +3,11 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
+const { SecretsManager } = require("@chainlink/functions-toolkit")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 
 async function main() {
-    let donHostedSecretsVersion, provider, donIDString, rpcUrl, subId, donId, athlete_2
+    let donHostedSecretsObject, provider, donIDString, rpcUrl, subId, donId, athlete_2, slotId
 
     const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
     const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
@@ -30,11 +31,10 @@ async function main() {
         provider = hre.network.provider
     } else {
         provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
-        donHostedSecretsVersion = await chainLinkFunctions(chainID)
+        donHostedSecretsObject = await chainLinkFunctions(chainID)
         donId = hre.ethers.utils.formatBytes32String(donIDString)
     }
 
-    const slotId = 0
     const functionsRouter = chainLinkFunctionsRouterList[chainID]
 
     //Deploy Token
@@ -46,18 +46,44 @@ async function main() {
 
     // only populate on test net for now
     if (chainID !== "31337") {
+        const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
+        const wallet = new hre.ethers.Wallet(privateKey)
+        const athlete = wallet.connect(provider)
+        //create athlete 2 for testing
+        const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
+        const wallet_2 = new hre.ethers.Wallet(privateKey_2)
+        athlete_2 = wallet_2.connect(provider)
         // Initialize functions settings
         const getAthleteData = fs
             .readFileSync(path.resolve(__dirname, "./APICalls/getAthleteData.js"))
             .toString()
         // populate code for calling athlete stats
         await consumer.populateAPICallJS(getAthleteData)
-        //populate DonId bytes
+        //populate DonId bytes for athlete 1
         await consumer.populateDonId(donId)
+
+        await consumer.populateVersionSecret(
+            donHostedSecretsObject.donHostedSecretsVersion,
+            athlete.address
+        )
+        await consumer.populateVersionSecret(
+            donHostedSecretsObject.donHostedSecretsVersion_2,
+            athlete_2.address
+        )
+        slotId = 0
+        await consumer.populateDONSlotID(slotId, athlete.address)
+        slotId++
+        await consumer.populateDONSlotID(slotId, athlete_2.address)
         //populate subId
         await consumer.populateSubId(subId)
-        await consumer.populateVersionSecret(donHostedSecretsVersion)
-        await consumer.populateDONSlotID(slotId)
+        // Add consumer to subscription
+        // const secretsManager = new SecretsManager({
+        //     signer: athlete,
+        //     functionsRouterAddress: functionsRouter,
+        //     donId: donId,
+        // })
+        // await secretsManager.initialize()
+        // await secretsManager.addConsumer(subId, consumer.address)
     }
 
     console.log(` /n ------------------------------------`)
@@ -72,11 +98,6 @@ async function main() {
 
     //set up chainrunners for testing
     if (chainID !== "31337") {
-        //create athlete 2 for testing
-        const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
-        const wallet_2 = new hre.ethers.Wallet(privateKey_2)
-        athlete_2 = wallet_2.connect(provider)
-
         await chainrunner.createAthlete("Ahmed", "62612170")
         await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
         //create competitions and join with other athlete

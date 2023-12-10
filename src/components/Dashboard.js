@@ -115,9 +115,15 @@ const Dashboard = ({ athlete }) => {
             const newAthleteWinningStats = {
                 competitionsWon: parseInt(winnerStatistics[0]),
                 intervalsWon: parseInt(winnerStatistics[1]),
-                etherGained: winnerStatistics[2],
+                etherGained: null,
             }
-            console.log("ether gained", newAthleteWinningStats.etherGained)
+            let athletesWinnings
+            if (winnerStatistics[2] == 0) {
+                athletesWinnings = winnerStatistics[2]
+            } else {
+                athletesWinnings = formatEther(winnerStatistics[2])
+            }
+            newAthleteWinningStats.etherGained = athletesWinnings
             setAthleteWinningStats(newAthleteWinningStats)
         }
     }, [winnerStatistics])

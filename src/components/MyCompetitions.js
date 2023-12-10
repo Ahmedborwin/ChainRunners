@@ -63,7 +63,6 @@ const MyCompetitions = ({ competitionId }) => {
     const [winnersAddress, setWinnersAddress] = useState(null)
     //functions
     function formatDate(epoch) {
-        console.log(epoch)
         var date = new Date(epoch * 1000) // Convert epoch to milliseconds
 
         const localString = date.toLocaleString()
@@ -222,6 +221,25 @@ const MyCompetitions = ({ competitionId }) => {
                     <GridItem>{competitionDetails.name}</GridItem>
                     <GridItem>{competitionDetails.status}</GridItem>
                     {startComp && (
+                        <GridItem>
+                            <Button
+                                style={{ backgroundColor: "#18729c" }}
+                                onClick={() => handleStartCompetition(competitionDetails.id)}
+                            >
+                                Start Competition
+                            </Button>
+                        </GridItem>
+                    )}
+                    {!startComp && (
+                        <GridItem>
+                            <Button style={{ backgroundColor: "#444444" }}>
+                                Competition Started
+                            </Button>
+                        </GridItem>
+                    )}
+                </FlexGridContainer>
+            )}
+            {/* {startComp && (
                         <>
                             <GridItem>
                                 {formatEther(competitionDetails.totalStakedAmount)} ETH
@@ -241,9 +259,7 @@ const MyCompetitions = ({ competitionId }) => {
                         <>
                             <GridItem> {winnerAddress}</GridItem>
                         </>
-                    )}
-                </FlexGridContainer>
-            )}
+                    )} */}
         </div>
     )
 }

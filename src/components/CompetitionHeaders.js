@@ -39,20 +39,19 @@ const CompetitionHeaders = () => {
             <GridItem>
                 <b>Status</b>
             </GridItem>
-
             <GridItem>
+                <b>Actions</b>
+            </GridItem>
+            {/* <GridItem>
                 <b>Staked Amount</b>
             </GridItem>
             <GridItem>
                 <b>Start Deadline</b>
             </GridItem>
-            <GridItem>
-                <b>Actions</b>
-            </GridItem>
 
             <GridItem>
                 <b>Winner Address</b>
-            </GridItem>
+            </GridItem> */}
         </FlexGridContainer>
     )
 }

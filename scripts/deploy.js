@@ -15,7 +15,6 @@ async function main() {
     if (chainID === "80001") {
         rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
     } else if (chainID === "43113") {
-        console.log("FUJI RPC URL")
         rpcUrl = "https://avalanche-fuji.drpc.org"
     }
 

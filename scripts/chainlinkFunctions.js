@@ -10,7 +10,6 @@ require("@chainlink/env-enc").config()
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
 async function chainLinkFunctions(chainID) {
-    console.log("chainlink functions", chainID)
     let linkTokenAddress, donId, gatewayUrls, slotIdNumber, rpcUrl, routerAddress
 
     //Chainlink Functions Variables if Matic Mumbai

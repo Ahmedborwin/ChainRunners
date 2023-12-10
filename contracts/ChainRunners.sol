@@ -332,9 +332,9 @@ contract ChainRunners is Ownable {
         //set start date
         competition.startDate = block.timestamp;
         //set end date
-        competition.endDate = block.timestamp + 300; //(competition.durationDays * 86400);
+        competition.endDate = block.timestamp + 1200; //(competition.durationDays * 86400);
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + 75; //(competition.payoutIntervals * 86400);
+        competition.nextPayoutDate = block.timestamp + 300; //(competition.payoutIntervals * 86400);
         //set next reward interval
 
         //Assign updated Competition Form back to mapping
@@ -471,7 +471,7 @@ contract ChainRunners is Ownable {
                 endCompetition(_compId);
             } else {
                 //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + 75; //(competition.payoutIntervals * 86400);
+                _competition.nextPayoutDate = _competition.nextPayoutDate + 300; //(competition.payoutIntervals * 86400);
                 //set next reward interval;
                 competitionTable[_compId] = _competition;
             }
@@ -480,7 +480,7 @@ contract ChainRunners is Ownable {
 
     function handleWinner(uint256 _compId) internal {
         //divide the winenrs pot by 1e18 (used to avoid decimal places)
-        uint256 reward = competitionTable[_compId].rewardPot / 1 ether;
+        uint256 reward = competitionTable[_compId].rewardPot;
 
         winnerStatistics[intervalWinnerAddress[_compId]].intervalsWon++;
         winnerStatistics[intervalWinnerAddress[_compId]].etherWon += reward;

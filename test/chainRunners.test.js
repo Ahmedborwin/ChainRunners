@@ -37,11 +37,6 @@ describe("ChainRunners", () => {
         it("sets address for Chainlink functions consumer", async () => {
             expect(await chainrunners.i_linkReq()).equal(clrConsumer.address)
         })
-        it("updates app strava AccessTokenExpiry date", async () => {
-            const NextdDayinEpoch = Math.floor(Date.now() / 1000) + 60 * 60 * 24
-            chainrunners.updateAppAccessTokenExpires(NextdDayinEpoch)
-            expect(await chainrunners.appAccessTokenExpires()).equal(NextdDayinEpoch)
-        })
     })
     describe("Create Athlete Profile", () => {
         let athleteProfile
@@ -310,14 +305,19 @@ describe("ChainRunners", () => {
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
             })
+            it("test Commence Competition", async () => {
+                await chainrunners.testCommenceCompetition("1")
+                const athleteComps = await chainrunners.athleteToCompIdList(deployer.address)
+                expect(athleteComps).include("1")
+            })
             it("sets status to inProgress", async () => {
-                await chainrunners.callHandleStartCompetitionTest("1")
+                await chainrunners.testHandleStartCompetition("1")
                 //get competition form
                 competition = await chainrunners.competitionTable("1")
                 expect(competition.status.toString()).equal("1")
             })
             it("records start time, calculates endDate and next Pay out Date", async () => {
-                await chainrunners.callHandleStartCompetitionTest("1")
+                await chainrunners.testHandleStartCompetition("1")
                 //get competition form
                 competition = await chainrunners.competitionTable("1")
                 const thirtyDaysinseconds = 60 * 60 * 24 * 30
@@ -331,11 +331,11 @@ describe("ChainRunners", () => {
                 )
             })
             it("Competition set to live", async () => {
-                await chainrunners.callHandleStartCompetitionTest("1")
+                await chainrunners.testHandleStartCompetition("1")
                 expect(await chainrunners.competitionIsLive(1)).equal(true)
             })
             it("emits Comp started event", async () => {
-                await expect(chainrunners.callHandleStartCompetitionTest("1")).emit(
+                await expect(chainrunners.testHandleStartCompetition("1")).emit(
                     chainrunners,
                     "competitionStarted"
                 )
@@ -355,9 +355,10 @@ describe("ChainRunners", () => {
             it("reverts if comp status anything other then pending", async () => {
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
                 await chainrunners.testSetCompStatus(1)
-                await expect(
-                    chainrunners.callHandleStartCompetitionTest("1")
-                ).revertedWithCustomError(chainrunners, "ChainRunners__CompStatusNotAsExpected")
+                await expect(chainrunners.testHandleStartCompetition("1")).revertedWithCustomError(
+                    chainrunners,
+                    "ChainRunners__CompStatusNotAsExpected"
+                )
             })
         })
     })
@@ -520,8 +521,8 @@ describe("ChainRunners", () => {
                     await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
                     await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
                     await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
-                    const result = await chainrunners.eventResultsMapping(1, 1)
-                    expect(result.winnnersAddress.toString()).equal(deployer.address.toString())
+                    const result = await chainrunners.intervalWinnerAddress(1)
+                    expect(result.winnnersAddress.toString()).equal(deployer.address)
                 })
                 it("emits winner picked event", async () => {
                     await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)

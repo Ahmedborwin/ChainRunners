@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
-import { ethers } from 'ethers'
-import styled from 'styled-components';
+import React, { useState, useEffect } from "react"
+
+import styled from "styled-components"
 
 // Components
-import { Form, Button } from 'react-bootstrap';
-import Greeter from './Greeter';
-import Navigation from './Navigation';
+import { Form, Button } from "react-bootstrap"
+import Greeter from "./Greeter"
+import Navigation from "./Navigation"
+
+// ABIs
+import ChainRunners_ABI from "../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
+
+// Hooks
+import { useContractWrite, usePrepareContractWrite } from "wagmi"
+import useWalletConnected from "../hooks/useAccount"
 
 // Images
-import mapsImage from '../assets/images/chain.jpg';
+import mapsImage from "../assets/images/chain.jpg"
 
 // Redux
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux"
 
 // Store
-import { selectAuthDetails } from '../store/tokenExchange';
+import { selectAuthDetails } from "../store/tokenExchange"
+import { parseEther } from "viem"
 
 const CompetitionContainer = styled("div")`
     position: relative;
@@ -22,7 +31,7 @@ const CompetitionContainer = styled("div")`
     background-size: cover;
     background-position: center;
     min-height: 100vh;
-`;
+`
 
 const Title = styled("h2")`
     display: flex;
@@ -56,7 +65,7 @@ const LeftVerticalLine = styled("div")`
     background-color: #fc4c02; /* Orange color */
     left: 0;
     top: 0;
-`;
+`
 
 const RightVerticalLine = styled("div")`
     position: absolute;
@@ -65,31 +74,73 @@ const RightVerticalLine = styled("div")`
     background-color: #ffd700; /* Gold color */
     right: 0;
     top: 0;
-`;
+`
 
 const CompetitionCreation = () => {
-    const [competitionName, setCompetitionName] = useState("");
-    const [buyIn, setBuyIn] = useState(0.01);
-    const [durationDays, setDurationDays] = useState(28);
-    const [payoutIntervals, setPayoutIntervals] = useState(7);
+    const [competitionName, setCompetitionName] = useState("")
+    const [buyIn, setBuyIn] = useState(0.01)
+    const [durationDays, setDurationDays] = useState(28)
+    const [payoutIntervals, setPayoutIntervals] = useState(7)
+    const [createCompetitionReady, setCreateCompetitionReady] = useState(false)
 
-    const data = useSelector(selectAuthDetails);
+    const userData = useSelector(selectAuthDetails)
+    const { chain, address } = useWalletConnected()
 
+    // Prepare contract write
+    const { config } = usePrepareContractWrite({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "createCompetition",
+        args: [
+            competitionName,
+            parseEther(buyIn.toString()),
+            parseInt(durationDays),
+            parseInt(payoutIntervals),
+        ],
+        enabled: createCompetitionReady,
+        account: address,
+        value: parseEther("0.01"),
+        onError(error) {
+            window.alert(error)
+            setCreateCompetitionReady(false)
+        },
+        onSuccess(data) {
+            setCreateCompetitionReady(false)
+            console.log(data)
+        },
+        onSettled(data, error) {
+            console.log("Settled", { data, error })
+        },
+    })
+
+    // Write contract
+    // Use the useContractWrite hook with the config from usePrepareContractWrite
+    const { data: createCompData, isSuccess, write } = useContractWrite(config)
+
+    // Event handler for creating the competition
     const handleCreateCompetition = () => {
-        // if (competitionName && buyIn && durationDays && payoutIntervals)
-        //     chainRunner.connect(account).createCompetition(
-        //         competitionName,
-        //         ethers.utils.parseEther(buyIn.toString()),
-        //         durationDays,
-        //         payoutIntervals
-        //     );
-        // else
-        //     window.alert('Please fill in all the details in order to create a competition');
-    };
+        if (competitionName && buyIn && durationDays && payoutIntervals) {
+            console.log("READY TO CREATE")
+            setCreateCompetitionReady(true)
+        } else {
+            window.alert("complete form buddy")
+        }
+    }
+    useEffect(() => {
+        if (isSuccess) {
+            console.log(isSuccess)
+        }
+    }, [isSuccess])
+
+    useEffect(() => {
+        if (competitionName && buyIn && durationDays && payoutIntervals) {
+            handleCreateCompetition()
+        }
+    }, [competitionName, buyIn, durationDays, payoutIntervals])
 
     return (
         <CompetitionContainer>
-            <Navigation account={`${data.athlete.firstname} ${data.athlete.lastname}`} />
+            <Navigation account={`${userData.athlete.firstname} ${userData.athlete.lastname}`} />
 
             <LeftVerticalLine />
             <RightVerticalLine />
@@ -140,14 +191,13 @@ const CompetitionCreation = () => {
                         />
                     </Form.Group>
 
-                    <CreateButton onClick={handleCreateCompetition}>
+                    <CreateButton disabled={!write} onClick={() => write()}>
                         Create Competition
                     </CreateButton>
                 </CustomForm>
             </div>
-
         </CompetitionContainer>
-    );
-};
+    )
+}
 
-export default CompetitionCreation;
+export default CompetitionCreation

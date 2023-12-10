@@ -4,21 +4,14 @@ const { SecretsManager } = require("@chainlink/functions-toolkit")
 const hre = require("hardhat")
 const hardhatConfig = require("../hardhat.config")
 const accessToken = require("./getAppAccessToken")
-const chainRunnerAddressList = require("../src/config/chainRunnerAddress.json")
-const consumerAddressList = require("../src/config/consumerAddress.json")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 require("@chainlink/env-enc").config()
-
-const getAthleteData = fs
-    .readFileSync(path.resolve(__dirname, "APICalls/getAthleteData.js"))
-    .toString()
 
 const expirationTimeMinutes = 360 // expiration time in minutes of the secrets
 
 async function chainLinkFunctions(chainID) {
     console.log("chainlink functions", chainID)
-    let linkTokenAddress, donId, gatewayUrls, slotIdNumber
-    let rpcUrl, routerAddress, chainRunnerAddress, consumerAddress
+    let linkTokenAddress, donId, gatewayUrls, slotIdNumber, rpcUrl, routerAddress
 
     //Chainlink Functions Variables if Matic Mumbai
     if (chainID === "80001") {
@@ -122,10 +115,5 @@ async function chainLinkFunctions(chainID) {
 
     return { donHostedSecretsVersion, donHostedSecretsVersion_2 }
 }
-
-// chainLinkFunctions().catch((e) => {
-//     console.error(e)
-//     process.exit(1)
-// })
 
 module.exports = chainLinkFunctions

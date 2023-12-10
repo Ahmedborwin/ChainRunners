@@ -8,6 +8,7 @@ import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite } from "wagmi"
 import useWalletConnected from "../hooks/useAccount"
+import useChainLinkFunctions from "../hooks/useChainLinkFunctions"
 
 // Images
 import mapsImage from "../assets/images/chain.jpg"
@@ -73,8 +74,11 @@ const StravaAccountCreation = ({ userAccountDetails }) => {
 
     const [isLoading, setIsLoading] = useState(false)
     const [athlete, setAthlete] = useState(null)
+    const [accessToken, setAccessToken] = useState(null)
 
     const { chain } = useWalletConnected()
+
+    useChainLinkFunctions(accessToken)
 
     // Prepare contract write
     const { config } = usePrepareContractWrite({
@@ -82,7 +86,7 @@ const StravaAccountCreation = ({ userAccountDetails }) => {
         abi: ChainRunners_ABI,
         functionName: "createAthlete",
         args: [athlete?.username, athlete?.id],
-        enabled: Boolean(userAccountDetails),
+        enabled: Boolean(athlete),
     })
 
     // Write contract
@@ -105,6 +109,7 @@ const StravaAccountCreation = ({ userAccountDetails }) => {
         )
             .then((response) => {
                 console.log("Token exchange successful:", response)
+                setAccessToken(response.accessToken)
                 setAthlete(response.athlete)
             })
             .catch((error) => {

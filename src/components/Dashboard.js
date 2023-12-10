@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Card } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import React, { useState, useEffect } from "react"
+import { Button, Card } from "react-bootstrap"
+import { Link } from "react-router-dom"
+import styled from "styled-components"
+import { formatEther } from "viem"
 
 // ABIs
-import ChainRunners_ABI from "../config/chainRunnerAbi.json";
+import ChainRunners_ABI from "../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
 
 // Components
-import JoinedCompetitions from './JoinedCompetitions';
+import MyCompetitions from "./MyCompetitions"
+import CompetitionHeaders from "./CompetitionHeaders"
 
 // Hooks
-import { useContractRead } from 'wagmi';
+import { useContractRead } from "wagmi"
+import useWalletConnected from "../hooks/useAccount"
 
 const DashboardContainer = styled("div")`
     position: relative;
@@ -21,7 +25,7 @@ const DashboardContainer = styled("div")`
     display: flex;
     flex-direction: column;
     align-items: center;
-`;
+`
 
 const DashboardTitle = styled("h2")`
     color: #ffffff;
@@ -35,51 +39,64 @@ const StyledButton = styled(Button)`
         color: #38ff7f;
     }
 `
+const ScrollableGridContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto; // Enable horizontal scrolling
+    width: 100%; // Adjust the width as needed
+`
 
-const Dashboard = ({ athlete, address }) => {
-    const [athleteProfile, setAthleteProfile] = useState({});
-    const [athleteWinningStats, setAthleteWinningStats] = useState({});
-    const [competitionDetails, setCompetitionDetails] = useState({});
+const Dashboard = ({ athlete }) => {
+    const [athleteProfile, setAthleteProfile] = useState({})
+    const [athleteWinningStats, setAthleteWinningStats] = useState({})
+    const [competitionDetails, setCompetitionDetails] = useState({})
+    const [compIdArray, setCompIdArray] = useState([])
 
-    console.log(athlete, "@@@@athlete")
+    const { chain, address } = useWalletConnected()
+
     // Read athlete table
     const { data: athleteTable } = useContractRead({
-        address: '0x60bE2963Cbcb7C9b7C4b9095068A6267b76cc167',
+        address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        functionName: 'athleteTable',
-        args: ['0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029']
+        functionName: "athleteTable",
+        args: [address],
     })
-    
+
     // Read winner statistics
     const { data: winnerStatistics } = useContractRead({
-        address: '0x60bE2963Cbcb7C9b7C4b9095068A6267b76cc167',
+        address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        functionName: 'winnerStatistics',
-        args: ['0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029']
+        functionName: "winnerStatistics",
+        args: [address],
+        onSettled(data, error) {
+            console.log("Settled winner stats read", { data, error })
+        },
     })
 
-    // Read athlete competitions
-    const { data: athleteCompetitions } = useContractRead({
-        address: '0x60bE2963Cbcb7C9b7C4b9095068A6267b76cc167',
-        abi: ChainRunners_ABI,
-        functionName: 'listAthleteCompetitions',
-        args: ['0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029']
-    })
+    // // Read athlete competitions
+    // const { data: athleteCompetitions } = useContractRead({
+    //     address: ChainRunnersAddresses[chain.id],
+    //     abi: ChainRunners_ABI,
+    //     functionName: "listAthleteCompetitions",
+    //     args: [address],
+    // })
 
-    // Read competition table
-    const { data: competitionTable } = useContractRead({
-        address: '0x60bE2963Cbcb7C9b7C4b9095068A6267b76cc167',
+    //read chainrunners for competitionId's
+    const { data: competitionCount } = useContractRead({
+        address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        functionName: 'competitionTable',
-        args: ['1']
-    })
+        functionName: "competitionId",
 
-    console.log(athleteCompetitions, "@@@@athleteCompetitions")
-    const joinedCompetitions = [
-        { id: 1, name: 'Morning Run Challenge' },
-        { id: 2, name: 'Weekend Cycling Marathon' },
-        // Add more competitions as needed
-    ];
+        onError(error) {
+            window.alert(error)
+        },
+        onSuccess(data) {
+            console.log("Last Comp Id:", data)
+        },
+        onSettled(data, error) {
+            console.log("Settled", { data, error })
+        },
+    })
 
     useEffect(() => {
         if (athleteTable) {
@@ -87,59 +104,55 @@ const Dashboard = ({ athlete, address }) => {
                 username: athleteTable[0],
                 stravaId: athleteTable[1],
                 totalMeters: parseInt(athleteTable[2]),
-                registeredAthlete: athleteTable[3]
+                registeredAthlete: athleteTable[3],
             }
-            setAthleteProfile(newAthleteProfile);
+            setAthleteProfile(newAthleteProfile)
         }
     }, [athleteTable])
 
     useEffect(() => {
         if (winnerStatistics) {
-            const newAthleteWinningStats = { 
+            const newAthleteWinningStats = {
                 competitionsWon: parseInt(winnerStatistics[0]),
                 intervalsWon: parseInt(winnerStatistics[1]),
-                etherGained: parseInt(winnerStatistics[2]),
+                etherGained: winnerStatistics[2],
             }
-            setAthleteWinningStats(newAthleteWinningStats);
+            console.log("ether gained", newAthleteWinningStats.etherGained)
+            setAthleteWinningStats(newAthleteWinningStats)
         }
     }, [winnerStatistics])
 
     useEffect(() => {
-        if (competitionTable) {
-            const newCompetitionDetails = {
-                id: parseInt(competitionTable[0]),
-                name: competitionTable[1],
-                status: parseInt(competitionTable[2]),
-                adminAddress: competitionTable[3],
-                startDate: parseInt(competitionTable[4]),
-                durationDays: parseInt(competitionTable[5]),
-                endDate: parseInt(competitionTable[6]),
-                nextPayoutDate: parseInt(competitionTable[7]),
-                payoutIntervals: parseInt(competitionTable[8]),
-                startDeadline: parseInt(competitionTable[9]),
-                buyInAmount: parseInt(competitionTable[10]),
-                totalStakedAmount: parseInt(competitionTable[11]),
-                prizeReward: parseInt(competitionTable[12]),
+        if (competitionCount > 0) {
+            //create array of compID's
+            console.log("competitionCount", competitionCount)
+            const _compIdArray = []
+            for (let i = 1; i <= competitionCount; i++) {
+                _compIdArray.push(i)
             }
-            setCompetitionDetails(newCompetitionDetails);
+            setCompIdArray(_compIdArray)
         }
-    }, [competitionTable])
+    }, [competitionCount])
 
     return (
         <DashboardContainer>
-
             <DashboardTitle className="text-center my-4">
                 {athlete?.firstname} {athlete?.lastname}
             </DashboardTitle>
 
-            <Card className="my-5" style={{ width: '80%' }}>
+            <Card className="my-5" style={{ width: "80%" }}>
                 <Card.Body>
-                    <h4>Active Competitions:</h4>
-                    <JoinedCompetitions joinedCompetitions={joinedCompetitions} />
+                    <h4>Your Competitions:</h4>
+
+                    <CompetitionHeaders />
+                    {compIdArray.length > 0 &&
+                        compIdArray.map((compId, index) => (
+                            <MyCompetitions key={index} competitionId={compId} />
+                        ))}
                 </Card.Body>
             </Card>
 
-            <Card className="my-5" style={{ width: '80%' }}>
+            <Card className="my-5" style={{ width: "80%" }}>
                 <Card.Body>
                     <h4>Your Stats:</h4>
                     <p>Competitions Won: {athleteWinningStats.competitionsWon}</p>
@@ -152,12 +165,12 @@ const Dashboard = ({ athlete, address }) => {
                     <StyledButton>Create Competition</StyledButton>
                 </Link>
 
-                <Link to="/joined-competitions" className="mx-4">
+                <Link to="/join-competition" className="mx-4">
                     <StyledButton>Join Competition</StyledButton>
                 </Link>
             </div>
         </DashboardContainer>
-    );
-};
+    )
+}
 
-export default Dashboard;
+export default Dashboard

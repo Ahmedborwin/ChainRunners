@@ -5,46 +5,67 @@ import styled from "styled-components"
 import { formatEther } from "viem"
 
 // ABIs
-import ChainRunners_ABI from "../config/chainRunnerAbi.json"
-import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 
 // Components
-import MyCompetitions from "./MyCompetitions"
 import CompetitionHeaders from "./CompetitionHeaders"
+import Greeter from "../Greeter"
+import MyCompetitions from "./MyCompetitions"
 
 // Hooks
 import { useContractRead } from "wagmi"
-import useWalletConnected from "../hooks/useAccount"
-
-const DashboardContainer = styled("div")`
-    position: relative;
-    padding-left: 20px; /* Adjust as needed */
-    padding-right: 20px; /* Adjust as needed */
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-`
-
-const DashboardTitle = styled("h2")`
-    color: #ffffff;
-    text-transform: uppercase;
-`
+import useWalletConnected from "../../hooks/useAccount"
 
 const StyledButton = styled(Button)`
-    background-color: #18729c;
+    background-color: #0E76FD;;
+    font-weight: bold;
 
     &:hover {
         color: #38ff7f;
     }
 `
-const ScrollableGridContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    overflow-x: auto; // Enable horizontal scrolling
-    width: 100%; // Adjust the width as needed
-`
+
+const StyledLink = styled(Link)`
+  text-decoration: none;
+`;
+
+const StyledButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+`;
+
+const DashboardContainer = styled("div")`
+  position: relative;
+  padding-left: 20px; /* Adjust as needed */
+  padding-right: 20px; /* Adjust as needed */
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const DashboardTitle = styled("h2")`
+  color: #ffffff;
+  background: #0d2137;
+  text-transform: uppercase;
+  font-size: 2.5rem; /* Increase font size for prominence */
+  margin-bottom: 20px; /* Add some spacing at the bottom */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
+  border-radius: 12px;
+`;
+
+const StyledCard = styled(Card)`
+  width: 700px;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Darker shadow for a tech feel */
+  background-color: #ffffff; /* Dark background color */
+  color: black; /* White text for contrast */
+`;
 
 const Dashboard = ({ athlete }) => {
     const [athleteProfile, setAthleteProfile] = useState({})
@@ -141,42 +162,47 @@ const Dashboard = ({ athlete }) => {
     }, [competitionCount])
 
     return (
-        <DashboardContainer>
-            <DashboardTitle className="text-center my-4">
-                {athlete?.firstname} {athlete?.lastname}
-            </DashboardTitle>
+        <>
+            <Greeter />
+            <DashboardContainer>
+                <DashboardTitle className="text-center my-4">
+                    {athlete?.firstname} {athlete?.lastname}'s
+                    Dashboard
+                </DashboardTitle>
 
-            <Card className="my-5" style={{ width: "80%" }}>
-                <Card.Body>
-                    <h4>Your Competitions:</h4>
+                <StyledCard>
+                    <Card.Body>
+                        <h4>Your Competitions:</h4>
+                        <CompetitionHeaders />
+                        {compIdArray.length > 0 &&
+                            compIdArray.map((compId, index) => (
+                                <MyCompetitions key={index} competitionId={compId} />
+                            ))}
+                    </Card.Body>
+                </StyledCard>
 
-                    <CompetitionHeaders />
-                    {compIdArray.length > 0 &&
-                        compIdArray.map((compId, index) => (
-                            <MyCompetitions key={index} competitionId={compId} />
-                        ))}
-                </Card.Body>
-            </Card>
+                <StyledCard>
+                    <Card.Body>
+                        <h4>Your Stats:</h4>
+                        <hr />
+                        <p><strong>Competitions Won</strong>: {athleteWinningStats.competitionsWon}</p>
+                        <p><strong>Income Gained</strong>: {athleteWinningStats.etherGained} MATIC</p>
+                    </Card.Body>
+                </StyledCard>
 
-            <Card className="my-5" style={{ width: "80%" }}>
-                <Card.Body>
-                    <h4>Your Stats:</h4>
-                    <p>Competitions Won: {athleteWinningStats.competitionsWon}</p>
-                    <p>Income Gained: {athleteWinningStats.etherGained} MATIC</p>
-                </Card.Body>
-            </Card>
+                <StyledButtonContainer>
+                    <StyledLink to="/create-competition" className="mx-4">
+                        <StyledButton>Create Competition</StyledButton>
+                    </StyledLink>
 
-            <div className="text-center my-4">
-                <Link to="/create-competition" className="mx-4">
-                    <StyledButton>Create Competition</StyledButton>
-                </Link>
+                    <StyledLink to="/join-competition" className="mx-4">
+                        <StyledButton>Join Competition</StyledButton>
+                    </StyledLink>
+                </StyledButtonContainer>
+            </DashboardContainer>
+        </>
+    );
+};
 
-                <Link to="/join-competition" className="mx-4">
-                    <StyledButton>Join Competition</StyledButton>
-                </Link>
-            </div>
-        </DashboardContainer>
-    )
-}
 
 export default Dashboard

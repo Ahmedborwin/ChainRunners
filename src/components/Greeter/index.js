@@ -1,4 +1,9 @@
 import React, { useEffect, useRef } from 'react';
+
+// Components
+import Navigation from './Navigation';
+
+// Styles
 import styled, { keyframes } from 'styled-components';
 
 const colorRun = keyframes`
@@ -20,18 +25,40 @@ const colorRun = keyframes`
 `;
 
 const StyledGreeter = styled.h1`
-    padding: 2%;
-    // background: linear-gradient(to right, #0d2137, #19ddd3);
-    color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
     border-radius: 12px;
+`;
+
+const Brand = styled.p`
+    color: #fff;
     overflow: hidden;
     position: relative;
 
     &.run-animation {
         animation: ${colorRun} 5s linear infinite;
     }
-`;
+`
+
+const LeftVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #0d2137;
+    left: 0;
+    top: 0;
+`
+
+const RightVerticalLine = styled("div")`
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #19ddd3;
+    right: 0;
+    top: 0;
+`
 
 const Greeter = () => {
     const greeterRef = useRef(null);
@@ -55,12 +82,22 @@ const Greeter = () => {
     };
 
     return (
-        <StyledGreeter
-            className='my-4 text-center run-animation' // Initial state with the class
-            ref={greeterRef}
-        >
-            Welcome to ChainRunners
-        </StyledGreeter>
+        <div className='mb-4 text-center'>
+            <Navigation />
+
+            <LeftVerticalLine />
+            <RightVerticalLine />
+
+            <StyledGreeter >
+                Welcome to
+                <Brand
+                    className='run-animation'
+                    ref={greeterRef}
+                >
+                    &nbsp; ChainRunners &nbsp;
+                </Brand>
+            </StyledGreeter>
+        </div>
     );
 };
 

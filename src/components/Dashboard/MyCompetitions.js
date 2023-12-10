@@ -4,12 +4,12 @@ import styled from "styled-components"
 import { Form, Button, Card } from "react-bootstrap"
 
 // ABIs
-import ChainRunners_ABI from "../config/chainRunnerAbi.json"
-import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
-import useWalletConnected from "../hooks/useAccount"
+import useWalletConnected from "../../hooks/useAccount"
 const FlexGridContainer = styled.div`
     display: flex;
     flex-direction: row;

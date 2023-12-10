@@ -43,9 +43,10 @@ const CompetitionInformation = ({ competitionId }) => {
     const [competitionDetails, setCompetitionDetails] = useState({})
     const [renderComp, setRenderComp] = useState(false)
     const [joinCompetitionIsReady, setJoinCompetitionIsReady] = useState(false)
+    const [buyIn, setBuyIn] = useState(0)
 
     //hooks
-    const { chain } = useWalletConnected()
+    const { chain, wallet } = useWalletConnected()
 
     // Read competition table
     const { data: competitionForm } = useContractRead({
@@ -69,8 +70,8 @@ const CompetitionInformation = ({ competitionId }) => {
         abi: ChainRunners_ABI,
         functionName: "joinCompetition",
         args: [joinCompId],
-        value: parseEther("0.01"),
-        enabled: !!joinCompId,
+        value: buyIn,
+        enabled: joinCompetitionIsReady,
         onError(error) {
             window.alert(error)
             setJoinCompetitionIsReady(false) // Reset the state after the operation
@@ -79,20 +80,12 @@ const CompetitionInformation = ({ competitionId }) => {
             console.log("Join COMP success", data)
             setJoinCompetitionIsReady(false) // Reset the state after the operation
         },
-        onSettled(data, error) {
-            if (data) {
-                console.log("Join Comp Prepare write Settled Successfully", { data })
-            } else if (error) {
-                console.log("Join Comp Prepare write settled with error", { error })
-            }
-        },
     })
 
     // join competition
     const { data, write: joinCompetition, isSuccess } = useContractWrite(prepareJoinCompConfig)
 
     const handleJoin = (_compId) => {
-        console.log("Join comp Id", _compId)
         setJoinCompId(_compId)
         setJoinCompetitionIsReady(true)
     }
@@ -100,6 +93,7 @@ const CompetitionInformation = ({ competitionId }) => {
     useEffect(() => {
         if (joinCompetitionIsReady && joinCompId && prepareJoinCompConfig) {
             joinCompetition()
+            setJoinCompetitionIsReady(false)
         }
     }, [joinCompetitionIsReady, joinCompId, prepareJoinCompConfig])
 
@@ -136,6 +130,7 @@ const CompetitionInformation = ({ competitionId }) => {
                 prizeReward: parseInt(competitionForm[12]),
             }
             setCompetitionDetails(competitionDetails)
+            setBuyIn(competitionForm[10])
             //check if comp status is pending
             if (competitionDetails.status == "PENDING") {
                 setRenderComp(true)
@@ -153,6 +148,7 @@ const CompetitionInformation = ({ competitionId }) => {
                             <p>ID: {competitionDetails.id}</p>
                             <p>Status: {competitionDetails.status}</p>
                             <p>Buyin{formatEther(competitionDetails.buyInAmount)} ETH</p>
+
                             <Button
                                 style={{ backgroundColor: "#18729c" }}
                                 onClick={() => handleJoin(competitionDetails.id)}

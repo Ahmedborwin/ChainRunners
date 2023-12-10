@@ -233,7 +233,7 @@ const MyCompetitions = ({ competitionId }) => {
                     {!startComp && (
                         <GridItem>
                             <Button style={{ backgroundColor: "#444444" }}>
-                                Competition Started
+                                Start Competition
                             </Button>
                         </GridItem>
                     )}

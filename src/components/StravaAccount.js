@@ -69,7 +69,7 @@ const LoginButton = styled.button`
     border-color: #0d6efd;
 `
 
-const StravaAccountCreation = ({ userAccountDetails }) => {
+const StravaAccountCreation = () => {
     const dispatch = useDispatch()
 
     const [isLoading, setIsLoading] = useState(false)

@@ -1,40 +1,30 @@
 import React, { useState, useEffect } from "react"
-import { formatEther, parseEther } from "viem"
+import { formatEther } from "viem"
 import styled from "styled-components"
 import { Form, Button, Card } from "react-bootstrap"
 
 // ABIs
-import ChainRunners_ABI from "../config/chainRunnerAbi.json"
-import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
-import useWalletConnected from "../hooks/useAccount"
-
-const CompetitionCard = styled.div`
-    border: 1px solid #ccc;
-    padding: 10px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`
-
-const GridContainer = styled.div`
-    width: 100%; /* Full width */
-    margin: 0 auto;
-    max-height: 400px; /* Set your desired maximum container height */
-    overflow-y: auto; /* Enable vertical scrolling for the container */
-    display: flex; /* Use flexbox instead of grid */
-    flex-direction: column; /* Stack items vertically */
-    gap: 20px; /* Adjust the gap between cards */
-    padding: 20px; /* Add padding to the container */
-`
+import useWalletConnected from "../../hooks/useAccount"
 
 const FlexContainer = styled.div`
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between; /* Or 'space-between' if you want to spread the items out */
-    gap: 10px; /* Adjust the gap between items */
+    justify-content: space-between;
+    gap: 10px;
 `
+
+const competitionStatus = {
+    0: "PENDING",
+    1: "IN_PROGRESS",
+    2: "COMPLETED",
+    3: "ABORTED",
+}
 
 const CompetitionInformation = ({ competitionId }) => {
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
@@ -104,20 +94,13 @@ const CompetitionInformation = ({ competitionId }) => {
         }
     }, [competitionId])
 
-    //set state for retreived comp table
+    // Get competition table details
     useEffect(() => {
         if (competitionForm) {
-            const status = {
-                0: "PENDING",
-                1: "IN_PROGRESS",
-                2: "COMPLETED",
-                3: "ABORTED",
-            }
-
             const competitionDetails = {
                 id: parseInt(competitionForm[0]),
                 name: competitionForm[1],
-                status: status[competitionForm[2]],
+                status: competitionStatus[competitionForm[2]],
                 adminAddress: competitionForm[3],
                 startDate: parseInt(competitionForm[4]),
                 durationDays: parseInt(competitionForm[5]),
@@ -131,35 +114,35 @@ const CompetitionInformation = ({ competitionId }) => {
             }
             setCompetitionDetails(competitionDetails)
             setBuyIn(competitionForm[10])
-            //check if comp status is pending
-            if (competitionDetails.status == "PENDING") {
-                setRenderComp(true)
+
+            //check if comp status is PENDING
+            if (competitionDetails.status === competitionStatus[0]) {
+                setRenderComp(true);
             }
         }
     }, [competitionForm])
 
     return (
-        <GridContainer className="competition-grid">
-            {renderComp && (
-                <Card className="m-4">
-                    <Card.Body>
-                        <h5>{competitionDetails.name}</h5>
-                        <FlexContainer>
-                            <p>ID: {competitionDetails.id}</p>
-                            <p>Status: {competitionDetails.status}</p>
-                            <p>Buyin{formatEther(competitionDetails.buyInAmount)} ETH</p>
+        renderComp && (
+            <Card className="m-4 text-center">
+                <Card.Body>
+                    <h5>{competitionDetails.name}</h5>
+                    <hr />
+                    <FlexContainer>
+                        <p>ID: {competitionDetails.id}</p>
+                        <p>Status: {competitionDetails.status}</p>
+                        <p>Buy-in: {formatEther(competitionDetails.buyInAmount)} ETH</p>
 
-                            <Button
-                                style={{ backgroundColor: "#18729c" }}
-                                onClick={() => handleJoin(competitionDetails.id)}
-                            >
-                                Join
-                            </Button>
-                        </FlexContainer>
-                    </Card.Body>
-                </Card>
-            )}
-        </GridContainer>
+                        <Button
+                            style={{ backgroundColor: "#18729c" }}
+                            onClick={() => handleJoin(competitionDetails.id)}
+                        >
+                            Join
+                        </Button>
+                    </FlexContainer>
+                </Card.Body>
+            </Card>
+        )
     )
 }
 

@@ -4,10 +4,12 @@ import { Link } from "react-router-dom"
 // Components
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import Navbar from "react-bootstrap/Navbar"
-import styled from "styled-components"
 
 // Images
-import logo from "../assets/images/image.png"
+import logo from "../../assets/images/image.png"
+
+// Styles
+import styled from "styled-components"
 
 const CustomNavbar = styled(Navbar)`
     background: #0d2137;
@@ -32,19 +34,7 @@ const BrandText = styled(Link)`
     }
 `
 
-const UppercaseAccountText = styled(Navbar.Brand)`
-    text-transform: uppercase;
-    font-family: sans-serif;
-    font-weight: bold;
-    color: #b7ff00;
-    margin-right: 2%;
-
-    &:hover {
-        color: #38ff7f;
-    }
-`
-
-const Navigation = ({ account }) => {
+const Navigation = () => {
     return (
         <CustomNavbar>
             <LogoImg
@@ -56,7 +46,7 @@ const Navigation = ({ account }) => {
             />
             <BrandText to="/">CHAIN-RUNNERS</BrandText>
 
-            <Navbar.Collapse className="justify-content-end">
+            <Navbar.Collapse className="mx-2 justify-content-end">
                 <ConnectButton>Connect Wallet</ConnectButton>
             </Navbar.Collapse>
         </CustomNavbar>

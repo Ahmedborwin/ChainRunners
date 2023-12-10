@@ -3,26 +3,26 @@ import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 
 // Components
-import { Form, Button } from "react-bootstrap"
-import Greeter from "./Greeter"
-import Navigation from "./Navigation"
+import { Form } from "react-bootstrap"
+import Greeter from "../Greeter"
+import CreateCompetitionButton from "./CreateCompetitionButton"
 
 // ABIs
-import ChainRunners_ABI from "../config/chainRunnerAbi.json"
-import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 
 // Hooks
-import { useContractWrite, usePrepareContractWrite } from "wagmi"
-import useWalletConnected from "../hooks/useAccount"
+import { usePrepareContractWrite } from "wagmi"
+import useWalletConnected from "../../hooks/useAccount"
 
 // Images
-import mapsImage from "../assets/images/chain.jpg"
+import mapsImage from "../../assets/images/chain.jpg"
 
 // Redux
 import { useSelector } from "react-redux"
 
 // Store
-import { selectAuthDetails } from "../store/tokenExchange"
+import { selectAuthDetails } from "../../store/tokenExchange"
 import { parseEther } from "viem"
 
 const CompetitionContainer = styled("div")`
@@ -33,47 +33,14 @@ const CompetitionContainer = styled("div")`
     min-height: 100vh;
 `
 
-const Title = styled("h2")`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 4%;
-`
 const CustomForm = styled(Form)`
-    width: 300px;
+    width: 500px;
     padding: 20px;
     border-radius: 10px;
     background-color: rgba(255, 255, 255, 0.9);
     display: flex;
     flex-direction: column;
     gap: 15px;
-`
-
-const CreateButton = styled(Button)`
-    background-color: #18729c;
-    border-color: #0d6efd;
-
-    &:hover {
-        color: #38ff7f;
-    }
-`
-
-const LeftVerticalLine = styled("div")`
-    position: absolute;
-    height: 100%;
-    width: 2px;
-    background-color: #fc4c02; /* Orange color */
-    left: 0;
-    top: 0;
-`
-
-const RightVerticalLine = styled("div")`
-    position: absolute;
-    height: 100%;
-    width: 2px;
-    background-color: #ffd700; /* Gold color */
-    right: 0;
-    top: 0;
 `
 
 const CompetitionCreation = () => {
@@ -113,24 +80,15 @@ const CompetitionCreation = () => {
         },
     })
 
-    // Write contract
-    // Use the useContractWrite hook with the config from usePrepareContractWrite
-    const { data: createCompData, isSuccess, write } = useContractWrite(config)
-
     // Event handler for creating the competition
     const handleCreateCompetition = () => {
         if (competitionName && buyIn && durationDays && payoutIntervals) {
-            console.log("READY TO CREATE")
-            setCreateCompetitionReady(true)
+            console.log("READY TO CREATE");
+            setCreateCompetitionReady(true);
         } else {
-            window.alert("complete form buddy")
+            window.alert("complete form buddy");
         }
     }
-    useEffect(() => {
-        if (isSuccess) {
-            console.log(isSuccess)
-        }
-    }, [isSuccess])
 
     useEffect(() => {
         if (competitionName && buyIn && durationDays && payoutIntervals) {
@@ -140,19 +98,14 @@ const CompetitionCreation = () => {
 
     return (
         <CompetitionContainer>
-            <Navigation account={`${userData.athlete.firstname} ${userData.athlete.lastname}`} />
-
-            <LeftVerticalLine />
-            <RightVerticalLine />
-
             <Greeter />
 
-            <Title>Create a New Competition</Title>
-
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", marginTop: "2%" }}>
                 <CustomForm>
+                    <h2 className="my-2 text-center">Enter competition details</h2>
+                    <hr />
                     <Form.Group controlId="competitionName">
-                        <Form.Label>Name</Form.Label>
+                        <Form.Label><strong>Name</strong></Form.Label>
                         <Form.Control
                             type="text"
                             placeholder="Enter Competition Name"
@@ -162,7 +115,7 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="buyIn">
-                        <Form.Label>Buy-In (ETH)</Form.Label>
+                        <Form.Label><strong>Buy-In (ETH)</strong></Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter Buy-In Amount"
@@ -172,7 +125,7 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="durationDays">
-                        <Form.Label>Duration (Days)</Form.Label>
+                        <Form.Label><strong>Duration (Days)</strong></Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter competition duration"
@@ -182,7 +135,7 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="payoutIntervals">
-                        <Form.Label>Payout Intervals (Days)</Form.Label>
+                        <Form.Label><strong>Payout Intervals (Days)</strong></Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter Payout Intervals"
@@ -190,14 +143,12 @@ const CompetitionCreation = () => {
                             onChange={(e) => setPayoutIntervals(e.target.value)}
                         />
                     </Form.Group>
-
-                    <CreateButton disabled={!write} onClick={() => write()}>
-                        Create Competition
-                    </CreateButton>
+                    <hr/>
+                    <CreateCompetitionButton config={config} />
                 </CustomForm>
             </div>
         </CompetitionContainer>
     )
 }
 
-export default CompetitionCreation
+export default CompetitionCreation;

@@ -9,8 +9,8 @@ import ChainRunners_ABI from "../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
 
 // Components
-import MyCompetitions from "./MyCompetitions"
-import CompetitionHeaders from "./CompetitionHeaders"
+import MyCompetitions from "./Dashboard/MyCompetitions"
+import CompetitionHeaders from "./Dashboard/CompetitionHeaders"
 
 // Hooks
 import { useContractRead } from "wagmi"

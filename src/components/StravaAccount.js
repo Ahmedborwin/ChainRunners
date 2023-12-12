@@ -77,13 +77,12 @@ const StravaAccountCreation = () => {
     const [accessToken, setAccessToken] = useState(null)
 
     const { chain } = useWalletConnected()
-    console.log("chain", chain)
 
     useChainLinkFunctions(accessToken)
 
     // Prepare contract write
     const { config } = usePrepareContractWrite({
-        address: ChainRunnersAddresses[chain],
+        address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "createAthlete",
         args: [athlete?.username, athlete?.id],

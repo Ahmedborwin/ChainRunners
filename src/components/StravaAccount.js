@@ -77,6 +77,7 @@ const StravaAccountCreation = () => {
     const [accessToken, setAccessToken] = useState(null)
 
     const { chain } = useWalletConnected()
+    console.log("chain", chain)
 
     useChainLinkFunctions(accessToken)
 

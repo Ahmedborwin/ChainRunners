@@ -13,6 +13,16 @@ module.exports = {
     solidity: {
         compilers: [
             {
+                version: "0.8.8",
+                settings: {
+                    viaIR: true,
+                    optimizer: {
+                        enabled: true,
+                        yul: true,
+                    },
+                },
+            },
+            {
                 version: "0.8.9",
                 settings: {
                     viaIR: true,
@@ -50,7 +60,7 @@ module.exports = {
             url: "https://api.avax-test.network/ext/bc/C/rpc",
             gasPrice: 500000,
             chainId: 43113,
-            accounts: [PRIVATE_KEY_2],
+            accounts: [PRIVATE_KEY],
         },
         AvalancheMainnet: {
             url: "https://api.avax.network/ext/bc/C/rpc",

@@ -78,7 +78,8 @@ const JoinNewCompetition = () => {
 
     //create array of compID's
     useEffect(() => {
-        if (competitionCount > 1) {
+        console.log(competitionCount)
+        if (competitionCount > 0) {
             //create array of compID's
             const _compIdArray = []
             for (let i = 1; i <= competitionCount; i++) {

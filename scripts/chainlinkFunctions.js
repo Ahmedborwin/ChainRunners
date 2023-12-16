@@ -49,18 +49,18 @@ async function chainLinkFunctions(chainID) {
         accessToken: accessTokens.accessTokenAthlete2,
     }
 
+    //get Contract Address's based on chainID
+    routerAddress = chainLinkFunctionsRouterList[chainID]
+
     // Initialize ethers signer and provider to interact with the contracts onchain
     const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
     const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
     if (!privateKey) throw new Error("private key not provided - check your environment variables")
     if (!privateKey_2)
         throw new Error("private key not provided - check your environment variables")
-
     if (!rpcUrl) throw new Error(`rpcUrl not provided  - check your environment variables`)
 
-    //get Contract Address's based on chainID
-    routerAddress = chainLinkFunctionsRouterList[chainID]
-
+    //Set up athlete 1 and 2 signers
     const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
     const wallet = new hre.ethers.Wallet(privateKey)
     const signer = wallet.connect(provider)

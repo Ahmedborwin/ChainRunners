@@ -2,10 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "./CRLinkReqInterface.sol";
 import "./crChainlinkRequestConsumer.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
+import "./ChainRunnersToken.sol";
+import "./Interfaces/CRLinkReqInterface.sol";
+import "./Interfaces/ChainRunnersNFTInterface.sol";
+import "hardhat/console.sol";
 
 //errors
 error ChainRunners__CompStatusNotAsExpected(uint8 currentStatus);
@@ -83,10 +87,14 @@ contract ChainRunners is Ownable {
     }
 
     //state variables
+    ChainRunnersNFTInterface public i_nftContract;
     CRLinkReqInterface public i_linkReq;
+    IERC20 public tokenContract;
     uint256 public competitionId;
     uint256 public appAccessTokenExpires;
     uint256 public dappFee;
+    uint104 constant BUYIN = 0.001 ether;
+    uint104 constant NFTMintPrice = 10 ether;
 
     //initialise structs
     CompetitionForm competition;
@@ -113,7 +121,6 @@ contract ChainRunners is Ownable {
     address public nftMintedtoAddress;
     mapping(uint256 => bool) public apiCallBool;
     uint256 public counter = 1000;
-    event testWINNERRESULT(address winner, uint256 distance);
 
     //----------------------------------------
     //----------------------------------------
@@ -142,7 +149,7 @@ contract ChainRunners is Ownable {
     //events
     event athleteProfileCreated(address indexed athlete, string indexed username);
     event UsernameTaken(string username);
-    event newCompetitionCreated(uint256 indexed compId, uint256 indexed buyIn);
+    event newCompetitionCreated(uint256 indexed compId, address indexed CompetitionAddress);
     event athleteJoinedCompetition(
         uint256 indexed compId,
         address indexed athleteAddress,
@@ -158,9 +165,12 @@ contract ChainRunners is Ownable {
     );
     event competitionAborted(uint256 indexed CompetitionId);
     event winnerPicked(address winnnersAddress, uint256 winnings);
+    event IntervalWinnerEvent(address winnerAddress, uint256 winnersDistance);
 
-    constructor(address _linkReq) {
+    constructor(address _linkReq, address _tokenAddress, address _nftAddress) {
         i_linkReq = CRLinkReqInterface(_linkReq);
+        i_nftContract = ChainRunnersNFTInterface(_nftAddress);
+        tokenContract = ChainRunnersToken(_tokenAddress);
     }
 
     /**
@@ -195,7 +205,6 @@ contract ChainRunners is Ownable {
 
     /**
      *
-     * @param _buyin ether amount required to enter competition
      * @param _durationDays length of competition - expected in days
      * @param _payoutIntervals length of time between payout intervals
      * @dev NEED TO RETHINK THE PAYOUT INTERVALS - WILL CAUSE ISSUES AND WILL REQUIRE TOO MANY CHECKS
@@ -207,21 +216,18 @@ contract ChainRunners is Ownable {
      */
     function createCompetition(
         string calldata _name,
-        uint256 _buyin,
         uint256 _durationDays,
         uint256 _payoutIntervals
     ) external payable isRegisteredAthlete(msg.sender) {
-        require(msg.value == _buyin, "Incorrect Buy In Amount Sent");
+        require(msg.value == BUYIN, "Incorrect Buy In Amount Sent");
 
         //increment ID for competition
         competitionId++;
-
         //populate Form
         competition.id = competitionId;
         athleteListByComp[competitionId].push(msg.sender);
         competition.name = _name;
         competition.totalStaked += msg.value;
-        competition.buyIn = _buyin;
         competition.administrator = msg.sender;
         competition.status = CompetitionStatus.pending;
         competition.durationDays = _durationDays;
@@ -240,7 +246,7 @@ contract ChainRunners is Ownable {
         //push comptition into array
         competitionList.push(competition);
 
-        emit newCompetitionCreated(competition.id, _buyin);
+        emit newCompetitionCreated(competition.id, msg.sender);
     }
 
     /**
@@ -252,8 +258,9 @@ contract ChainRunners is Ownable {
      * @dev emit athleteJoinedCompetition event
      */
     function joinCompetition(uint256 _compId) external payable isRegisteredAthlete(msg.sender) {
+        require(msg.value == BUYIN, "Incorrect BuyIn Amount");
+
         CompetitionForm storage _competition = competitionTable[_compId];
-        require(msg.value == competition.buyIn, "Incorrect BuyIn Amount");
         require(
             !isAthleteInCompetition[_compId][msg.sender],
             "Athlete Already Registered to competition"
@@ -292,14 +299,9 @@ contract ChainRunners is Ownable {
         //get competition Struct from mapping
         competition = competitionTable[_compId];
         // take fee
-        uint256 _fee = (competition.totalStaked * 5) / 100;
+        uint256 _fee = competition.totalStaked;
         competition.totalStaked -= _fee;
         dappFee += _fee;
-
-        uint256 rewardPerInterval = (competition.totalStaked * 1 ether) /
-            (competition.durationDays / competition.payoutIntervals);
-        //reward per payout Interval
-        competition.rewardPot = rewardPerInterval / 1 ether;
 
         //Assign updated Competition Form back to mapping
         competitionTable[competitionId] = competition;
@@ -413,6 +415,7 @@ contract ChainRunners is Ownable {
         uint256 _distance,
         uint256 _compId
     ) external {
+        //TODO
         //needs to be only consumer
         // check requestType
         if (requestType(_requestType) == requestType.beginCompetition) {
@@ -448,12 +451,21 @@ contract ChainRunners is Ownable {
         }
         //update athletes Total Meters as per the distance received form API Call
         athleteTable[_athlete].totalMeters = _distance;
+        //  Transfer ERC20 token based on distance logged
+        tokenContract.transferFrom(
+            address(tokenContract),
+            overAllWinnerByComp[_compId],
+            _distance * 0.1 ether
+        );
         //check distance is greater, if so set as new winner
         if (intervalWinnerDistance[_compId] < metersLogged) {
             intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
             intervalWinnerAddress[_compId] = _athlete; //current winners address
-            //-----------------TEST-----------------//
-            emit testWINNERRESULT(intervalWinnerAddress[_compId], intervalWinnerDistance[_compId]);
+            //Emit Winner Interval Event
+            emit IntervalWinnerEvent(
+                intervalWinnerAddress[_compId],
+                intervalWinnerDistance[_compId]
+            );
         }
 
         //record API response received by incrementing counter
@@ -520,8 +532,9 @@ contract ChainRunners is Ownable {
         competitionTable[_compId].status = CompetitionStatus.completed;
         //increment tally for winner
         winnerStatistics[overAllWinnerByComp[_compId]].competitionsWon++;
-        //mint NFT for winner overallWinner
-        nftMintedtoAddress = overAllWinnerByComp[_compId];
+
+        //winner gets enough tokens bonus to mint 1 NFT
+        tokenContract.transferFrom(address(tokenContract), overAllWinnerByComp[_compId], 10 ether);
     }
 
     function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {
@@ -554,6 +567,17 @@ contract ChainRunners is Ownable {
         competitionIsLive[_compId] = false;
 
         emit competitionAborted(_compId);
+    }
+
+    // function to MINT an NFT - will cost 10ether of chainrunners Token
+    function mintNFT() external {
+        //Make sure Athletes token balance is over
+        require(
+            tokenContract.balanceOf(msg.sender) >= NFTMintPrice,
+            "You do not have enough ChainRunners Token to Mint an NFT"
+        );
+        //Mint NFT
+        i_nftContract.requestRandomNumber(msg.sender);
     }
 
     function withdrawFeeBalance() external onlyOwner {

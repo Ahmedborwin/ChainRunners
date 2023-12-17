@@ -26,7 +26,7 @@ contract ChainRunnersNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     uint64 private immutable i_subscriptionId;
     bytes32 private immutable i_gasLane;
     uint32 private immutable i_callbackGasLimit;
-    uint16 private constant REQUEST_CONFIRMATIONS = 1;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
 
     // NFT Variables
@@ -68,7 +68,7 @@ contract ChainRunnersNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
         _initializeTokenURIArray(_s_RunnerSeriesURI);
-        s_tokenCounter = 0;
+        s_tokenCounter = 1;
     }
 
     function requestRandomNumber(address _athlete) public returns (uint256 requestId) {
@@ -128,11 +128,15 @@ contract ChainRunnersNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     }
 
     //getter functions
-    function getTokenURIArray() public view returns (string[] memory) {
+    function getTokenURIArray() external view returns (string[] memory) {
         return s_RunnerSeriesURI;
     }
 
-    function getTokenURIByAthlete(address _athlete) public view returns (string[] memory) {
+    function getTokenURIByAthlete(address _athlete) external view returns (string[] memory) {
         return s_addressToAllTokenURIs[_athlete];
+    }
+
+    function getCoordinatorAddress() external view returns (address) {
+        return address(i_vrfCoordinator);
     }
 }

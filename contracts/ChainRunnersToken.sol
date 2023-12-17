@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-
 contract ChainRunnersToken is IERC20, Ownable {
     string public constant name = "ChainRunners Token";
     string public constant symbol = "CRT";
@@ -19,7 +18,7 @@ contract ChainRunnersToken is IERC20, Ownable {
     uint256 totalSupply_ = 1000000000000 * 1e18 * 10;
 
     constructor() {
-        // balances[msg.sender] = totalSupply_ / 2;
+        balances[msg.sender] = totalSupply_ / 2;
     }
 
     function totalSupply() public view override returns (uint256) {

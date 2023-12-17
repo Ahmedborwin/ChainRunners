@@ -17,7 +17,7 @@ const networkConfig = {
     80001: {
         name: "Mumbai",
         vrfCoordinatorV2: "0x7a1bac17ccc5b313516c5e16fb24f7659aa5ebed",
-        gasLane: "0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c",
+        gasLane: "0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f",
         callbackGasLimit: "500000", // 500,000 gas
         mintFee: "10000000000000000", // 0.01 ETH
         subscriptionId: "6701", // add your ID here!

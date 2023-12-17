@@ -58,12 +58,7 @@ const CompetitionCreation = () => {
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "createCompetition",
-        args: [
-            competitionName,
-            parseEther(buyIn.toString()),
-            parseInt(durationDays),
-            parseInt(payoutIntervals),
-        ],
+        args: [competitionName, parseInt(durationDays), parseInt(payoutIntervals)],
         enabled: createCompetitionReady,
         account: address,
         value: parseEther("0.01"),
@@ -83,10 +78,10 @@ const CompetitionCreation = () => {
     // Event handler for creating the competition
     const handleCreateCompetition = () => {
         if (competitionName && buyIn && durationDays && payoutIntervals) {
-            console.log("READY TO CREATE");
-            setCreateCompetitionReady(true);
+            console.log("READY TO CREATE")
+            setCreateCompetitionReady(true)
         } else {
-            window.alert("complete form buddy");
+            window.alert("complete form buddy")
         }
     }
 
@@ -100,12 +95,22 @@ const CompetitionCreation = () => {
         <CompetitionContainer>
             <Greeter />
 
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", marginTop: "2%" }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column",
+                    marginTop: "2%",
+                }}
+            >
                 <CustomForm>
                     <h2 className="my-2 text-center">Enter competition details</h2>
                     <hr />
                     <Form.Group controlId="competitionName">
-                        <Form.Label><strong>Name</strong></Form.Label>
+                        <Form.Label>
+                            <strong>Name</strong>
+                        </Form.Label>
                         <Form.Control
                             type="text"
                             placeholder="Enter Competition Name"
@@ -115,7 +120,9 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="buyIn">
-                        <Form.Label><strong>Buy-In (ETH)</strong></Form.Label>
+                        <Form.Label>
+                            <strong>Buy-In (ETH)</strong>
+                        </Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter Buy-In Amount"
@@ -125,7 +132,9 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="durationDays">
-                        <Form.Label><strong>Duration (Days)</strong></Form.Label>
+                        <Form.Label>
+                            <strong>Duration (Days)</strong>
+                        </Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter competition duration"
@@ -135,7 +144,9 @@ const CompetitionCreation = () => {
                     </Form.Group>
 
                     <Form.Group controlId="payoutIntervals">
-                        <Form.Label><strong>Payout Intervals (Days)</strong></Form.Label>
+                        <Form.Label>
+                            <strong>Payout Intervals (Days)</strong>
+                        </Form.Label>
                         <Form.Control
                             type="number"
                             placeholder="Enter Payout Intervals"
@@ -143,7 +154,7 @@ const CompetitionCreation = () => {
                             onChange={(e) => setPayoutIntervals(e.target.value)}
                         />
                     </Form.Group>
-                    <hr/>
+                    <hr />
                     <CreateCompetitionButton config={config} />
                 </CustomForm>
             </div>
@@ -151,4 +162,4 @@ const CompetitionCreation = () => {
     )
 }
 
-export default CompetitionCreation;
+export default CompetitionCreation

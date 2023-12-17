@@ -19,8 +19,8 @@ import { useDispatch } from "react-redux"
 // Store
 import { exchangeToken } from "../store/tokenExchange"
 
-const CLIENT_ID = "116415"
-const CLIENT_SECRET = "4784e5e419141ad81ecaac028eb765f0311ee0af"
+const CLIENT_ID = process.env.STRAVA_CLIENT_ID
+const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET
 const REDIRECT_URI = "http://localhost:3000" // Replace with your actual redirect URI
 const SCOPE = "read,activity:read_all"
 

@@ -72,7 +72,7 @@ async function main() {
     // only populate on test net for now
     if (chainID !== "31337") {
         console.log(`\n ------------------------------------`)
-        console.log(`Set up consumer if deployed to non Local`)
+        console.log(`Set up consumer for chainID:: ${chainID}`)
         console.log(`------------------------------------ \n`)
         const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
         const wallet = new hre.ethers.Wallet(privateKey)
@@ -119,7 +119,11 @@ async function main() {
     }
 
     //deploy chainrunners
-    const chainrunner = await hre.ethers.deployContract("ChainRunners", [consumer.address])
+    const chainrunner = await hre.ethers.deployContract("ChainRunners", [
+        consumer.address,
+        chainRunnersNFT.address,
+        chainRunnerToken.address,
+    ])
     await chainrunner.deployed()
 
     console.log(`\n ------------------------------------`)
@@ -127,32 +131,33 @@ async function main() {
     console.log(`------------------------------------\n`)
 
     //set up chainrunners for testing
+
+    console.log(`\n ------------------------------------`)
+    console.log(`Create Competition , and Athlete2 Joins, set Admin, assign consumer address`)
+    console.log(`------------------------------------\n`)
+    const buyIn = hre.ethers.utils.parseEther("0.01")
+    await chainrunner.createAthlete("Ahmed", "62612170")
+    await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
+    //create competitions and join with other athlete
+    await chainrunner.createCompetition("oneForAll", 28, 7, {
+        value: buyIn,
+    })
+    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    //set chainrunner as admin
+    await consumer.setAdmin(chainrunner.address)
+    //set chainrunner interface
+    await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
+
+    // approve chain runners to token
     if (chainID !== "31337") {
-        console.log(`\n ------------------------------------`)
-        console.log(`Create Competition , and Athlete2 Joins, set Admin, assign consumer address`)
-        console.log(`\n ------------------------------------`)
-        const buyIn = hre.ethers.utils.parseEther("0.01")
-        await chainrunner.createAthlete("Ahmed", "62612170")
-        await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
-        //create competitions and join with other athlete
-        await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
-            value: buyIn,
-        })
-        await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
-        //set chainrunner as admin
-        await consumer.setAdmin(chainrunner.address)
-        //set chainrunner interface
-        await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
+        const totalSupply = await chainRunnerToken.totalSupply()
+        await chainRunnerToken.approve(chainrunner.address, totalSupply)
+        console.log("Athlete address", athlete.address)
+        const allowance = await chainRunnerToken.allowance(athlete.address, chainrunner.address)
+        console.log("Allowance: ", hre.ethers.utils.formatEther(allowance), "ETH")
     }
 
-    //TODO
-    //approve chain runners to token
-    const totalSupply = await chainRunnerToken.totalSupply()
-    await chainRunnerToken.approve(chainrunner.address, totalSupply)
-    const allowance = await chainRunnerToken.allowance(athlete.address, chainrunner.address)
-    console.log("Allowance: ", hre.ethers.utils.formatEther(allowance), "ETH")
-
-    // //record new contract address and ABI
+    //record new contract address and ABI
     await updateContractInfo(
         chainrunner.address,
         consumer.address,

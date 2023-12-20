@@ -18,7 +18,7 @@ contract ChainRunnersToken is IERC20, Ownable {
     uint256 totalSupply_ = 1000000000000 * 1e18 * 10;
 
     constructor() {
-        balances[msg.sender] = totalSupply_ / 2;
+        balances[msg.sender] = totalSupply_;
     }
 
     function totalSupply() public view override returns (uint256) {
@@ -35,7 +35,6 @@ contract ChainRunnersToken is IERC20, Ownable {
     }
 
     function transfer(address receiver, uint256 numTokens) public override returns (bool) {
-        console.log(uint256(balances[msg.sender]));
         require(numTokens <= balances[msg.sender], "Not enough tokens");
         balances[msg.sender] = balances[msg.sender] - numTokens;
         balances[receiver] = balances[receiver] + numTokens;
@@ -45,6 +44,12 @@ contract ChainRunnersToken is IERC20, Ownable {
 
     function approve(address delegate, uint256 numTokens) public override returns (bool) {
         allowed[msg.sender][delegate] = numTokens;
+        emit Approval(msg.sender, delegate, numTokens);
+        return true;
+    }
+
+    function approveChainRunner(address delegate, uint256 numTokens) external returns (bool) {
+        allowed[address(this)][delegate] = numTokens;
         emit Approval(msg.sender, delegate, numTokens);
         return true;
     }

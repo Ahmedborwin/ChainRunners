@@ -122,7 +122,16 @@ contract ChainRunners is Ownable {
     requestType public requesttype;
     address public nftMintedtoAddress;
     mapping(uint256 => bool) public apiCallBool;
-    uint256 public counter = 1000;
+    uint256 public counter = 10000;
+    event testDistanceLogged(uint256 Distance, uint8 counter, address athlete);
+    event testCurrentOverAllWinner(address _athlete);
+    event testWinnerDistanceVMetersLogged(
+        uint256 currentWinnerDistance,
+        uint256 metersLogged,
+        address athlete
+    );
+    uint8 winnersDistanceCounter = 1;
+    uint8 intervalEventCounter = 1;
 
     //----------------------------------------
     //----------------------------------------
@@ -145,8 +154,8 @@ contract ChainRunners is Ownable {
     mapping(uint256 => uint8) public payoutEventAPIResponseCounter; //count the payoutEvent responses by compId
     mapping(uint256 => uint8) public compPayoutId; //count the number of payoutEvents recorded by compId During a competition life cycle
     mapping(uint256 => mapping(uint8 => EventResults)) public eventResultsMapping; //compId to payoutId to event results
-    mapping(uint256 => address) public intervalWinnerAddress; //compId to payoutId to event results
-    mapping(uint256 => uint256) public intervalWinnerDistance; //compId to payoutId to event results
+    mapping(uint256 => address) public intervalWinnerAddress; //compId to event results
+    mapping(uint256 => uint256) public intervalWinnerDistance; //compId to event results
 
     //events
     event athleteProfileCreated(address indexed athlete, string indexed username);
@@ -166,9 +175,15 @@ contract ChainRunners is Ownable {
         uint256 nextPayout
     );
     event competitionAborted(uint256 indexed CompetitionId);
-    event winnerPicked(address winnnersAddress, uint256 winnings);
-    event IntervalWinnerEvent(address winnerAddress, uint256 winnersDistance);
+    event winnerPicked(address winnnersAddress, uint256 compTally, uint256 winnings);
+    event IntervalWinnerEvent(address winnerAddress, uint256 winnersDistance, uint8 counter);
 
+    /**
+     *
+     * @param _linkReq  Address for C0ntract Dealing with ChainFunctions Requests and Response
+     * @param _tokenAddress Address for ChainrunnersToken Contract
+     * @param _nftAddress Address for ChainrunnersNFT contract
+     */
     constructor(address _linkReq, address _tokenAddress, address _nftAddress) {
         i_linkReq = CRLinkReqInterface(_linkReq);
         i_nftContract = ChainRunnersNFTInterface(_nftAddress);
@@ -336,9 +351,9 @@ contract ChainRunners is Ownable {
         //set start date
         competition.startDate = block.timestamp;
         //set end date
-        competition.endDate = block.timestamp + 600; //(competition.durationDays * 86400);
+        competition.endDate = block.timestamp + 360; //(competition.durationDays * 86400);
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + 200; //(competition.payoutIntervals * 86400);
+        competition.nextPayoutDate = block.timestamp + 90; //(competition.payoutIntervals * 86400);
         //set next reward interval
 
         //Assign updated Competition Form back to mapping
@@ -417,8 +432,6 @@ contract ChainRunners is Ownable {
         uint256 _distance,
         uint256 _compId
     ) external onlyConsumer(msg.sender) {
-        //TODO
-        //needs to be only consumer
         // check requestType
         if (requestType(_requestType) == requestType.beginCompetition) {
             //update athletes distance logged
@@ -437,17 +450,18 @@ contract ChainRunners is Ownable {
         }
     }
 
-    function testHandlePayoutEvent(
-        address _athlete,
-        uint256 _distance,
-        uint256 _compId
-    ) internal onlyConsumer(msg.sender) {
+    function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
         //------------------------
         //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
         if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
             _distance += counter;
-            counter += 1000;
+            counter += 10000;
         }
+        if (_athlete == 0x0a192a377E7F2Bd2ffe494cE0976b79D897E10B0) {
+            _distance += counter;
+            counter += 10000;
+        }
+
         //------------------------
         uint256 metersLogged;
         if (athleteTable[_athlete].totalMeters == 0) {
@@ -458,38 +472,56 @@ contract ChainRunners is Ownable {
         //update athletes Total Meters as per the distance received form API Call
         athleteTable[_athlete].totalMeters = _distance;
         //  Transfer ERC20 token based on distance logged
-        uint256 tokensAwarded = _distance * 0.001 ether;
-        tokenContract.transferFrom(
-            address(tokenContract),
-            overAllWinnerByComp[_compId],
-            tokensAwarded
+        uint256 tokensAwarded = metersLogged * 0.001 ether;
+        tokenContract.transfer(_athlete, tokensAwarded);
+
+        //TEST EVENT
+        //--------------
+        emit testDistanceLogged(_distance, winnersDistanceCounter, _athlete);
+        winnersDistanceCounter++;
+        //--------------
+        emit testWinnerDistanceVMetersLogged(
+            intervalWinnerDistance[_compId],
+            metersLogged,
+            _athlete
         );
+        //--------------
+
         //check distance is greater, if so set as new winner
         if (intervalWinnerDistance[_compId] < metersLogged) {
             intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
             intervalWinnerAddress[_compId] = _athlete; //current winners address
         }
+
+        //TEST EVENT
+        //--------------
+        //Emit Winner Interval Event
+        emit IntervalWinnerEvent(
+            intervalWinnerAddress[_compId],
+            intervalWinnerDistance[_compId],
+            intervalEventCounter
+        );
+        intervalEventCounter++;
+        //--------------
+
         //record API response received by incrementing counter
         payoutEventAPIResponseCounter[_compId]++;
         //check if final response for this event call
         if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
-            //Emit Winner Interval Event
-            emit IntervalWinnerEvent(
-                intervalWinnerAddress[_compId],
-                intervalWinnerDistance[_compId]
-            );
             //handle winner
             handleWinner(_compId, tokensAwarded);
             //reset API Response counter
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
             CompetitionForm memory _competition = competitionTable[_compId];
+            //TODO
+            //check is this is the last interval
             //Check if the competition has ended
             if (block.timestamp >= _competition.endDate) {
                 endCompetition(_compId);
             } else {
                 //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + 200; //(competition.payoutIntervals * 86400);
+                _competition.nextPayoutDate = _competition.nextPayoutDate + 90; //(competition.payoutIntervals * 86400);
                 //set next reward interval;
                 competitionTable[_compId] = _competition;
             }
@@ -518,10 +550,12 @@ contract ChainRunners is Ownable {
             }
         }
 
-        // emit event to signal successfull payout
-        emit winnerPicked(intervalWinnerAddress[_compId], tokensAwarded);
+        //---------
+        //TEST EVENT
+        emit testCurrentOverAllWinner(overAllWinnerByComp[_compId]);
+        //---------
 
-        // //Reset mappings for winner address and distance
+        //Reset mappings for winner address and distance
         intervalWinnerAddress[_compId] = address(0);
         intervalWinnerDistance[_compId] = 0;
     }
@@ -532,7 +566,13 @@ contract ChainRunners is Ownable {
         //increment tally for winner
         athleteStats[overAllWinnerByComp[_compId]].competitionsWon++;
         //winner gets enough tokens bonus to mint 1 NFT
-        tokenContract.transferFrom(address(tokenContract), overAllWinnerByComp[_compId], 10 ether);
+        tokenContract.transfer(overAllWinnerByComp[_compId], 10 ether);
+        // emit event to signal successfull payout
+        emit winnerPicked(
+            overAllWinnerByComp[_compId],
+            athleteStats[overAllWinnerByComp[_compId]].competitionsWon,
+            10 ether
+        );
     }
 
     function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {
@@ -574,6 +614,7 @@ contract ChainRunners is Ownable {
             tokenContract.balanceOf(msg.sender) >= NFTMintPrice,
             "You do not have enough ChainRunners Token to Mint an NFT"
         );
+        tokenContract.transferFrom(msg.sender, address(this), 10 ether);
         //Mint NFT
         i_nftContract.requestRandomNumber(msg.sender);
     }
@@ -669,6 +710,66 @@ contract ChainRunners is Ownable {
         handleStartCompetition(_compId);
     }
 
+    function testHandlePayoutEvent(
+        address _athlete,
+        uint256 _distance,
+        uint256 _compId
+    ) internal onlyConsumer(msg.sender) {
+        //------------------------
+        //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
+        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
+            _distance += counter;
+            counter += 1000;
+        }
+        //------------------------
+        uint256 metersLogged;
+        if (athleteTable[_athlete].totalMeters == 0) {
+            metersLogged = _distance;
+        } else {
+            metersLogged = _distance - athleteTable[_athlete].totalMeters;
+        }
+        //update athletes Total Meters as per the distance received form API Call
+        athleteTable[_athlete].totalMeters = _distance;
+        //  Transfer ERC20 token based on distance logged
+        uint256 tokensAwarded = _distance * 0.001 ether;
+        tokenContract.transferFrom(
+            address(tokenContract),
+            overAllWinnerByComp[_compId],
+            tokensAwarded
+        );
+        //check distance is greater, if so set as new winner
+        if (intervalWinnerDistance[_compId] < metersLogged) {
+            intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
+            intervalWinnerAddress[_compId] = _athlete; //current winners address
+        }
+        //record API response received by incrementing counter
+        payoutEventAPIResponseCounter[_compId]++;
+        //check if final response for this event call
+        if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
+            //Emit Winner Interval Event
+            emit IntervalWinnerEvent(
+                intervalWinnerAddress[_compId],
+                intervalWinnerDistance[_compId],
+                intervalEventCounter
+            );
+            //handle winner
+            handleWinner(_compId, tokensAwarded);
+            //reset API Response counter
+            payoutEventAPIResponseCounter[_compId] = 0;
+            //set new payoutDate
+            CompetitionForm memory _competition = competitionTable[_compId];
+            //Check if the competition has ended
+            if (block.timestamp >= _competition.endDate) {
+                endCompetition(_compId);
+            } else {
+                //otherwise calculcate new payoutDate
+                _competition.nextPayoutDate = _competition.nextPayoutDate + 200; //(competition.payoutIntervals * 86400);
+                //set next reward interval;
+                competitionTable[_compId] = _competition;
+            }
+        }
+    }
+
     function testPreformKeep() external {
         for (uint256 _compId = 1; _compId <= competitionId; _compId++) {
             CompetitionForm memory _competition = competitionTable[_compId];
@@ -709,63 +810,12 @@ contract ChainRunners is Ownable {
         requesttype = requestType(_requestType);
     }
 
-    function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
-        //------------------------
-        //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
-        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
-            _distance += counter;
-            counter += 1000;
-        }
-        //------------------------
-        uint256 metersLogged;
-        if (athleteTable[_athlete].totalMeters == 0) {
-            metersLogged = _distance;
-        } else {
-            metersLogged = _distance - athleteTable[_athlete].totalMeters;
-        }
-        //update athletes Total Meters as per the distance received form API Call
-        athleteTable[_athlete].totalMeters = _distance;
-        //  Transfer ERC20 token based on distance logged
-        uint256 tokensAwarded = _distance * 0.001 ether;
-        // tokenContract.transferFrom(
-        //     address(tokenContract),
-        //     overAllWinnerByComp[_compId],
-        //     tokensAwarded
-        // );
-        //check distance is greater, if so set as new winner
-        if (intervalWinnerDistance[_compId] < metersLogged) {
-            intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
-            intervalWinnerAddress[_compId] = _athlete; //current winners address
-        }
-        //record API response received by incrementing counter
-        payoutEventAPIResponseCounter[_compId]++;
-        //check if final response for this event call
-        if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
-            //Emit Winner Interval Event
-            emit IntervalWinnerEvent(
-                intervalWinnerAddress[_compId],
-                intervalWinnerDistance[_compId]
-            );
-            //handle winner
-            handleWinner(_compId, tokensAwarded);
-            //reset API Response counter
-            payoutEventAPIResponseCounter[_compId] = 0;
-            //set new payoutDate
-            CompetitionForm memory _competition = competitionTable[_compId];
-            //Check if the competition has ended
-            if (block.timestamp >= _competition.endDate) {
-                endCompetition(_compId);
-            } else {
-                //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + 200; //(competition.payoutIntervals * 86400);
-                //set next reward interval;
-                competitionTable[_compId] = _competition;
-            }
-        }
-    }
-
     function testPayoutIdIncrement(uint256 _compId) external {
         compPayoutId[_compId]++;
+    }
+
+    function testTransfer() external {
+        tokenContract.transfer(0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029, 1 ether);
     }
 
     function withdrawBalanceTEST() external onlyOwner {

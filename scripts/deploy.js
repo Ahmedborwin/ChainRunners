@@ -3,7 +3,7 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const { SubscriptionManager } = require("@chainlink/functions-toolkit")
+const { SubscriptionManager, startLocalFunctionsTestnet } = require("@chainlink/functions-toolkit")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 const deployNFTContractScript = require("./Deploy/deployNFT")
 const deployTokenContractScript = require("./Deploy/deployToken")
@@ -39,6 +39,10 @@ async function main() {
     if (chainID === "31337") {
         provider = hre.network.provider
         ;[athlete, athlete_2] = await hre.ethers.getSigners()
+        // const localFunctionsTestnet = await startLocalFunctionsTestnet(
+        //     simulationConfigPath?: string // Absolute path to config file which exports simulation config parameters
+        //     options?: ServerOptions // Ganache server options
+        //   )
     } else {
         provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
         donHostedSecretsObject = await chainLinkFunctions(chainID)
@@ -121,8 +125,8 @@ async function main() {
     //deploy chainrunners
     const chainrunner = await hre.ethers.deployContract("ChainRunners", [
         consumer.address,
-        chainRunnersNFT.address,
         chainRunnerToken.address,
+        chainRunnersNFT.address,
     ])
     await chainrunner.deployed()
 
@@ -149,14 +153,9 @@ async function main() {
     await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
 
     // approve chain runners to token
-    if (chainID !== "31337") {
-        const totalSupply = await chainRunnerToken.totalSupply()
-        await chainRunnerToken.approve(chainrunner.address, totalSupply)
-        console.log("Athlete address", athlete.address)
-        const allowance = await chainRunnerToken.allowance(athlete.address, chainrunner.address)
-        console.log("Allowance: ", hre.ethers.utils.formatEther(allowance), "ETH")
-    }
-
+    // if (chainID !== "31337") {
+    const totalSupply = await chainRunnerToken.totalSupply()
+    await chainRunnerToken.transfer(chainrunner.address, totalSupply)
     //record new contract address and ABI
     await updateContractInfo(
         chainrunner.address,

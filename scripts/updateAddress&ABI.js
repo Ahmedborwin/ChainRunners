@@ -110,7 +110,7 @@ async function updateChainRunnerTokenAddress(chainId, chainRunnerTokenAddress) {
     } else {
         chainRunnerTokenList[chainId] = chainRunnerTokenAddress
     }
-    fs.writeFileSync(CHAINRUNNER_NFT_ADDRESS_FILE, JSON.stringify(chainRunnerTokenList, null, 2))
+    fs.writeFileSync(CHAINRUNNER_TOKEN_ADDRESS_FILE, JSON.stringify(chainRunnerTokenList, null, 2))
 }
 
 async function updateTokenABI(chainRunnerTokenAddress) {

@@ -37,7 +37,7 @@ async function verifyContracts() {
 
     await hre.run("verify:verify", {
         address: chainRunnerAddress,
-        constructorArguments: [consumerAddress, NFTAddress, TokenAddress],
+        constructorArguments: [consumerAddress, TokenAddress, NFTAddress],
     })
     await hre.run("verify:verify", {
         address: NFTAddress,

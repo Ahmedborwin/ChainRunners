@@ -95,7 +95,7 @@ contract ChainRunners is Ownable {
     uint256 public competitionId;
     uint256 public appAccessTokenExpires;
     uint256 public dappFee;
-    uint104 constant BUYIN = 0.01 ether;
+    uint104 public constant BUYIN = 0.01 ether;
     uint104 constant NFTMintPrice = 10 ether;
 
     //initialise structs

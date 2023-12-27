@@ -115,6 +115,18 @@ contract ChainRunnersNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     //helper functions
     //---------------
 
+    function testMint(uint256 tokenURI) external onlyOwner {
+        NftTier nftWon = NftTier(tokenURI);
+        //Mint NFT and set the TokenURI
+        _safeMint(msg.sender, s_tokenCounter);
+        _setTokenURI(s_tokenCounter, s_RunnerSeriesURI[uint256(nftWon)]);
+        s_tokenCounter++;
+        // push new token URI to list of tokens owned by address // DO I NEED THIS???
+        s_addressToAllTokenURIs[msg.sender].push(s_RunnerSeriesURI[uint256(nftWon)]);
+        //emit event??
+        emit nftMinted(msg.sender, s_RunnerSeriesURI[uint256(nftWon)]);
+    }
+
     function _initializeTokenURIArray(string[7] memory tokenUris) private {
         if (s_initialized) {
             revert ChainRunnersNFT__AlreadyInitialized();

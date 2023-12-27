@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { Button, Card } from "react-bootstrap"
+import { Button, Card, CardBody, Container } from "react-bootstrap"
+
 import { Link } from "react-router-dom"
 import styled from "styled-components"
 import { formatEther } from "viem"
@@ -7,6 +8,8 @@ import { formatEther } from "viem"
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
+import ChainRunnersTokenAddresses from "../../config/chainRunnerTokenAddress.json"
+import ChainRunnersTokenABI from "../../config/chainRunnerTokenAbi.json"
 
 // Components
 import CompetitionHeaders from "./CompetitionHeaders"
@@ -16,36 +19,6 @@ import MyCompetitions from "./MyCompetitions"
 // Hooks
 import { useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
-
-const StyledButton = styled(Button)`
-    background-color: #0e76fd;
-    font-weight: bold;
-
-    &:hover {
-        color: #38ff7f;
-    }
-`
-
-const StyledLink = styled(Link)`
-    text-decoration: none;
-`
-
-const StyledButtonContainer = styled.div`
-    display: flex;
-    justify-content: center;
-    margin: 20px;
-`
-
-const DashboardContainer = styled("div")`
-    position: relative;
-    padding-left: 20px; /* Adjust as needed */
-    padding-right: 20px; /* Adjust as needed */
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-`
 
 const DashboardTitle = styled("h2")`
     color: #ffffff;
@@ -57,21 +30,12 @@ const DashboardTitle = styled("h2")`
     border-radius: 12px;
 `
 
-const StyledCard = styled(Card)`
-    width: 700px;
-    margin: 20px;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Darker shadow for a tech feel */
-    background-color: #ffffff; /* Dark background color */
-    color: black; /* White text for contrast */
-`
-
 const Dashboard = ({ athlete }) => {
     const [athleteProfile, setAthleteProfile] = useState({})
     const [athleteWinningStats, setAthleteWinningStats] = useState({})
     const [competitionDetails, setCompetitionDetails] = useState({})
     const [compIdArray, setCompIdArray] = useState([])
+    const [tokensOwned, setTokensOwned] = useState(0)
 
     const { chain, address } = useWalletConnected()
 
@@ -83,14 +47,25 @@ const Dashboard = ({ athlete }) => {
         args: [address],
     })
 
-    // Read winner statistics
+    //Read winner statistics
     const { data: winnerStatistics } = useContractRead({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        functionName: "winnerStatistics",
+        functionName: "athleteStats",
         args: [address],
         onSettled(data, error) {
             console.log("Settled winner stats read", { data, error })
+        },
+    })
+
+    //Read ChainRunners Token Contract
+    const { data: tokens } = useContractRead({
+        address: ChainRunnersTokenAddresses[chain.id],
+        abi: ChainRunnersTokenABI,
+        functionName: "balanceOf",
+        args: [address],
+        onSettled(data, error) {
+            console.log("Settled Tokens Balance read", { data, error })
         },
     })
 
@@ -136,7 +111,7 @@ const Dashboard = ({ athlete }) => {
             const newAthleteWinningStats = {
                 competitionsWon: parseInt(winnerStatistics[0]),
                 intervalsWon: parseInt(winnerStatistics[1]),
-                etherGained: null,
+                tokensEarned: null,
             }
             let athletesWinnings
             if (winnerStatistics[2] == 0) {
@@ -144,7 +119,7 @@ const Dashboard = ({ athlete }) => {
             } else {
                 athletesWinnings = formatEther(winnerStatistics[2])
             }
-            newAthleteWinningStats.etherGained = athletesWinnings
+            newAthleteWinningStats.tokensEarned = athletesWinnings
             setAthleteWinningStats(newAthleteWinningStats)
         }
     }, [winnerStatistics])
@@ -161,48 +136,65 @@ const Dashboard = ({ athlete }) => {
         }
     }, [competitionCount])
 
+    useEffect(() => {
+        if (tokens > 0) {
+            const formattedTokens = formatEther(tokens)
+            setTokensOwned(formattedTokens)
+        }
+    }, [tokens, tokensOwned])
+
     return (
         <>
             <Greeter />
-            <DashboardContainer>
-                <DashboardTitle className="text-center my-4">
+            <div className="relative p-5 bg-no-repeat bg-cover bg-center items-center">
+                <DashboardTitle className="text-center my-4 text-white bg-blue-800 uppercase text-4xl mb-5 shadow-xl rounded-lg px-4 py-2">
                     {athlete?.firstname} {athlete?.lastname}'s Dashboard
                 </DashboardTitle>
-
-                <StyledCard>
-                    <Card.Body>
-                        <h4>Your Competitions:</h4>
-                        <CompetitionHeaders />
-                        {compIdArray.length > 0 &&
-                            compIdArray.map((compId, index) => (
-                                <MyCompetitions key={index} competitionId={compId} />
-                            ))}
-                    </Card.Body>
-                </StyledCard>
-
-                <StyledCard>
-                    <Card.Body>
-                        <h4>Your Stats:</h4>
-                        <hr />
+                <div className="grid grid-cols-[100px_200px] grid-rows-[100px_50px] gap-x-6 gap-y-6">
+                    <Card className="my-5 p-5 rounded-lg shadow-lg bg-white text-black">
                         <p>
                             <strong>Competitions Won</strong>: {athleteWinningStats.competitionsWon}
                         </p>
+                    </Card>
+                    <Card className="my-5 p-5 rounded-lg shadow-lg bg-white text-black">
                         <p>
-                            <strong>Income Gained</strong>: {athleteWinningStats.etherGained} MATIC
+                            <strong>ChainRunner Tokens</strong>: {athleteWinningStats.tokensEarned}{" "}
+                            CRT
                         </p>
-                    </Card.Body>
-                </StyledCard>
+                    </Card>
+                </div>
 
-                <StyledButtonContainer>
-                    <StyledLink to="/create-competition" className="mx-4">
-                        <StyledButton>Create Competition</StyledButton>
-                    </StyledLink>
-
-                    <StyledLink to="/join-competition" className="mx-4">
-                        <StyledButton>Join Competition</StyledButton>
-                    </StyledLink>
-                </StyledButtonContainer>
-            </DashboardContainer>
+                <Card className="">
+                    <h4>Your Competitions:</h4>
+                    <table class="table table-striped table-light">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Start</th>
+                                <th scope="col">Abort</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {compIdArray.length > 0 &&
+                                compIdArray.map((compId, index) => (
+                                    <MyCompetitions key={index} competitionId={compId} />
+                                ))}
+                        </tbody>
+                    </table>
+                </Card>
+            </div>
+            <div className="flex-row flex-nowrap flex-auto justify-center ">
+                <Link to="/create-competition">
+                    <button className="">Create Competition</button>
+                </Link>
+                <Link to="/join-competition">
+                    <button className="">Join Competition</button>
+                </Link>
+                <Link to="/nft-portfolio">
+                    <button className="">NFT Portfolio</button>
+                </Link>
+            </div>
         </>
     )
 }

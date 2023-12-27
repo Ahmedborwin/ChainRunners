@@ -90,9 +90,6 @@ const JoinNewCompetition = () => {
     }, [competitionCount])
 
     const handleSearch = () => {
-        // TODO: Implement the logic to search for competitions
-        // call chainrunner to get array of competition ID that can be joined
-        // use array of compId's to return only pending competitions....
         if (compIdArray.length > 0) {
             setShowCompetitions(true)
         }

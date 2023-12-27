@@ -61,7 +61,7 @@ const CompetitionCreation = () => {
         args: [competitionName, parseInt(durationDays), parseInt(payoutIntervals)],
         enabled: createCompetitionReady,
         account: address,
-        value: parseEther("0.01"),
+        value: parseEther(buyIn.toString()),
         onError(error) {
             window.alert(error)
             setCreateCompetitionReady(false)

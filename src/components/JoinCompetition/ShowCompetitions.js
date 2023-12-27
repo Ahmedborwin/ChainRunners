@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -12,9 +12,9 @@ import { useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
 
 const ShowCompetitions = ({ showCompetitions }) => {
-    const [compIdArray, setCompIdArray] = useState([]);
+    const [compIdArray, setCompIdArray] = useState([])
 
-    const { chain } = useWalletConnected();
+    const { chain } = useWalletConnected()
 
     // Read ChainRunners for competitionId's
     const { data: competitionCount } = useContractRead({
@@ -35,22 +35,24 @@ const ShowCompetitions = ({ showCompetitions }) => {
 
     // Create array of competition IDs
     useEffect(() => {
-        if (competitionCount > 1) {
+        if (competitionCount > 0) {
             // Create array of compID's
-            const _compIdArray = [];
+            const _compIdArray = []
             for (let i = 1; i <= competitionCount; i++) {
                 _compIdArray.push(i)
             }
-            setCompIdArray(_compIdArray);
+            setCompIdArray(_compIdArray)
         }
     }, [competitionCount])
 
     return (
         showCompetitions && (
             <div style={{ width: "80vw" }}>
-                <h4 className="m-2" style={{ color: "white" }}>Search Results:</h4>
+                <h4 className="m-2" style={{ color: "white" }}>
+                    Search Results:
+                </h4>
                 <hr style={{ color: "white" }} />
-                <div style={{ display: "flex"}}>
+                <div style={{ display: "flex" }}>
                     {compIdArray.map((competitionId, index) => (
                         <CompetitionInformation key={index} competitionId={competitionId} />
                     ))}
@@ -60,4 +62,4 @@ const ShowCompetitions = ({ showCompetitions }) => {
     )
 }
 
-export default ShowCompetitions;
+export default ShowCompetitions

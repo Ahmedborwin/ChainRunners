@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react"
 
 // Components
-import Navigation from './Navigation';
+import Navigation from "./Navigation"
 
 // Styles
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes } from "styled-components"
 
 const colorRun = keyframes`
     0% {
@@ -22,15 +22,15 @@ const colorRun = keyframes`
     100% {
         color: #fdfb31;
     }
-`;
+`
 
 const StyledGreeter = styled.h1`
     font-size: 2.5rem;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
     border-radius: 12px;
-`;
+`
 
 const Brand = styled.p`
     color: #fff;
@@ -61,44 +61,41 @@ const RightVerticalLine = styled("div")`
 `
 
 const Greeter = () => {
-    const greeterRef = useRef(null);
+    const greeterRef = useRef(null)
 
     useEffect(() => {
         const interval = setInterval(() => {
-            runEffect();
-        }, 10000); // Run the effect every 10 seconds
+            runEffect()
+        }, 10000) // Run the effect every 10 seconds
 
         // Clean up the interval when the component is unmounted
-        return () => clearInterval(interval);
-    }, []);
+        return () => clearInterval(interval)
+    }, [])
 
     const runEffect = () => {
         // Trigger the running effect
         if (greeterRef.current) {
-            greeterRef.current.classList.remove('run-animation');
-            void greeterRef.current.offsetWidth; // Trigger reflow
-            greeterRef.current.classList.add('run-animation');
+            greeterRef.current.classList.remove("run-animation")
+            void greeterRef.current.offsetWidth // Trigger reflow
+            greeterRef.current.classList.add("run-animation")
         }
-    };
+    }
 
     return (
-        <div className='mb-4 text-center'>
+        <div className="mb-4 text-center">
             <Navigation />
 
             <LeftVerticalLine />
             <RightVerticalLine />
 
-            <StyledGreeter >
+            <StyledGreeter>
                 Welcome to
-                <Brand
-                    className='run-animation'
-                    ref={greeterRef}
-                >
+                <Brand className="run-animation" ref={greeterRef}>
                     &nbsp; ChainRunners &nbsp;
                 </Brand>
             </StyledGreeter>
         </div>
-    );
-};
+    )
+}
 
-export default Greeter;
+export default Greeter

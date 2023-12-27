@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { formatEther, parseEther } from "viem"
 import styled from "styled-components"
-import { Form, Button, Card } from "react-bootstrap"
+import { Form, Button, Card, Table } from "react-bootstrap"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -10,45 +10,6 @@ import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
-const FlexGridContainer = styled.div`
-    display: flex;
-    flex-direction: row;
-    wrap: nowrap;
-    gap: 2px; /* Adjust the gap as needed */
-    overflow-x: auto; /* Add horizontal scrolling if items overflow */
-`
-const GridItem = styled.div`
-    border: 1px solid #ccc;
-    padding: 10px;
-    box-sizing: border-box;
-    flex: 0 1 auto; /* Allow shrinking but not growing */
-    min-width: 130px; /* Set a minimum width for each item */
-
-    /* Default flex-basis for small screens (e.g., mobile devices) */
-    flex-basis: calc(100% - 10px); /* Full width minus the gap */
-
-    /* Medium screens (e.g., tablets) */
-    @media (min-width: 600px) {
-        flex-basis: calc(50% - 10px); /* Half width for 2 items per row */
-    }
-
-    /* Large screens (e.g., desktops) */
-    @media (min-width: 1024px) {
-        flex-basis: calc(33.333% - 10px); /* One-third width for 3 items per row */
-    }
-
-    /* Extra large screens */
-    @media (min-width: 1440px) {
-        flex-basis: calc(25% - 10px); /* One-fourth width for 4 items per row */
-    }
-`
-
-const ScrollableGridContainer = styled.div`
-    display: column;
-    flex-direction: column;
-    overflow-x: auto; // Enable horizontal scrolling
-    width: 100%; // Adjust the width as needed
-`
 
 const MyCompetitions = ({ competitionId }) => {
     const [renderComp, setRenderComp] = useState(false)
@@ -57,6 +18,7 @@ const MyCompetitions = ({ competitionId }) => {
     const [startComp, setStartComp] = useState(false)
     const [compId, setCompId] = useState(null)
     const [startCompetitionReady, setStartCompetitionReady] = useState(false)
+    const [abortCompetitionReady, setAbortCompetitionReady] = useState(false)
     const [compInProgress, setCompInProgress] = useState(false)
     const [compClosed, setCompClosed] = useState(false)
     const [compAborted, setCompAborted] = useState(false)
@@ -124,7 +86,7 @@ const MyCompetitions = ({ competitionId }) => {
         },
     })
 
-    // Prepare contract write to join Competition
+    // Prepare contract write to start Competition
     const { config: prepareStartComp } = usePrepareContractWrite({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
@@ -148,8 +110,35 @@ const MyCompetitions = ({ competitionId }) => {
         },
     })
 
+    // start competition
+    const { write: joinCompetition } = useContractWrite(prepareStartComp)
+
+    // Prepare contract write to abort Competition
+    const { config: prepareAbortComp } = usePrepareContractWrite({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "abortCompetition",
+        args: [compId],
+        enabled: abortCompetitionReady,
+        onError(error) {
+            window.alert(error)
+            setAbortCompetitionReady(false) // Reset the state after the operation
+        },
+        onSuccess(data) {
+            console.log("Abort competition preparation success", data)
+            setAbortCompetitionReady(false) // Reset the state after the operation
+        },
+        onSettled(data, error) {
+            if (data) {
+                console.log("Abort Comp Prepare write Settled Successfully", { data })
+            } else if (error) {
+                console.log("Abort Comp Prepare write settled with error", { error })
+            }
+        },
+    })
+
     // join competition
-    const { data, write: joinCompetition, isSuccess } = useContractWrite(prepareStartComp)
+    const { write: abortCompetition } = useContractWrite(prepareAbortComp)
 
     //set state for retreived comp table
     useEffect(() => {
@@ -186,81 +175,93 @@ const MyCompetitions = ({ competitionId }) => {
             }
             if (competitionDetails.status === "PENDING") {
                 setStartComp(true)
-            } else if (competitionDetails.status === "IN_PROGRESS") {
-                setCompInProgress(true)
-            } else if (competitionDetails.status === "CLOSED") {
-                setCompClosed(true)
-            } else if (competitionDetails.status === "ABORTED") {
-                setCompAborted(true)
             }
         }
     }, [competitionForm])
 
     //handle start competition
     const handleStartCompetition = async (_compId) => {
-        console.log(_compId)
         setCompId(_compId)
         setStartCompetitionReady(true)
     }
+
+    //handle Abort competition
+    const handleAbortCompetition = async (_compId) => {
+        setCompId(_compId)
+        setAbortCompetitionReady(true)
+    }
+
+    useEffect(() => {
+        if (winnerAddress) {
+            console.log(winnerAddress)
+        }
+    }, [winnerAddress])
 
     useEffect(() => {
         setGetCompetitionInformation(true)
     }, [competitionId])
 
+    //Trigger start competition contract call
     useEffect(() => {
         if (startCompetitionReady && compId && prepareStartComp) {
+            console.log(prepareStartComp)
             joinCompetition()
             setStartCompetitionReady(false) // Reset the state after the operation
         }
     }, [startCompetitionReady, compId, prepareStartComp])
 
+    //Trigger abort competition contract call
+    useEffect(() => {
+        console.log(prepareAbortComp)
+        if (abortCompetitionReady && compId && prepareAbortComp) {
+            abortCompetition()
+            setAbortCompetitionReady(false) // Reset the state after the operation
+        }
+    }, [abortCompetitionReady, compId, prepareAbortComp])
+
     return (
-        <div>
+        <>
             {renderComp && (
-                <FlexGridContainer>
-                    <GridItem>{competitionDetails.name}</GridItem>
-                    <GridItem>{competitionDetails.status}</GridItem>
-                    {startComp && (
-                        <GridItem>
-                            <Button
-                                style={{ backgroundColor: "#18729c" }}
-                                onClick={() => handleStartCompetition(competitionDetails.id)}
-                            >
-                                Start Competition
-                            </Button>
-                        </GridItem>
-                    )}
-                    {!startComp && (
-                        <GridItem>
-                            <Button style={{ backgroundColor: "#444444" }}>
-                                Start Competition
-                            </Button>
-                        </GridItem>
-                    )}
-                </FlexGridContainer>
+                <tr>
+                    <th scope="row">{competitionDetails.name}</th>
+                    <td>{competitionDetails.status}</td>
+                    <td>
+                        <button
+                            className={`${
+                                startComp
+                                    ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
+                                    : "bg-[#ccc] cursor-not-allowed opacity-50"
+                            }`}
+                            onClick={
+                                startComp
+                                    ? () => handleStartCompetition(competitionDetails.id)
+                                    : null
+                            }
+                            disabled={!startComp}
+                        >
+                            Start Competition
+                        </button>
+                    </td>
+                    <td>
+                        <button
+                            className={`${
+                                startComp
+                                    ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
+                                    : "bg-[#ccc] cursor-not-allowed opacity-50"
+                            }`}
+                            onClick={
+                                startComp
+                                    ? () => handleAbortCompetition(competitionDetails.id)
+                                    : null
+                            }
+                            disabled={!startComp}
+                        >
+                            Abort Competition
+                        </button>
+                    </td>
+                </tr>
             )}
-            {/* {startComp && (
-                        <>
-                            <GridItem>
-                                {formatEther(competitionDetails.totalStakedAmount)} ETH
-                            </GridItem>
-                            <GridItem> {competitionDetails.startDeadline}</GridItem>
-                            <GridItem>
-                                <Button
-                                    style={{ backgroundColor: "#18729c" }}
-                                    onClick={() => handleStartCompetition(competitionDetails.id)}
-                                >
-                                    Start Competition
-                                </Button>
-                            </GridItem>
-                        </>
-                    )}
-                    {compClosed && (
-                        <>
-                            <GridItem> {winnerAddress}</GridItem>
-                        </>
-                    )} */}
-        </div>
+        </>
     )
 }
 

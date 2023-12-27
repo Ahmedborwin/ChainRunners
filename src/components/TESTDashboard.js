@@ -23,6 +23,7 @@ const DashboardContainer = styled("div")`
     background-size: cover;
     background-position: center;
     display: flex;
+    flex-wrap: nowrap;
     flex-direction: column;
     align-items: center;
 `

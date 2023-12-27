@@ -27,6 +27,7 @@ const competitionStatus = {
 }
 
 const CompetitionInformation = ({ competitionId }) => {
+    const [getbuyIn, setGetBuyIn] = useState(false)
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
     const [compId, setCompId] = useState(null)
     const [joinCompId, setJoinCompId] = useState(null)
@@ -51,6 +52,21 @@ const CompetitionInformation = ({ competitionId }) => {
         },
         onSuccess(data) {
             setGetCompetitionInformation(false)
+        },
+    })
+
+    const { data: readBuyIn } = useContractRead({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "BUYIN",
+        enabled: getbuyIn,
+        onError(error) {
+            setGetCompetitionInformation(false)
+            window.alert(error)
+        },
+        onSuccess(data) {
+            setGetCompetitionInformation(false)
+            setBuyIn(readBuyIn)
         },
     })
 
@@ -94,6 +110,10 @@ const CompetitionInformation = ({ competitionId }) => {
         }
     }, [competitionId])
 
+    useEffect(() => {
+        setGetBuyIn(true)
+    }, [])
+
     // Get competition table details
     useEffect(() => {
         if (competitionForm) {
@@ -108,16 +128,13 @@ const CompetitionInformation = ({ competitionId }) => {
                 nextPayoutDate: parseInt(competitionForm[7]),
                 payoutIntervals: parseInt(competitionForm[8]),
                 startDeadline: parseInt(competitionForm[9]),
-                buyInAmount: parseInt(competitionForm[10]),
-                totalStakedAmount: parseInt(competitionForm[11]),
                 prizeReward: parseInt(competitionForm[12]),
             }
             setCompetitionDetails(competitionDetails)
-            setBuyIn(competitionForm[10])
 
             //check if comp status is PENDING
             if (competitionDetails.status === competitionStatus[0]) {
-                setRenderComp(true);
+                setRenderComp(true)
             }
         }
     }, [competitionForm])
@@ -131,7 +148,7 @@ const CompetitionInformation = ({ competitionId }) => {
                     <FlexContainer>
                         <p>ID: {competitionDetails.id}</p>
                         <p>Status: {competitionDetails.status}</p>
-                        <p>Buy-in: {formatEther(competitionDetails.buyInAmount)} ETH</p>
+                        <p>Buy-in: {formatEther(buyIn)} MATIC</p>
 
                         <Button
                             style={{ backgroundColor: "#18729c" }}

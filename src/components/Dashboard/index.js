@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Button, Card, CardBody, Container } from "react-bootstrap"
+import { Card } from "react-bootstrap"
 
 import { Link } from "react-router-dom"
 import styled from "styled-components"
@@ -25,9 +25,31 @@ const DashboardTitle = styled("h2")`
     background: #0d2137;
     text-transform: uppercase;
     font-size: 2.5rem; /* Increase font size for prominence */
-    margin-bottom: 20px; /* Add some spacing at the bottom */
+    margin-bottom: 15px; /* Add some spacing at the bottom */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
     border-radius: 12px;
+`
+
+const CenteredCards = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; /* Wrap the cards when the screen is not wide enough */
+    gap: 15px; /* Adjust the gap between cards */
+`
+const InfoCards = styled.div`
+    width: 100%; /* Each card takes the full width on small screens */
+    max-width: 18rem; /* Set a maximum width for larger screens */
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px; /* Add margin between cards */
+    background-color: #ffffff;
+    span {
+        text-decoration: underline;
+    }
 `
 
 const Dashboard = ({ athlete }) => {
@@ -140,6 +162,8 @@ const Dashboard = ({ athlete }) => {
         if (tokens > 0) {
             const formattedTokens = formatEther(tokens)
             setTokensOwned(formattedTokens)
+        } else {
+            setTokensOwned(0)
         }
     }, [tokens, tokensOwned])
 
@@ -150,19 +174,16 @@ const Dashboard = ({ athlete }) => {
                 <DashboardTitle className="text-center my-4 text-white bg-blue-800 uppercase text-4xl mb-5 shadow-xl rounded-lg px-4 py-2">
                     {athlete?.firstname} {athlete?.lastname}'s Dashboard
                 </DashboardTitle>
-                <div className="grid grid-cols-[100px_200px] grid-rows-[100px_50px] gap-x-6 gap-y-6">
-                    <Card className="my-5 p-5 rounded-lg shadow-lg bg-white text-black">
-                        <p>
-                            <strong>Competitions Won</strong>: {athleteWinningStats.competitionsWon}
-                        </p>
-                    </Card>
-                    <Card className="my-5 p-5 rounded-lg shadow-lg bg-white text-black">
-                        <p>
-                            <strong>ChainRunner Tokens</strong>: {athleteWinningStats.tokensEarned}{" "}
-                            CRT
-                        </p>
-                    </Card>
-                </div>
+
+                <CenteredCards>
+                    <InfoCards className="text-center">
+                        <strong>Competitions Won: </strong>
+                        <span>{athleteWinningStats.competitionsWon}</span>
+                    </InfoCards>
+                    <InfoCards className="text-center">
+                        <strong>ChainRunner Tokens:</strong> <span>{tokensOwned}</span> CRT
+                    </InfoCards>
+                </CenteredCards>
 
                 <Card className="">
                     <h4>Your Competitions:</h4>
@@ -184,17 +205,20 @@ const Dashboard = ({ athlete }) => {
                     </table>
                 </Card>
             </div>
-            <div className="flex-row flex-nowrap flex-auto justify-center ">
-                <Link to="/create-competition">
-                    <button className="">Create Competition</button>
-                </Link>
-                <Link to="/join-competition">
-                    <button className="">Join Competition</button>
-                </Link>
-                <Link to="/nft-portfolio">
-                    <button className="">NFT Portfolio</button>
-                </Link>
-            </div>
+
+            <CenteredCards>
+                <div className="flex-row flex-nowrap flex-auto justify-center ">
+                    <Link to="/create-competition">
+                        <button className="">Create Competition</button>
+                    </Link>
+                    <Link to="/join-competition">
+                        <button className="">Join Competition</button>
+                    </Link>
+                    <Link to="/nft-portfolio">
+                        <button className="">NFT Portfolio</button>
+                    </Link>
+                </div>
+            </CenteredCards>
         </>
     )
 }

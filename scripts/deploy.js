@@ -153,7 +153,6 @@ async function main() {
     await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
 
     // approve chain runners to token
-    // if (chainID !== "31337") {
     const totalSupply = await chainRunnerToken.totalSupply()
     await chainRunnerToken.transfer(chainrunner.address, totalSupply)
     //record new contract address and ABI

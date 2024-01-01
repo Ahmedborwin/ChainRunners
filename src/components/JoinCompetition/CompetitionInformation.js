@@ -89,7 +89,7 @@ const CompetitionInformation = ({ competitionId }) => {
     })
 
     // join competition
-    const { data, write: joinCompetition, isSuccess } = useContractWrite(prepareJoinCompConfig)
+    const { write: joinCompetition } = useContractWrite(prepareJoinCompConfig)
 
     const handleJoin = (_compId) => {
         setJoinCompId(_compId)

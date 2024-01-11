@@ -37,13 +37,23 @@ const JoinNewCompetition = () => {
 
     const userData = useSelector(selectAuthDetails)
 
-    const handleSearch = () => setShowCompetitions(true);
+    const handleSearch = () => setShowCompetitions(true)
+
+    console.log("index", searchText)
 
     return (
         <Container>
             <Greeter />
 
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", marginTop: "2%" }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column",
+                    marginTop: "2%",
+                }}
+            >
                 <CustomForm className="m-4 text-center">
                     <h2 className="text-center">Join New Competition</h2>
                     <Form.Group controlId="searchText">
@@ -54,13 +64,13 @@ const JoinNewCompetition = () => {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </Form.Group>
-                    <hr/>
+                    <hr />
                     <Button style={{ backgroundColor: "#18729c" }} onClick={handleSearch}>
                         Search
                     </Button>
                 </CustomForm>
 
-                <ShowCompetitions showCompetitions={showCompetitions} />
+                <ShowCompetitions showCompetitions={showCompetitions} searchText={searchText} />
             </div>
         </Container>
     )

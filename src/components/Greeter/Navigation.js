@@ -13,6 +13,9 @@ import styled from "styled-components"
 
 const CustomNavbar = styled(Navbar)`
     background: #0d2137;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 `
 
 const LogoImg = styled.img`
@@ -34,17 +37,49 @@ const BrandText = styled(Link)`
     }
 `
 
+const ChainRunnerLogo = styled.a`
+    margin: 0 1rem;
+`
+
+const Tabs = styled.div`
+    display: flex;
+    gap: 10px;
+`
+
+const TabLink = styled(Link)`
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: box-shadow 0.3s, transform 0.3s;
+
+    &:hover {
+        background-color: #ffffff;
+        color: #333;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+    }
+`
+
 const Navigation = () => {
     return (
         <CustomNavbar>
-            <LogoImg
-                alt="logo"
-                src={logo}
-                width="40"
-                height="40"
-                className="d-inline-block align-top mx-3"
-            />
-            <BrandText to="/">CHAIN-RUNNERS</BrandText>
+            <ChainRunnerLogo href="/">
+                <LogoImg
+                    alt="logo"
+                    src={logo}
+                    width="40"
+                    height="40"
+                    className="d-inline-block align-top mx-3"
+                />
+            </ChainRunnerLogo>
+
+            <Tabs>
+                <TabLink to="/create-competition">Create Comp</TabLink>
+                <TabLink to="/join-competition">Join Comp</TabLink>
+                <TabLink to="/nft-portfolio">NFT Portfolio</TabLink>
+            </Tabs>
 
             <Navbar.Collapse className="mx-2 justify-content-end">
                 <ConnectButton>Connect Wallet</ConnectButton>

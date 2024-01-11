@@ -11,7 +11,7 @@ import CompetitionInformation from "./CompetitionInformation"
 import { useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
 
-const ShowCompetitions = ({ showCompetitions }) => {
+const ShowCompetitions = ({ showCompetitions, searchText }) => {
     const [compIdArray, setCompIdArray] = useState([])
 
     const { chain } = useWalletConnected()
@@ -22,14 +22,12 @@ const ShowCompetitions = ({ showCompetitions }) => {
         abi: ChainRunners_ABI,
         functionName: "competitionId",
 
-        onError(error) {
-            window.alert(error)
-        },
-        onSuccess(data) {
-            console.log("Last Comp Id:", data)
-        },
         onSettled(data, error) {
-            console.log("Settled", { data, error })
+            if (data) {
+                console.log("Settled Succesfully", data)
+            } else if (error) {
+                console.log("Settled with error", error)
+            }
         },
     })
 
@@ -45,6 +43,8 @@ const ShowCompetitions = ({ showCompetitions }) => {
         }
     }, [competitionCount])
 
+    console.log("show comp", searchText)
+
     return (
         showCompetitions && (
             <div style={{ width: "80vw" }}>
@@ -54,7 +54,11 @@ const ShowCompetitions = ({ showCompetitions }) => {
                 <hr style={{ color: "white" }} />
                 <div style={{ display: "flex" }}>
                     {compIdArray.map((competitionId, index) => (
-                        <CompetitionInformation key={index} competitionId={competitionId} />
+                        <CompetitionInformation
+                            key={index}
+                            competitionId={competitionId}
+                            searchText={searchText}
+                        />
                     ))}
                 </div>
             </div>

@@ -64,7 +64,7 @@ contract ChainRunnersToken is IERC20, Ownable {
         uint256 numTokens
     ) public override returns (bool) {
         require(numTokens <= balances[owner]);
-        require(numTokens <= allowed[owner][msg.sender]);
+        require(numTokens <= allowed[owner][msg.sender], "Not enough allowance!");
 
         balances[owner] = balances[owner] - numTokens;
         allowed[owner][msg.sender] = allowed[owner][msg.sender] - numTokens;

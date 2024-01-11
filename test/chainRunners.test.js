@@ -1,5 +1,6 @@
 const { expect, add } = require("chai")
 const { ethers, network } = require("hardhat")
+const { getAddress } = require("viem")
 
 const tokens = (n) => {
     return ethers.utils.parseUnits(n.toString(), "ether")
@@ -11,7 +12,7 @@ describe("ChainRunners", () => {
     //variables
     let chainrunners, deployer, athlete2, athlete3, defaultAddress
     let username = "Ahmed"
-    let buyin = ether(1)
+    let buyin = ether(0.01)
     let stravaId = "123456"
     let clrConsumer
     beforeEach(async () => {
@@ -26,7 +27,12 @@ describe("ChainRunners", () => {
 
         //deploy chainrunners contract
         const chainrunnerFactory = await ethers.getContractFactory("ChainRunners")
-        chainrunners = await chainrunnerFactory.deploy(clrConsumer.address)
+        //passing dummy address to
+        chainrunners = await chainrunnerFactory.deploy(
+            clrConsumer.address,
+            getAddress("0x0000000000000000000000000000000000000000"),
+            getAddress("0x0000000000000000000000000000000000000000")
+        )
     })
 
     describe("Deployment", () => {
@@ -368,7 +374,7 @@ describe("ChainRunners", () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username, stravaId)
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
-                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", 30, 7, {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
@@ -415,7 +421,7 @@ describe("ChainRunners", () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username, stravaId)
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
-                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", 30, 7, {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })

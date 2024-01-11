@@ -72,6 +72,7 @@ contract ChainRunnersNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     }
 
     function requestRandomNumber(address _athlete) public returns (uint256 requestId) {
+        console.log("VRF COORDINATOR ADDRESS", address(i_vrfCoordinator));
         requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane,
             i_subscriptionId,

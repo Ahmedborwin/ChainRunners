@@ -614,7 +614,10 @@ contract ChainRunners is Ownable {
             tokenContract.balanceOf(msg.sender) >= NFTMintPrice,
             "You do not have enough ChainRunners Token to Mint an NFT"
         );
+
+        //transferToken from NFT Buyer
         tokenContract.transferFrom(msg.sender, address(this), 10 ether);
+
         //Mint NFT
         i_nftContract.requestRandomNumber(msg.sender);
     }

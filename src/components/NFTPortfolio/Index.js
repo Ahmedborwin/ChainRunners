@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react"
 import styled from "styled-components"
+import { ethers } from "ethers"
+import Swal from "sweetalert2"
+import { PublicClient } from "viem"
 
 // Images
 import mapsImage from "../../assets/images/chain.jpg"
@@ -8,6 +11,7 @@ import mapsImage from "../../assets/images/chain.jpg"
 import Greeter from "../Greeter"
 import ShowNFT from "./ShowNft"
 import BuyNFT from "./BuyNFT"
+import Loading from "../Loading"
 
 // Hooks
 import { useContractRead } from "wagmi"
@@ -16,6 +20,7 @@ import useWalletConnected from "../../hooks/useAccount"
 //Address and ABI
 import NFT_ABI from "../../config/chainRunnerNFTAbi.json"
 import NFTAddresses from "../../config/chainRunnerNFTAddress.json"
+import providerURLs from "../../config/ProviderUrl.json"
 
 const NftTitle = styled("h2")`
     color: #ffffff;
@@ -40,11 +45,9 @@ const GridContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    max-height: 600px; /* Set the maximum height for the y-axis */
-    overflow-y: auto; /* Enable vertical scroll when content exceeds the height */
     padding: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
+
     border-radius: 8px;
 
     @media (min-width: 640px) {
@@ -62,13 +65,17 @@ const CenteredCard = styled.div`
     align-items: center;
 `
 
-const NFTPortfolio = () => {
+const NFTPortfolio = ({ isLoading }) => {
     //States
     const [nftURIList, setNftURIList] = useState([])
     const [getTokenURIList, setGetTokenURIList] = useState(false)
 
     //hooks
     const { chain, address } = useWalletConnected()
+
+    //get provider
+    const providerurl = chain.id in providerURLs ? providerURLs[chain.id] : null
+    const provider = new ethers.providers.JsonRpcProvider(providerurl)
 
     // Read ChainRunnersNFT for NFT URI List
     const { data: TokenURIList } = useContractRead({
@@ -80,35 +87,48 @@ const NFTPortfolio = () => {
             window.alert(error)
         },
         onSuccess(data) {
-            console.log("Token URI List", data)
             setNftURIList(data)
-            setGetTokenURIList(false)
-        },
-        onSettled(data, error) {
-            console.log("Settled", { data, error })
         },
     })
 
+    //event listenener - toast/pop up when NFT bought
+    const listenEvents = async () => {
+        const NFTContract = new ethers.Contract(NFTAddresses[chain.id], NFT_ABI, provider)
+        // const isMintNFTRegistered = await NFTContract.listenerCount("nftMinted")
+
+        NFTContract.once("nftMinted", async (athlete, NftTier) => {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "NFT Minted!",
+                showConfirmButton: false,
+                timer: 1500,
+            })
+        })
+    }
+
     //use Effects
     useEffect(() => {
-        setGetTokenURIList(true)
+        listenEvents()
     }, [])
 
     return (
         <Container>
             <Greeter />
 
-            <BuyNFT />
+            <>
+                <BuyNFT />
 
-            <CenteredCard>
-                <NftTitle>NFT Portfolio</NftTitle>
-            </CenteredCard>
+                <CenteredCard>
+                    <NftTitle>NFT Portfolio</NftTitle>
+                </CenteredCard>
 
-            <GridContainer className="grid grid-cols-2 gap-4">
-                {nftURIList.map((uri, index) => (
-                    <ShowNFT key={index} NFTURI={uri} />
-                ))}
-            </GridContainer>
+                <GridContainer className="grid grid-cols-2 gap-4">
+                    {nftURIList.map((uri, index) => (
+                        <ShowNFT key={index} NFTURI={uri} />
+                    ))}
+                </GridContainer>
+            </>
         </Container>
     )
 }

@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react"
-import { Card } from "react-bootstrap"
+import { Card, CardBody } from "react-bootstrap"
+import styled from "styled-components"
+
+const CardFooter = styled("CardBody")`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`
 
 const ShowNFT = ({ NFTURI }) => {
     const [imageURI, setImageURI] = useState("")
@@ -7,7 +14,6 @@ const ShowNFT = ({ NFTURI }) => {
     const [tokenDescription, setTokenDescription] = useState("")
 
     const fetchNFT = async (Uri) => {
-        console.log(Uri)
         // IPFS Gateway: A server that will return IPFS files from a "normal" URL.
         const requestURL = Uri.replace("ipfs://", "http://cf-ipfs.com/ipfs/")
         try {
@@ -28,7 +34,6 @@ const ShowNFT = ({ NFTURI }) => {
     //use fetch api to get URI Object
     useEffect(() => {
         if (NFTURI) {
-            console.log("NFT URI", NFTURI)
             fetchNFT(NFTURI)
         }
     }, [NFTURI])
@@ -36,6 +41,9 @@ const ShowNFT = ({ NFTURI }) => {
     return (
         <Card className="card" style={{ width: "19rem" }}>
             <img loader={() => imageURI} src={imageURI} height="300" width="302" alt="NFT Token" />
+            <CardFooter>
+                <div>{tokenName}</div>
+            </CardFooter>
         </Card>
     )
 }

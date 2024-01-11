@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
-
 import styled from "styled-components"
+import { ethers } from "ethers"
+
+import Swal from "sweetalert2"
 
 // Components
 import { Form } from "react-bootstrap"
@@ -10,6 +12,7 @@ import CreateCompetitionButton from "./CreateCompetitionButton"
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
+import providerURLs from "../../config/ProviderUrl.json"
 
 // Hooks
 import { usePrepareContractWrite } from "wagmi"
@@ -53,6 +56,10 @@ const CompetitionCreation = () => {
     const userData = useSelector(selectAuthDetails)
     const { chain, address } = useWalletConnected()
 
+    //get provider
+    const providerurl = chain.id in providerURLs ? providerURLs[chain.id] : null
+    const provider = new ethers.providers.JsonRpcProvider(providerurl)
+
     // Prepare contract write
     const { config } = usePrepareContractWrite({
         address: ChainRunnersAddresses[chain.id],
@@ -78,10 +85,13 @@ const CompetitionCreation = () => {
     // Event handler for creating the competition
     const handleCreateCompetition = () => {
         if (competitionName && buyIn && durationDays && payoutIntervals) {
-            console.log("READY TO CREATE")
             setCreateCompetitionReady(true)
         } else {
-            window.alert("complete form buddy")
+            Swal.fire({
+                title: "Incomplete Form",
+                text: "Form Needs to be Completed!",
+                icon: "question",
+            })
         }
     }
 

@@ -30,13 +30,19 @@ const DashboardTitle = styled("h2")`
     border-radius: 12px;
 `
 
+const TableTitle = styled("h4")`
+    text-colour: #ffffff;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+`
+
 const CenteredCards = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap; /* Wrap the cards when the screen is not wide enough */
-    gap: 15px; /* Adjust the gap between cards */
+    flex-wrap: wrap;
+    gap: 15px;
 `
 const InfoCards = styled.div`
     width: 100%; /* Each card takes the full width on small screens */
@@ -50,6 +56,15 @@ const InfoCards = styled.div`
     span {
         text-decoration: underline;
     }
+`
+
+const TableCard = styled(Card)`
+    background: rgba(13, 33, 55, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
 `
 
 const Dashboard = ({ athlete }) => {
@@ -126,8 +141,10 @@ const Dashboard = ({ athlete }) => {
             }
             setAthleteProfile(newAthleteProfile)
         }
+        console.log(athleteProfile)
     }, [athleteTable])
 
+    //Get Competitions Won for signed in Athlete
     useEffect(() => {
         if (winnerStatistics) {
             const newAthleteWinningStats = {
@@ -170,8 +187,8 @@ const Dashboard = ({ athlete }) => {
     return (
         <>
             <Greeter />
-            <div className="relative p-5 bg-no-repeat bg-cover bg-center items-center">
-                <DashboardTitle className="text-center my-4 text-white bg-blue-800 uppercase text-4xl mb-5 shadow-xl rounded-lg px-4 py-2">
+            <div className="relative p-2 bg-no-repeat bg-cover bg-center items-center">
+                <DashboardTitle className="text-center my-2 text-white bg-blue-800 uppercase text-4xl mb-5 shadow-xl rounded-lg px-4 py-2">
                     {athlete?.firstname} {athlete?.lastname}'s Dashboard
                 </DashboardTitle>
 
@@ -185,9 +202,9 @@ const Dashboard = ({ athlete }) => {
                     </InfoCards>
                 </CenteredCards>
 
-                <Card className="">
-                    <h4>Your Competitions:</h4>
-                    <table class="table table-striped table-light">
+                <TableCard>
+                    <TableTitle className="text-white p-1 text-bold">Competitions</TableTitle>
+                    <table className="table table-striped table-light">
                         <thead>
                             <tr>
                                 <th scope="col">Name</th>
@@ -203,22 +220,8 @@ const Dashboard = ({ athlete }) => {
                                 ))}
                         </tbody>
                     </table>
-                </Card>
+                </TableCard>
             </div>
-
-            <CenteredCards>
-                <div className="flex-row flex-nowrap flex-auto justify-center ">
-                    <Link to="/create-competition">
-                        <button className="">Create Competition</button>
-                    </Link>
-                    <Link to="/join-competition">
-                        <button className="">Join Competition</button>
-                    </Link>
-                    <Link to="/nft-portfolio">
-                        <button className="">NFT Portfolio</button>
-                    </Link>
-                </div>
-            </CenteredCards>
         </>
     )
 }

@@ -1,6 +1,7 @@
 import React from "react"
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom"
 import { Container } from "react-bootstrap"
+import Navigation from "./Greeter/Navigation"
 
 // Components
 import App from "./App"
@@ -13,6 +14,7 @@ const AppRouter = () => {
     return (
         <Router>
             <Container>
+                <Navigation />
                 <Switch>
                     <Route path="/" exact component={App} />
                     <Route path="/dashboard" component={Dashboard} />

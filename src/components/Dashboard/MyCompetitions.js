@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { formatEther, parseEther } from "viem"
 import styled from "styled-components"
 import { Form, Button, Card, Table } from "react-bootstrap"
+import Swal from "sweetalert2"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -10,6 +11,7 @@ import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
+import { prepareTransactionRequest } from "viem/utils"
 
 const MyCompetitions = ({ competitionId }) => {
     const [renderComp, setRenderComp] = useState(false)
@@ -17,12 +19,11 @@ const MyCompetitions = ({ competitionId }) => {
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
     const [startComp, setStartComp] = useState(false)
     const [compId, setCompId] = useState(null)
+    const [prepareStartCompReady, setPrepareStartCompReady] = useState(null)
     const [startCompetitionReady, setStartCompetitionReady] = useState(false)
+    const [prepareAbortCompReady, setPrepareAbortCompReady] = useState(false)
     const [abortCompetitionReady, setAbortCompetitionReady] = useState(false)
-    const [compInProgress, setCompInProgress] = useState(false)
-    const [compClosed, setCompClosed] = useState(false)
-    const [compAborted, setCompAborted] = useState(false)
-    const [winnersAddress, setWinnersAddress] = useState(null)
+
     //functions
     function formatDate(epoch) {
         var date = new Date(epoch * 1000) // Convert epoch to milliseconds
@@ -71,47 +72,34 @@ const MyCompetitions = ({ competitionId }) => {
         },
     })
 
-    // Read competition table
-    const { data: winnerAddress } = useContractRead({
-        address: ChainRunnersAddresses[chain.id],
-        abi: ChainRunners_ABI,
-        functionName: "overAllWinnerByComp",
-        args: [competitionId],
-        onError(error) {
-            window.alert(error)
-        },
-        onSuccess(data) {
-            setWinnersAddress(data)
-            console.log("winners address", data)
-        },
-    })
-
     // Prepare contract write to start Competition
     const { config: prepareStartComp } = usePrepareContractWrite({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "commenceCompetition",
         args: [compId],
-        enabled: startCompetitionReady,
-        onError(error) {
-            window.alert(error)
-            setStartCompetitionReady(false) // Reset the state after the operation
-        },
-        onSuccess(data) {
-            console.log("start competition preparation success", data)
-            setStartCompetitionReady(false) // Reset the state after the operation
-        },
+        enabled: prepareStartCompReady,
         onSettled(data, error) {
             if (data) {
+                setStartCompetitionReady(true)
                 console.log("Start Comp Prepare write Settled Successfully", { data })
             } else if (error) {
                 console.log("Start Comp Prepare write settled with error", { error })
+                Swal.fire({
+                    title: "Create Competition Error",
+                    text: `${error}`,
+                    icon: "error",
+                })
             }
         },
     })
 
     // start competition
-    const { write: joinCompetition } = useContractWrite(prepareStartComp)
+    const {
+        write: startCompetition,
+        status: createCompStatus,
+        isError: startCompError,
+    } = useContractWrite(prepareStartComp)
 
     // Prepare contract write to abort Competition
     const { config: prepareAbortComp } = usePrepareContractWrite({
@@ -119,26 +107,41 @@ const MyCompetitions = ({ competitionId }) => {
         abi: ChainRunners_ABI,
         functionName: "abortCompetition",
         args: [compId],
-        enabled: abortCompetitionReady,
-        onError(error) {
-            window.alert(error)
-            setAbortCompetitionReady(false) // Reset the state after the operation
-        },
-        onSuccess(data) {
-            console.log("Abort competition preparation success", data)
-            setAbortCompetitionReady(false) // Reset the state after the operation
-        },
+        enabled: prepareAbortCompReady,
         onSettled(data, error) {
             if (data) {
+                setAbortCompetitionReady(true)
                 console.log("Abort Comp Prepare write Settled Successfully", { data })
             } else if (error) {
                 console.log("Abort Comp Prepare write settled with error", { error })
+                Swal.fire({
+                    title: "Abort Competition Error",
+                    text: `${error}`,
+                    icon: "error",
+                })
             }
         },
     })
 
     // join competition
     const { write: abortCompetition } = useContractWrite(prepareAbortComp)
+
+    //handle start competition
+    const handleStartCompetition = async (_compId) => {
+        setCompId(_compId)
+        setPrepareStartCompReady(true)
+    }
+
+    //handle Abort competition
+    const handleAbortCompetition = async (_compId) => {
+        console.log("COMPID", _compId)
+        setCompId(_compId)
+        setPrepareAbortCompReady(true)
+    }
+
+    useEffect(() => {
+        setGetCompetitionInformation(true)
+    }, [competitionId])
 
     //set state for retreived comp table
     useEffect(() => {
@@ -179,45 +182,36 @@ const MyCompetitions = ({ competitionId }) => {
         }
     }, [competitionForm])
 
-    //handle start competition
-    const handleStartCompetition = async (_compId) => {
-        setCompId(_compId)
-        setStartCompetitionReady(true)
-    }
-
-    //handle Abort competition
-    const handleAbortCompetition = async (_compId) => {
-        setCompId(_compId)
-        setAbortCompetitionReady(true)
-    }
-
-    useEffect(() => {
-        if (winnerAddress) {
-            console.log(winnerAddress)
-        }
-    }, [winnerAddress])
-
-    useEffect(() => {
-        setGetCompetitionInformation(true)
-    }, [competitionId])
-
     //Trigger start competition contract call
     useEffect(() => {
-        if (startCompetitionReady && compId && prepareStartComp) {
-            console.log(prepareStartComp)
-            joinCompetition()
-            setStartCompetitionReady(false) // Reset the state after the operation
+        // console.log("createCompStatus", createCompStatus)
+        // console.log("prepareStartCompReady", prepareStartCompReady)
+        // console.log("startCompetitionReady", startCompetitionReady)
+        if (prepareStartCompReady && startCompetitionReady) {
+            startCompetition()
+            setStartCompetitionReady(false)
+            setPrepareStartCompReady(false)
         }
-    }, [startCompetitionReady, compId, prepareStartComp])
+    }, [prepareStartCompReady, startCompetitionReady])
 
     //Trigger abort competition contract call
     useEffect(() => {
-        console.log(prepareAbortComp)
-        if (abortCompetitionReady && compId && prepareAbortComp) {
+        if (prepareAbortCompReady && abortCompetitionReady) {
             abortCompetition()
-            setAbortCompetitionReady(false) // Reset the state after the operation
+            setPrepareAbortCompReady(false)
+            setAbortCompetitionReady(false)
         }
-    }, [abortCompetitionReady, compId, prepareAbortComp])
+    }, [prepareAbortCompReady, abortCompetitionReady])
+
+    useEffect(() => {
+        if (startCompError) {
+            Swal.fire({
+                title: "Start Comp ERROR",
+                text: `ERROR ${JSON.stringify(startCompError)}`,
+                icon: "error",
+            })
+        }
+    }, [startCompError])
 
     return (
         <>
@@ -237,7 +231,6 @@ const MyCompetitions = ({ competitionId }) => {
                                     ? () => handleStartCompetition(competitionDetails.id)
                                     : null
                             }
-                            disabled={!startComp}
                         >
                             Start Competition
                         </button>
@@ -254,7 +247,7 @@ const MyCompetitions = ({ competitionId }) => {
                                     ? () => handleAbortCompetition(competitionDetails.id)
                                     : null
                             }
-                            disabled={!startComp}
+                            disabled={!prepareAbortComp}
                         >
                             Abort Competition
                         </button>

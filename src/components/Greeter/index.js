@@ -83,8 +83,6 @@ const Greeter = () => {
 
     return (
         <div className="mb-4 text-center">
-            <Navigation />
-
             <LeftVerticalLine />
             <RightVerticalLine />
 

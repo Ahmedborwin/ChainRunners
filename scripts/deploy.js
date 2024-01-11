@@ -7,6 +7,7 @@ const { SubscriptionManager, startLocalFunctionsTestnet } = require("@chainlink/
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 const deployNFTContractScript = require("./Deploy/deployNFT")
 const deployTokenContractScript = require("./Deploy/deployToken")
+const { parseEther } = require("viem")
 
 async function main() {
     let donHostedSecretsObject,
@@ -146,7 +147,7 @@ async function main() {
     await chainrunner.createCompetition("oneForAll", 28, 7, {
         value: buyIn,
     })
-    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    // await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
     //set chainrunner as admin
     await consumer.setAdmin(chainrunner.address)
     //set chainrunner interface
@@ -154,7 +155,8 @@ async function main() {
 
     // approve chain runners to token
     const totalSupply = await chainRunnerToken.totalSupply()
-    await chainRunnerToken.transfer(chainrunner.address, totalSupply)
+    // Keep
+    await chainRunnerToken.transfer(chainrunner.address, parseEther("100000"))
     //record new contract address and ABI
     await updateContractInfo(
         chainrunner.address,

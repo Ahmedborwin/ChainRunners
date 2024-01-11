@@ -2,11 +2,12 @@ import { Button, Card } from "react-bootstrap"
 import styled from "styled-components"
 import React, { useState, useEffect } from "react"
 import { formatEther, parseEther } from "viem"
+import Swal from "sweetalert2"
 import { ethers } from "ethers"
 
-//NFT Contract
-import ChainRunnersNFT_ABI from "../../config/chainRunnerNFTAbi.json"
-import ChainRunnersNFTAddresses from "../../config/chainRunnerNFTAddress.json"
+//Components
+import NFTIndex from "./Index"
+
 //TOKEN Contract
 import ChainRunnersToken_ABI from "../../config/chainRunnerTokenAbi.json"
 import ChainRunnersTokenAddresses from "../../config/chainRunnerTokenAddress.json"
@@ -30,16 +31,17 @@ const FlexContainer = styled.div`
     justify-content: center;
     align-items: center;
     margin-bottom: 5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px; /* Add border-radius to the card */
-    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.8);
 `
 
 const CardChild = styled.div`
     margin: 10px 0;
     padding: 20px; /* Add padding for content inside the card */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow to the children */
-    border-radius: 4px; /* Add border-radius to the children */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 1);
     span {
         text-decoration: underline;
         font-weight: bold;
@@ -56,12 +58,13 @@ const StyledButton = styled.a`
     font-size: 1rem; /* Equivalent to text-sm in Tailwind */
     font-weight: 500; /* Equivalent to font-medium in Tailwind */
     color: #4f46e5; /* Equivalent to text-indigo-600 in Tailwind */
+    background-color: rgba(255, 255, 255, 1);
     text-decoration: none;
     transition: transform 0.3s, box-shadow 0.3s;
 
     &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         cursor: pointer;
     }
 
@@ -78,13 +81,15 @@ const StyledButton = styled.a`
 const BuyNFT = () => {
     //hooks
     const [approveTransferReady, setApproveTransferReady] = useState(false)
-    const [mintNFTReady, setMintNFTReady] = useState(false)
+    const [mintNFTPrepareReady, setMintNFTPrepareReady] = useState(false)
     const [mintNFTWriteReady, setMintNFTWriteReady] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [tokenBalance, setTokenBalance] = useState(0)
 
     const { chain, wallet, address } = useWalletConnected()
 
     // Read competition table
-    const { data: tokenBalance } = useContractRead({
+    const { data: tokenBalanceData } = useContractRead({
         address: ChainRunnersTokenAddresses[chain.id],
         abi: ChainRunnersToken_ABI,
         functionName: "balanceOf",
@@ -93,7 +98,8 @@ const BuyNFT = () => {
             window.alert(error)
         },
         onSuccess(data) {
-            console.log("tokenBalance", formatEther(tokenBalance))
+            console.log("tokenBalance", formatEther(tokenBalanceData))
+            setTokenBalance(formatEther(tokenBalanceData))
         },
     })
 
@@ -103,84 +109,121 @@ const BuyNFT = () => {
         abi: ChainRunnersToken_ABI,
         functionName: "approve",
         args: [ChainRunnersAddresses[chain.id], parseEther("10")],
-        enabled: approveTransferReady,
-        onError(error) {
-            console.log(error)
-            setApproveTransferReady(false) // Reset the state after the operation
-        },
-        onSuccess(data) {
-            console.log("PrepareApprove", data)
-            setApproveTransferReady(false) // Reset the state after the operation
+        onSettled(data, error) {
+            if (data) {
+                console.log("PrepareApprove", data)
+                setIsLoading(false)
+            } else if (error) {
+                console.log(error)
+                setIsLoading(false)
+            }
         },
     })
     // approve
-    const { write: approveChainRunner, isSuccess: approveSuccesfull } =
+    const { writeAsync: approveChainRunner, isSuccess: approveSuccesfull } =
         useContractWrite(prepareApproveTransfer)
 
-    //write to Token contract and NFT contract
-    const { config: mintNFTPrepare } = usePrepareContractWrite({
+    // Mint NFT
+    const {
+        data: NFTMintResponse,
+        write: mintNFTWrite,
+        isSuccess: MintNFTSuccesfull,
+        isError: MintNFTError,
+    } = useContractWrite({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "mintNFT",
-        enabled: mintNFTReady,
-        onError(error) {
-            console.log(error)
-            setMintNFTReady(false) // Reset the state after the operation
-        },
-        onSuccess(data) {
-            console.log("Prepare Mint NFT Ready", data)
-            setMintNFTReady(false) // Reset the state after the operation
-            setMintNFTWriteReady(true)
+        onSettled(data, error) {
+            if (data) {
+                console.log("Mint NFT Success ", data)
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "NFT Minted!",
+                    showConfirmButton: false,
+                    timer: 1500,
+                })
+            } else if (error) {
+                console.log("Mint NFT Error", error)
+                Swal.fire({
+                    title: "NFT MINT ERROR",
+                    text: `ERROR ${error}`,
+                    icon: "error",
+                })
+            }
         },
     })
-    // approve
-    const { write: mintNFTWrite, isSuccess: MintNFTSuccesfull } = useContractWrite(mintNFTPrepare)
 
     //handle buy
     const handleBuyNFT = async () => {
-        //approve token transfer
-        approveChainRunner()
+        try {
+            // Execute the approve transaction and get the transaction hash
+            const txResponse = await approveChainRunner()
+
+            // Extract the transaction hash from the response
+            const txHash = txResponse.hash
+
+            // Create an ethers provider
+            const provider = new ethers.providers.Web3Provider(window.ethereum)
+
+            // Wait for the transaction to be confirmed
+            const confirmationsNeeded = 1 // Adjust based on your requirement
+            await provider.waitForTransaction(txHash, confirmationsNeeded)
+
+            //set Loading screen
+            setIsLoading(true)
+            // Once the approval is confirmed, proceed to mint NFT
+            mintNFTWrite()
+        } catch (error) {
+            console.error("Transaction failed", error)
+            Swal.fire({
+                title: "Transaction Error",
+                text: "There was an error processing your transaction",
+                icon: "error",
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    //MODAL when button clicked?
-    //event listenener - toast/pop up when NFT bought
+    // //call Chainrunner to mint NFT
+    // useEffect(() => {
+    //     if (approveSuccesfull) {
+    //         // NFT Mint contract call
+    //         mintNFTWrite()
+    //     }
+    // }, [approveSuccesfull])
 
-    useEffect(() => {
-        setApproveTransferReady(true)
-    }, [])
-
-    //call Chainrunner to mint NFT
-    useEffect(() => {
-        if (approveSuccesfull) {
-            // prepare NFT Mint contract call
-            setMintNFTReady(true)
-        }
-    }, [approveSuccesfull])
-
-    //call Chainrunner to mint NFT
-    useEffect(() => {
-        if (mintNFTWriteReady) {
-            // call Chainrunners contract to Mint NFT
-            mintNFTWrite()
-        }
-    }, [mintNFTWriteReady])
+    // //call Chainrunner to mint NFT
+    // useEffect(() => {
+    //     if (mintNFTWriteReady) {
+    //         // call Chainrunners contract to Mint NFT
+    //         mintNFTWrite()
+    //     }
+    // }, [mintNFTWriteReady])
 
     return (
-        <CenteredComponent>
-            <FlexContainer style={{ width: "35vw" }}>
-                <CardChild>
-                    Balance is: <span>{formatEther(tokenBalance)}</span> CRT
-                </CardChild>
+        <>
+            {!isLoading ? (
+                <CenteredComponent>
+                    <FlexContainer style={{ width: "35vw" }}>
+                        <CardChild>
+                            Balance is: <span>{tokenBalance}</span> CRT
+                        </CardChild>
 
-                <CardChild>
-                    <span>10 CRT </span> Per Mint
-                </CardChild>
+                        <CardChild>
+                            <span>10 CRT </span> Per Mint
+                        </CardChild>
 
-                <StyledButton style={{ width: "20vw" }} onClick={() => handleBuyNFT()}>
-                    MINT NFT
-                </StyledButton>
-            </FlexContainer>
-        </CenteredComponent>
+                        <StyledButton style={{ width: "20vw" }} onClick={() => handleBuyNFT()}>
+                            MINT NFT
+                        </StyledButton>
+                    </FlexContainer>
+                </CenteredComponent>
+            ) : (
+                <NFTIndex isLoading={isLoading} />
+            )}
+        </>
     )
 }
 

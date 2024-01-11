@@ -1,11 +1,14 @@
+import { useEffect } from "react"
+import Swal from "sweetalert2"
+import Toastify from "toastify-js"
 // Components
-import { Button } from "react-bootstrap";
+import { Button } from "react-bootstrap"
 
 // Hooks
 import { useContractWrite } from "wagmi"
 
 // Styles
-import styled from "styled-components";
+import styled from "styled-components"
 
 const CreateButton = styled(Button)`
     background-color: #18729c;
@@ -19,7 +22,30 @@ const CreateButton = styled(Button)`
 const CreateCompetitionButton = ({ config }) => {
     // Write contract
     // Use the useContractWrite hook with the config from usePrepareContractWrite
-    const { write } = useContractWrite(config);
+    const {
+        data: createCompResponse,
+        write,
+        isSuccess: createCompetitionSucces,
+        isError: createCompetitionError,
+    } = useContractWrite(config)
+
+    useEffect(() => {
+        if (createCompetitionError) {
+            Swal.fire({
+                title: "Create Competition Error",
+                text: `ERROR ${createCompResponse}`,
+                icon: "error",
+            })
+        } else if (createCompetitionSucces) {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Created",
+                showConfirmButton: false,
+                timer: 1500,
+            })
+        }
+    }, [createCompetitionError, createCompetitionSucces])
 
     return (
         <CreateButton disabled={!write} onClick={() => write()}>
@@ -28,4 +54,4 @@ const CreateCompetitionButton = ({ config }) => {
     )
 }
 
-export default CreateCompetitionButton;
+export default CreateCompetitionButton

@@ -99,9 +99,13 @@ const NFTPortfolio = ({ isLoading }) => {
             Swal.fire({
                 position: "top-end",
                 icon: "success",
-                title: "NFT Minted!",
+                title: "NFT Minted Succesfully!",
                 showConfirmButton: false,
                 timer: 1500,
+            }).then(() => {
+                // This will be executed after the Swal alert
+                // Hard reload the page
+                window.location.reload(true)
             })
         })
     }

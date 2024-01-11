@@ -80,9 +80,9 @@ const StyledButton = styled.a`
 
 const BuyNFT = () => {
     //hooks
-    const [approveTransferReady, setApproveTransferReady] = useState(false)
-    const [mintNFTPrepareReady, setMintNFTPrepareReady] = useState(false)
-    const [mintNFTWriteReady, setMintNFTWriteReady] = useState(false)
+    // const [approveTransferReady, setApproveTransferReady] = useState(false)
+    // const [mintNFTPrepareReady, setMintNFTPrepareReady] = useState(false)
+    // const [mintNFTWriteReady, setMintNFTWriteReady] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [tokenBalance, setTokenBalance] = useState(0)
 
@@ -134,16 +134,7 @@ const BuyNFT = () => {
         abi: ChainRunners_ABI,
         functionName: "mintNFT",
         onSettled(data, error) {
-            if (data) {
-                console.log("Mint NFT Success ", data)
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "NFT Minted!",
-                    showConfirmButton: false,
-                    timer: 1500,
-                })
-            } else if (error) {
+            if (error) {
                 console.log("Mint NFT Error", error)
                 Swal.fire({
                     title: "NFT MINT ERROR",
@@ -172,8 +163,12 @@ const BuyNFT = () => {
 
             //set Loading screen
             setIsLoading(true)
+
             // Once the approval is confirmed, proceed to mint NFT
             mintNFTWrite()
+
+            //set Loading screen
+            setIsLoading(false)
         } catch (error) {
             console.error("Transaction failed", error)
             Swal.fire({
@@ -185,22 +180,6 @@ const BuyNFT = () => {
             setIsLoading(false)
         }
     }
-
-    // //call Chainrunner to mint NFT
-    // useEffect(() => {
-    //     if (approveSuccesfull) {
-    //         // NFT Mint contract call
-    //         mintNFTWrite()
-    //     }
-    // }, [approveSuccesfull])
-
-    // //call Chainrunner to mint NFT
-    // useEffect(() => {
-    //     if (mintNFTWriteReady) {
-    //         // call Chainrunners contract to Mint NFT
-    //         mintNFTWrite()
-    //     }
-    // }, [mintNFTWriteReady])
 
     return (
         <>

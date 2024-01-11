@@ -134,7 +134,6 @@ const MyCompetitions = ({ competitionId }) => {
 
     //handle Abort competition
     const handleAbortCompetition = async (_compId) => {
-        console.log("COMPID", _compId)
         setCompId(_compId)
         setPrepareAbortCompReady(true)
     }
@@ -184,9 +183,6 @@ const MyCompetitions = ({ competitionId }) => {
 
     //Trigger start competition contract call
     useEffect(() => {
-        // console.log("createCompStatus", createCompStatus)
-        // console.log("prepareStartCompReady", prepareStartCompReady)
-        // console.log("startCompetitionReady", startCompetitionReady)
         if (prepareStartCompReady && startCompetitionReady) {
             startCompetition()
             setStartCompetitionReady(false)

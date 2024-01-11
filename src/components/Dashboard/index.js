@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Card } from "react-bootstrap"
-
-import { Link } from "react-router-dom"
+import Swal from "sweetalert2"
+import { ethers } from "ethers"
 import styled from "styled-components"
 import { formatEther } from "viem"
 
@@ -10,6 +10,7 @@ import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 import ChainRunnersTokenAddresses from "../../config/chainRunnerTokenAddress.json"
 import ChainRunnersTokenABI from "../../config/chainRunnerTokenAbi.json"
+import providerURLs from "../../config/ProviderUrl.json"
 
 // Components
 import CompetitionHeaders from "./CompetitionHeaders"
@@ -75,6 +76,10 @@ const Dashboard = ({ athlete }) => {
     const [tokensOwned, setTokensOwned] = useState(0)
 
     const { chain, address } = useWalletConnected()
+
+    //get provider
+    const providerurl = chain.id in providerURLs ? providerURLs[chain.id] : null
+    const provider = new ethers.providers.JsonRpcProvider(providerurl)
 
     // Read athlete table
     const { data: athleteTable } = useContractRead({
@@ -183,6 +188,49 @@ const Dashboard = ({ athlete }) => {
             setTokensOwned(0)
         }
     }, [tokens, tokensOwned])
+
+    //event listenener - toast/pop up when NFT bought
+    const listenEvents = async () => {
+        const NFTContract = new ethers.Contract(
+            ChainRunnersAddresses[chain.id],
+            ChainRunners_ABI,
+            provider
+        )
+        NFTContract.once(
+            "competitionStarted",
+            async (compId, athleteList, startDate, endDate, nextPayoutDate) => {
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "Competition Created Succesfully!",
+                    showConfirmButton: false,
+                    timer: 1500,
+                }).then(() => {
+                    // This will be executed after the Swal alert
+                    // Hard reload the page
+                    window.location.reload(true)
+                })
+            }
+        )
+        NFTContract.once("competitionAborted", async (compId) => {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Aborted Succesfully!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                // This will be executed after the Swal alert
+                // Hard reload the page
+                window.location.reload(true)
+            })
+        })
+    }
+
+    //use Effects
+    useEffect(() => {
+        listenEvents()
+    }, [])
 
     return (
         <>

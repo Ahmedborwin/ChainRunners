@@ -109,22 +109,19 @@ const CompetitionCreation = () => {
             provider
         )
 
-        NFTContract.once(
-            "competitionStarted",
-            async (compId, athleteList, startDate, endDate, nextPayoutDate) => {
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "Competition Created Minted!",
-                    showConfirmButton: false,
-                    timer: 1500,
-                }).then(() => {
-                    // This will be executed after the Swal alert
-                    // Hard reload the page
-                    window.location.reload(true)
-                })
-            }
-        )
+        NFTContract.once("newCompetitionCreated", async (compId, compAdmin) => {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Created!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                // This will be executed after the Swal alert
+                // Hard reload the page
+                window.location.reload(true)
+            })
+        })
     }
 
     //use Effects

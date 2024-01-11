@@ -36,14 +36,6 @@ const CreateCompetitionButton = ({ config }) => {
                 text: `ERROR ${createCompResponse}`,
                 icon: "error",
             })
-        } else if (createCompetitionSucces) {
-            Swal.fire({
-                position: "top-end",
-                icon: "success",
-                title: "Competition Created",
-                showConfirmButton: false,
-                timer: 1500,
-            })
         }
     }, [createCompetitionError, createCompetitionSucces])
 

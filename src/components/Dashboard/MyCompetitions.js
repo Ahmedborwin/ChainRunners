@@ -212,6 +212,7 @@ const MyCompetitions = ({ competitionId }) => {
             })
         }
     }, [startCompError])
+    //note
 
     return (
         <>

@@ -78,7 +78,7 @@ const StravaAccountCreation = () => {
 
     const { chain } = useWalletConnected()
 
-    useChainLinkFunctions(accessToken)
+    //useChainLinkFunctions(accessToken)
 
     // Prepare contract write
     const { config } = usePrepareContractWrite({

@@ -15,12 +15,12 @@ const ShowNFT = ({ NFTURI }) => {
 
     const fetchNFT = async (Uri) => {
         // IPFS Gateway: A server that will return IPFS files from a "normal" URL.
-        const requestURL = Uri.replace("ipfs://", "http://cf-ipfs.com/ipfs/")
+        const requestURL = Uri.replace("ipfs://", "https://cf-ipfs.com/ipfs/")
         try {
             const response = await fetch(requestURL)
             const tokenURIResponse = await response.json()
             const imageURI = tokenURIResponse.image
-            const imageURIURL = imageURI.replace("ipfs://", "http://cf-ipfs.com/ipfs/")
+            const imageURIURL = imageURI.replace("ipfs://", "https://cf-ipfs.com/ipfs/")
 
             setImageURI(imageURIURL)
             setTokenName(tokenURIResponse.name)

@@ -94,7 +94,6 @@ const NFTPortfolio = ({ isLoading }) => {
     //event listenener - toast/pop up when NFT bought
     const listenEvents = async () => {
         const NFTContract = new ethers.Contract(NFTAddresses[chain.id], NFT_ABI, provider)
-        // const isMintNFTRegistered = await NFTContract.listenerCount("nftMinted")
 
         NFTContract.once("nftMinted", async (athlete, NftTier) => {
             Swal.fire({

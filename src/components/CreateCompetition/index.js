@@ -9,7 +9,7 @@ import { Form } from "react-bootstrap"
 import Greeter from "../Greeter"
 import CreateCompetitionButton from "./CreateCompetitionButton"
 
-// ABIs
+//Address and ABI
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 import providerURLs from "../../config/ProviderUrl.json"
@@ -100,6 +100,37 @@ const CompetitionCreation = () => {
             handleCreateCompetition()
         }
     }, [competitionName, buyIn, durationDays, payoutIntervals])
+
+    //event listenener - toast/pop up when NFT bought
+    const listenEvents = async () => {
+        const NFTContract = new ethers.Contract(
+            ChainRunnersAddresses[chain.id],
+            ChainRunners_ABI,
+            provider
+        )
+
+        NFTContract.once(
+            "competitionStarted",
+            async (compId, athleteList, startDate, endDate, nextPayoutDate) => {
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "Competition Created Minted!",
+                    showConfirmButton: false,
+                    timer: 1500,
+                }).then(() => {
+                    // This will be executed after the Swal alert
+                    // Hard reload the page
+                    window.location.reload(true)
+                })
+            }
+        )
+    }
+
+    //use Effects
+    useEffect(() => {
+        listenEvents()
+    }, [])
 
     return (
         <CompetitionContainer>

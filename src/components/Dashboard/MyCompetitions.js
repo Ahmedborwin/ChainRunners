@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { formatEther, parseEther } from "viem"
-import styled from "styled-components"
-import { Form, Button, Card, Table } from "react-bootstrap"
 import Swal from "sweetalert2"
+import styled from "styled-components"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -11,12 +9,18 @@ import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
-import { prepareTransactionRequest } from "viem/utils"
+import { Button } from "react-bootstrap"
+
+const TableButtons = styled(Button)`
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
+    border-radius: 12px;
+`
 
 const MyCompetitions = ({ competitionId }) => {
     const [renderComp, setRenderComp] = useState(false)
     const [competitionDetails, setCompetitionDetails] = useState({})
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
+    const [getAthleteListByComp, setGetAthleteListByComp] = useState([])
     const [startComp, setStartComp] = useState(false)
     const [compId, setCompId] = useState(null)
     const [prepareStartCompReady, setPrepareStartCompReady] = useState(null)
@@ -53,7 +57,7 @@ const MyCompetitions = ({ competitionId }) => {
     }
 
     //hooks
-    const { chain, address, wallet } = useWalletConnected()
+    const { chain, address } = useWalletConnected()
 
     // Read competition table
     const { data: competitionForm } = useContractRead({
@@ -69,6 +73,26 @@ const MyCompetitions = ({ competitionId }) => {
         onSuccess(data) {
             console.log("competition table", data)
             setGetCompetitionInformation(false)
+        },
+    })
+
+    // Read competition table
+    const { data: athleteListByCompId } = useContractRead({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "getAthleteList",
+        args: [competitionId],
+        enabled: getAthleteListByComp,
+        onSettled(data, error) {
+            setGetAthleteListByComp(true)
+            if (data) {
+                if (data.includes(address)) {
+                    setRenderComp(true)
+                }
+                console.log(competitionId, data)
+            } else if (error) {
+                console.log("get List of Athlete Error", error)
+            }
         },
     })
 
@@ -135,11 +159,13 @@ const MyCompetitions = ({ competitionId }) => {
     //handle Abort competition
     const handleAbortCompetition = async (_compId) => {
         setCompId(_compId)
+        console.log("ABORT COMP", compId)
         setPrepareAbortCompReady(true)
     }
 
     useEffect(() => {
         setGetCompetitionInformation(true)
+        setGetAthleteListByComp(true)
     }, [competitionId])
 
     //set state for retreived comp table
@@ -175,7 +201,10 @@ const MyCompetitions = ({ competitionId }) => {
             if (competitionDetails.adminAddress == address) {
                 setRenderComp(true)
             }
-            if (competitionDetails.status === "PENDING") {
+            if (
+                competitionDetails.status === "PENDING" &&
+                competitionDetails.adminAddress == address
+            ) {
                 setStartComp(true)
             }
         }
@@ -217,7 +246,7 @@ const MyCompetitions = ({ competitionId }) => {
                     <th scope="row">{competitionDetails.name}</th>
                     <td>{competitionDetails.status}</td>
                     <td>
-                        <button
+                        <TableButtons
                             className={`${
                                 startComp
                                     ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
@@ -230,10 +259,10 @@ const MyCompetitions = ({ competitionId }) => {
                             }
                         >
                             Start Competition
-                        </button>
+                        </TableButtons>
                     </td>
                     <td>
-                        <button
+                        <TableButtons
                             className={`${
                                 startComp
                                     ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
@@ -247,7 +276,7 @@ const MyCompetitions = ({ competitionId }) => {
                             disabled={!prepareAbortComp}
                         >
                             Abort Competition
-                        </button>
+                        </TableButtons>
                     </td>
                 </tr>
             )}

@@ -453,10 +453,10 @@ contract ChainRunners is Ownable {
     function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
         //------------------------
         //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
-        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
-            _distance += counter;
-            counter += 10000;
-        }
+        // if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
+        //     _distance += counter;
+        //     counter += 10000;
+        // }
         if (_athlete == 0x0a192a377E7F2Bd2ffe494cE0976b79D897E10B0) {
             _distance += counter;
             counter += 10000;
@@ -576,12 +576,12 @@ contract ChainRunners is Ownable {
     }
 
     function abortCompetition(uint256 _compId) public onlyAdmin(msg.sender, _compId) {
-        if (competition.status != CompetitionStatus.pending) {
-            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
-        }
-
         //retrieve comp tables
         CompetitionForm storage _competition = competitionTable[competitionId];
+
+        if (_competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
+        }
 
         //update status
         _competition.status = CompetitionStatus.aborted;

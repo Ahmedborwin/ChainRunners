@@ -119,7 +119,7 @@ const CompetitionCreation = () => {
             }).then(() => {
                 // This will be executed after the Swal alert
                 // Hard reload the page
-                window.location.reload(true)
+                window.location.href = "/"
             })
         })
     }

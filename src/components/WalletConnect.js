@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from "react";
-import styled, { keyframes } from 'styled-components';
+import React, { useRef, useEffect } from "react"
+import styled, { keyframes } from "styled-components"
 
 // Components
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 
 // Images
-import logo from '../assets/images/image.png';
+import logo from "../assets/images/image.png"
 
 // Styles
 const WalletContainer = styled("div")`
@@ -40,9 +40,9 @@ const colorRun = keyframes`
     100% {
         color: #fdfb31;
     }
-`;
+`
 
-const Brand = styled('p')`
+const Brand = styled("p")`
     // padding: 1%;
     // background: linear-gradient(to right, #0d2137, #19ddd3);
     color: #fff;
@@ -57,55 +57,48 @@ const Brand = styled('p')`
 `
 
 const LogoImg = styled.img`
-  width: 200px; /* Adjust the width as needed */
-  height: auto;
-  transition: transform 0.3s ease-in-out;
-  margin-bottom: 100px;
+    width: 200px; /* Adjust the width as needed */
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+    margin-bottom: 100px;
 
-  &:hover {
-    transform: scale(1.5);
-  }
-`;
+    &:hover {
+        transform: scale(1.5);
+    }
+`
 
 const WalletConnect = () => {
-    const greeterRef = useRef(null);
+    const greeterRef = useRef(null)
 
     useEffect(() => {
         const interval = setInterval(() => {
-            runEffect();
-        }, 10000); // Run the effect every 10 seconds
+            runEffect()
+        }, 10000) // Run the effect every 10 seconds
 
         // Clean up the interval when the component is unmounted
-        return () => clearInterval(interval);
-    }, []);
+        return () => clearInterval(interval)
+    }, [])
 
     const runEffect = () => {
         // Trigger the running effect
         if (greeterRef.current) {
-            greeterRef.current.classList.remove('run-animation');
-            void greeterRef.current.offsetWidth; // Trigger reflow
-            greeterRef.current.classList.add('run-animation');
+            greeterRef.current.classList.remove("run-animation")
+            void greeterRef.current.offsetWidth // Trigger reflow
+            greeterRef.current.classList.add("run-animation")
         }
-    };
+    }
 
     return (
         <WalletContainer className="wallet-connect-container">
-            <LogoImg
-                alt="logo"
-                src={logo}
-                className="d-inline-block align-top mx-3"
-            />
-            <Title>Welcome to
-                <Brand ref={greeterRef}>
-                    &nbsp; ChainRunners &nbsp;
-                </Brand>
+            <LogoImg alt="logo" src={logo} className="d-inline-block align-top mx-3" />
+            <Title>
+                Welcome to
+                <Brand ref={greeterRef}>&nbsp; ChainRunners &nbsp;</Brand>
             </Title>
             <p>Connect your wallet to get started</p>
-            <ConnectButton>
-                Connect Wallet
-            </ConnectButton>
+            <ConnectButton>Connect Wallet</ConnectButton>
         </WalletContainer>
-    );
+    )
 }
 
-export default WalletConnect;
+export default WalletConnect

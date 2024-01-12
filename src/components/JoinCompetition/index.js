@@ -2,6 +2,12 @@ import React, { useState } from "react"
 import { Form, Button } from "react-bootstrap"
 import styled from "styled-components"
 
+import Swal from "sweetalert2"
+
+//Address and ABI
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
+
 // Components
 import Greeter from "../Greeter"
 import ShowCompetitions from "./ShowCompetitions"
@@ -14,6 +20,10 @@ import { useSelector } from "react-redux"
 
 // Store
 import { selectAuthDetails } from "../../store/tokenExchange"
+
+//hooks
+import { useContractEvent } from "wagmi"
+import useWalletConnected from "../../hooks/useAccount"
 
 const Container = styled("div")`
     position: relative;
@@ -39,7 +49,26 @@ const JoinNewCompetition = () => {
 
     const handleSearch = () => setShowCompetitions(true)
 
-    console.log("index", searchText)
+    const { chain, address } = useWalletConnected()
+
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "athleteJoinedCompetition",
+        listener(log) {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Joined!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                // This will be executed after the Swal alert
+                // Hard reload the page
+                window.location.href = "/"
+            })
+        },
+    })
 
     return (
         <Container>

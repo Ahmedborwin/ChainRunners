@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { formatEther, parseEther } from "viem"
 import Swal from "sweetalert2"
 import { ethers } from "ethers"
+import { useWaitForTransaction } from "wagmi"
 
 //Components
 import NFTIndex from "./Index"
@@ -85,8 +86,9 @@ const BuyNFT = () => {
     // const [mintNFTWriteReady, setMintNFTWriteReady] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [tokenBalance, setTokenBalance] = useState(0)
+    const [approveHash, setApproveHash] = useState(null)
 
-    const { chain, wallet, address } = useWalletConnected()
+    const { chain, address } = useWalletConnected()
 
     // Read competition table
     const { data: tokenBalanceData } = useContractRead({
@@ -147,39 +149,42 @@ const BuyNFT = () => {
 
     //handle buy
     const handleBuyNFT = async () => {
-        try {
-            // Execute the approve transaction and get the transaction hash
-            const txResponse = await approveChainRunner()
+        // Execute the approve transaction and get the transaction hash
+        const txResponse = await approveChainRunner()
+        setApproveHash(txResponse.hash)
 
-            // Extract the transaction hash from the response
-            const txHash = txResponse.hash
-
-            // Create an ethers provider
-            const provider = new ethers.providers.Web3Provider(window.ethereum)
-
-            // Wait for the transaction to be confirmed
-            const confirmationsNeeded = 1 // Adjust based on your requirement
-            await provider.waitForTransaction(txHash, confirmationsNeeded)
-
-            //set Loading screen
-            setIsLoading(true)
-
-            // Once the approval is confirmed, proceed to mint NFT
-            mintNFTWrite()
-
-            //set Loading screen
-            setIsLoading(false)
-        } catch (error) {
-            console.error("Transaction failed", error)
-            Swal.fire({
-                title: "Transaction Error",
-                text: "There was an error processing your transaction",
-                icon: "error",
-            })
-        } finally {
-            setIsLoading(false)
-        }
+        //set Loading screen
+        setIsLoading(true)
     }
+
+    useWaitForTransaction({
+        hash: approveHash,
+        confirmations: 1,
+        onSettled: (data, error) => {
+            if (data) {
+                // Handle successful transaction confirmation
+                setIsLoading(false)
+                // Once the approval is confirmed, proceed to mint NFT
+                const txMintResponse = mintNFTWrite()
+
+                if (txMintResponse?.hash) {
+                    Swal.fire({
+                        title: "<strong>NFT Mint TX Hash</strong>",
+                        icon: "info",
+                        url: `https://mumbai.polygonscan.com/address/`,
+                        showCloseButton: true,
+                    })
+                }
+            } else if (error) {
+                console.error("Transaction failed", error)
+                Swal.fire({
+                    title: "Transaction Error",
+                    text: "There was an error processing your transaction",
+                    icon: "error",
+                })
+            }
+        },
+    })
 
     return (
         <>

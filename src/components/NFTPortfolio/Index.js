@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import styled from "styled-components"
 import { ethers } from "ethers"
 import Swal from "sweetalert2"
-import { PublicClient } from "viem"
+import { useContractEvent } from "wagmi"
 
 // Images
 import mapsImage from "../../assets/images/chain.jpg"
@@ -68,14 +68,9 @@ const CenteredCard = styled.div`
 const NFTPortfolio = ({ isLoading }) => {
     //States
     const [nftURIList, setNftURIList] = useState([])
-    const [getTokenURIList, setGetTokenURIList] = useState(false)
 
     //hooks
     const { chain, address } = useWalletConnected()
-
-    //get provider
-    const providerurl = chain.id in providerURLs ? providerURLs[chain.id] : null
-    const provider = new ethers.providers.JsonRpcProvider(providerurl)
 
     // Read ChainRunnersNFT for NFT URI List
     const { data: TokenURIList } = useContractRead({
@@ -92,10 +87,12 @@ const NFTPortfolio = ({ isLoading }) => {
     })
 
     //event listenener - toast/pop up when NFT bought
-    const listenEvents = async () => {
-        const NFTContract = new ethers.Contract(NFTAddresses[chain.id], NFT_ABI, provider)
 
-        NFTContract.once("nftMinted", async (athlete, NftTier) => {
+    useContractEvent({
+        address: NFTAddresses[chain.id],
+        abi: NFT_ABI,
+        eventName: "nftMinted",
+        listener(log) {
             Swal.fire({
                 position: "top-end",
                 icon: "success",
@@ -107,31 +104,32 @@ const NFTPortfolio = ({ isLoading }) => {
                 // Hard reload the page
                 window.location.reload(true)
             })
-        })
-    }
-
-    //use Effects
-    useEffect(() => {
-        listenEvents()
-    }, [])
+        },
+    })
 
     return (
         <Container>
-            <Greeter />
+            {isLoading ? (
+                <>
+                    <Greeter />
+                    <Loading />
+                </>
+            ) : (
+                <>
+                    <Greeter />
+                    <BuyNFT />
 
-            <>
-                <BuyNFT />
+                    <CenteredCard>
+                        <NftTitle>NFT Portfolio</NftTitle>
+                    </CenteredCard>
 
-                <CenteredCard>
-                    <NftTitle>NFT Portfolio</NftTitle>
-                </CenteredCard>
-
-                <GridContainer className="grid grid-cols-2 gap-4">
-                    {nftURIList.map((uri, index) => (
-                        <ShowNFT key={index} NFTURI={uri} />
-                    ))}
-                </GridContainer>
-            </>
+                    <GridContainer className="grid grid-cols-2 gap-4">
+                        {nftURIList.map((uri, index) => (
+                            <ShowNFT key={index} NFTURI={uri} />
+                        ))}
+                    </GridContainer>
+                </>
+            )}
         </Container>
     )
 }

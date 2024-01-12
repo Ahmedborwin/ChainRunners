@@ -4,6 +4,7 @@ import Swal from "sweetalert2"
 import { ethers } from "ethers"
 import styled from "styled-components"
 import { formatEther } from "viem"
+import { useContractEvent } from "wagmi"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -13,7 +14,6 @@ import ChainRunnersTokenABI from "../../config/chainRunnerTokenAbi.json"
 import providerURLs from "../../config/ProviderUrl.json"
 
 // Components
-import CompetitionHeaders from "./CompetitionHeaders"
 import Greeter from "../Greeter"
 import MyCompetitions from "./MyCompetitions"
 
@@ -89,7 +89,7 @@ const Dashboard = ({ athlete }) => {
         args: [address],
     })
 
-    //Read winner statistics
+    //Read winner statistics used to get CompetitionWon by Address
     const { data: winnerStatistics } = useContractRead({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
@@ -110,14 +110,6 @@ const Dashboard = ({ athlete }) => {
             console.log("Settled Tokens Balance read", { data, error })
         },
     })
-
-    // // Read athlete competitions
-    // const { data: athleteCompetitions } = useContractRead({
-    //     address: ChainRunnersAddresses[chain.id],
-    //     abi: ChainRunners_ABI,
-    //     functionName: "listAthleteCompetitions",
-    //     args: [address],
-    // })
 
     //read chainrunners for competitionId's
     const { data: competitionCount } = useContractRead({
@@ -189,30 +181,32 @@ const Dashboard = ({ athlete }) => {
         }
     }, [tokens, tokensOwned])
 
-    //event listenener - toast/pop up when NFT bought
-    const listenEvents = async () => {
-        const NFTContract = new ethers.Contract(
-            ChainRunnersAddresses[chain.id],
-            ChainRunners_ABI,
-            provider
-        )
-        NFTContract.once(
-            "competitionStarted",
-            async (compId, athleteList, startDate, endDate, nextPayoutDate) => {
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "Competition Created Succesfully!",
-                    showConfirmButton: false,
-                    timer: 1500,
-                }).then(() => {
-                    // This will be executed after the Swal alert
-                    // Hard reload the page
-                    window.location.reload(true)
-                })
-            }
-        )
-        NFTContract.once("competitionAborted", async (compId) => {
+    //comp Started Event Listener
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "competitionStarted",
+        listener(log) {
+            console.log("comp started", log)
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Started Succesfully!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                // window.location.reload(true)
+            })
+        },
+    })
+
+    //Comp Aborted Event
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "competitionAborted",
+        listener(log) {
+            console.log("comp Aborted", log)
             Swal.fire({
                 position: "top-end",
                 icon: "success",
@@ -220,17 +214,35 @@ const Dashboard = ({ athlete }) => {
                 showConfirmButton: false,
                 timer: 1500,
             }).then(() => {
-                // This will be executed after the Swal alert
-                // Hard reload the page
                 window.location.reload(true)
             })
-        })
-    }
+        },
+    })
 
-    //use Effects
-    useEffect(() => {
-        listenEvents()
-    }, [])
+    //Winner Picked Event Listener
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "winnerPicked",
+        listener(log) {
+            const winnerAddress = log[0].args.winndersAddress
+            console.log("Winner picked log", log)
+
+            Swal.fire({
+                title: `Winner Picked! The winners Address is: ${winnerAddress}`,
+                width: 600,
+                padding: "3em",
+                color: "#716add",
+                background: "#fff url(/images/trees.png)",
+                backdrop: `
+                  rgba(0,0,123,0.4)
+                  url("/images/nyan-cat.gif")
+                  left top
+                  no-repeat
+                `,
+            })
+        },
+    })
 
     return (
         <>

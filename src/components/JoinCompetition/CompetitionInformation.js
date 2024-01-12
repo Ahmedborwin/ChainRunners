@@ -120,7 +120,6 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
 
     useEffect(() => {
         console.log("joinCompetitionIsReady", joinCompetitionIsReady)
-        console.log("compIdReady", compIdReady)
         if (joinCompetitionIsReady && compIdReady) {
             joinCompetition()
             setCompIdReady(false) // Reset the state after the operation
@@ -132,15 +131,9 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
         console.log("Join comp response", joinCompResponse)
         if (joinCompError) {
             Swal.fire({
-                title: "Create Competition Error",
+                title: "Join Competition Error",
                 text: `ERROR ${JSON.stringify(joinCompResponse)}`,
                 icon: "error",
-            })
-        } else if (joinCompSuccess) {
-            Swal.fire({
-                title: "Success",
-                text: `Competition Joined successfully`,
-                icon: "success",
             })
         }
     }, [joinCompSuccess, joinCompError])

@@ -100,8 +100,6 @@ const NFTPortfolio = ({ isLoading }) => {
                 showConfirmButton: false,
                 timer: 1500,
             }).then(() => {
-                // This will be executed after the Swal alert
-                // Hard reload the page
                 window.location.reload(true)
             })
         },
@@ -111,8 +109,7 @@ const NFTPortfolio = ({ isLoading }) => {
         <Container>
             {isLoading ? (
                 <>
-                    <Greeter />
-                    <Loading />
+                    <Loading customAction={"Approving Token Transfer"} />
                 </>
             ) : (
                 <>

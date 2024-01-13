@@ -81,12 +81,10 @@ const StyledButton = styled.a`
 
 const BuyNFT = () => {
     //hooks
-    // const [approveTransferReady, setApproveTransferReady] = useState(false)
-    // const [mintNFTPrepareReady, setMintNFTPrepareReady] = useState(false)
-    // const [mintNFTWriteReady, setMintNFTWriteReady] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [tokenBalance, setTokenBalance] = useState(0)
     const [approveHash, setApproveHash] = useState(null)
+    const [mintHash, setMintHash] = useState(null)
 
     const { chain, address } = useWalletConnected()
 
@@ -100,8 +98,10 @@ const BuyNFT = () => {
             window.alert(error)
         },
         onSuccess(data) {
-            console.log("tokenBalance", formatEther(tokenBalanceData))
-            setTokenBalance(formatEther(tokenBalanceData))
+            if (tokenBalanceData > 0) {
+                console.log("tokenBalance", formatEther(tokenBalanceData))
+                setTokenBalance(formatEther(tokenBalanceData))
+            }
         },
     })
 
@@ -128,7 +128,7 @@ const BuyNFT = () => {
     // Mint NFT
     const {
         data: NFTMintResponse,
-        write: mintNFTWrite,
+        writeAsync: mintNFTWrite,
         isSuccess: MintNFTSuccesfull,
         isError: MintNFTError,
     } = useContractWrite({
@@ -157,24 +157,44 @@ const BuyNFT = () => {
         setIsLoading(true)
     }
 
+    //TODO
+    //i want to get the hash of the mint tx and display to nft minter -
+    //maybe url to take them to polygonscan?
+    // useWaitForTransaction({
+    //     hash: approveHash,
+    //     confirmations: 1,
+    //     onSettled: (data, error) => {
+    //         if (data) {
+    //             // Handle successful transaction confirmation
+    //             setIsLoading(false)
+    //             // Once the approval is confirmed, proceed to mint NFT
+    //             const txMintResponse = mintNFTWrite()
+    //             setMintHash(txMintResponse.hash)
+    //             console.log(txMintResponse.hash)
+    //         } else if (error) {
+    //             console.error("Transaction failed", error)
+    //             Swal.fire({
+    //                 title: "Transaction Error",
+    //                 text: "There was an error processing your transaction",
+    //                 icon: "error",
+    //             })
+    //         }
+    //     },
+    // })
+
     useWaitForTransaction({
-        hash: approveHash,
+        hash: mintHash,
         confirmations: 1,
         onSettled: (data, error) => {
             if (data) {
-                // Handle successful transaction confirmation
-                setIsLoading(false)
-                // Once the approval is confirmed, proceed to mint NFT
-                const txMintResponse = mintNFTWrite()
+                console.log("txMintResponse", data)
 
-                if (txMintResponse?.hash) {
-                    Swal.fire({
-                        title: "<strong>NFT Mint TX Hash</strong>",
-                        icon: "info",
-                        url: `https://mumbai.polygonscan.com/address/`,
-                        showCloseButton: true,
-                    })
-                }
+                Swal.fire({
+                    title: "<strong>NFT Mint TX Hash</strong>",
+                    icon: "info",
+                    url: `https://mumbai.polygonscan.com/address/`,
+                    showCloseButton: true,
+                })
             } else if (error) {
                 console.error("Transaction failed", error)
                 Swal.fire({

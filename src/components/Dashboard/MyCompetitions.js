@@ -22,6 +22,7 @@ const MyCompetitions = ({ competitionId }) => {
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
     const [getAthleteListByComp, setGetAthleteListByComp] = useState([])
     const [startComp, setStartComp] = useState(false)
+    const [notAdmin, setNotAdmin] = useState(false)
     const [compId, setCompId] = useState(null)
     const [prepareStartCompReady, setPrepareStartCompReady] = useState(null)
     const [startCompetitionReady, setStartCompetitionReady] = useState(false)
@@ -76,7 +77,8 @@ const MyCompetitions = ({ competitionId }) => {
         },
     })
 
-    // Read competition table
+    // Read List of Athletes by Comp
+    //IF address is found in list of athletes for this CompId then renderComp
     const { data: athleteListByCompId } = useContractRead({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
@@ -86,9 +88,6 @@ const MyCompetitions = ({ competitionId }) => {
         onSettled(data, error) {
             setGetAthleteListByComp(true)
             if (data) {
-                if (data.includes(address)) {
-                    setRenderComp(true)
-                }
                 console.log(competitionId, data)
             } else if (error) {
                 console.log("get List of Athlete Error", error)
@@ -159,7 +158,6 @@ const MyCompetitions = ({ competitionId }) => {
     //handle Abort competition
     const handleAbortCompetition = async (_compId) => {
         setCompId(_compId)
-        console.log("ABORT COMP", compId)
         setPrepareAbortCompReady(true)
     }
 
@@ -197,15 +195,20 @@ const MyCompetitions = ({ competitionId }) => {
 
             setCompetitionDetails(competitionDetails)
 
-            //check if comp status is pending
+            //check if address is admin
             if (competitionDetails.adminAddress == address) {
+                //if so render comp
                 setRenderComp(true)
-            }
-            if (
-                competitionDetails.status === "PENDING" &&
-                competitionDetails.adminAddress == address
-            ) {
-                setStartComp(true)
+                //if so check if status is pending
+                if (competitionDetails.status === "PENDING") {
+                    //enable start and abort buttons
+                    setStartComp(true)
+                }
+                //else check if address is athlete in comp
+            } else if (athleteListByCompId.includes(address)) {
+                //if so render comp and set ad not admin
+                setRenderComp(true)
+                setNotAdmin(true)
             }
         }
     }, [competitionForm])
@@ -237,7 +240,6 @@ const MyCompetitions = ({ competitionId }) => {
             })
         }
     }, [startCompError])
-    //note
 
     return (
         <>
@@ -258,7 +260,7 @@ const MyCompetitions = ({ competitionId }) => {
                                     : null
                             }
                         >
-                            Start Competition
+                            {notAdmin ? "Admin Only" : "Start Competition"}
                         </TableButtons>
                     </td>
                     <td>
@@ -275,7 +277,7 @@ const MyCompetitions = ({ competitionId }) => {
                             }
                             disabled={!prepareAbortComp}
                         >
-                            Abort Competition
+                            {notAdmin ? "Admin Only" : "Start Competition"}
                         </TableButtons>
                     </td>
                 </tr>

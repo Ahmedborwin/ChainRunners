@@ -1,10 +1,9 @@
 import { useAccount, useNetwork } from "wagmi"
 import { useWalletClient } from "wagmi"
-import { useState } from "react"
+import { useEffect } from "react"
 
 const useWalletConnected = () => {
-    const { address, isConnecting, isReconnecting } = useAccount()
-    const [currentAddress, setCurrentAddress] = useState(null)
+    const { address, isConnecting, isConnected } = useAccount()
 
     const { chain } = useNetwork()
 

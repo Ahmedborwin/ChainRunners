@@ -195,7 +195,7 @@ const Dashboard = ({ athlete }) => {
                 showConfirmButton: false,
                 timer: 1500,
             }).then(() => {
-                // window.location.reload(true)
+                window.location.reload(true)
             })
         },
     })
@@ -219,13 +219,37 @@ const Dashboard = ({ athlete }) => {
         },
     })
 
+    //Interval Winner Picked Event Listener
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "IntervalWinnerEvent",
+        listener(log) {
+            const winnerAddress = log[0].args.winnerAddress
+
+            Swal.fire({
+                title: `Interval Winner Picked! The winners Address is: ${winnerAddress}`,
+                width: 600,
+                padding: "3em",
+                color: "#716add",
+                background: "#fff url(/images/trees.png)",
+                backdrop: `
+                  rgba(0,0,123,0.4)
+                  url("/images/nyan-cat.gif")
+                  left top
+                  no-repeat
+                `,
+            })
+        },
+    })
+
     //Winner Picked Event Listener
     useContractEvent({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         eventName: "winnerPicked",
         listener(log) {
-            const winnerAddress = log[0].args.winndersAddress
+            const winnerAddress = log[0].args.winnerAddress
             console.log("Winner picked log", log)
 
             Swal.fire({

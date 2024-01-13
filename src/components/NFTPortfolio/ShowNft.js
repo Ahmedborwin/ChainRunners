@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Card, CardBody } from "react-bootstrap"
+import { Card } from "react-bootstrap"
 import styled from "styled-components"
 
 const CardFooter = styled("CardBody")`

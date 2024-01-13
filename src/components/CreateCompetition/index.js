@@ -69,15 +69,14 @@ const CompetitionCreation = () => {
         enabled: createCompetitionReady,
         account: address,
         value: parseEther(buyIn.toString()),
-        onError(error) {
-            window.alert(error)
-            setCreateCompetitionReady(false)
-        },
-        onSuccess(data) {
-            setCreateCompetitionReady(false)
-            console.log(data)
-        },
         onSettled(data, error) {
+            if (data) {
+                setCreateCompetitionReady(false)
+                console.log(data)
+            } else if (error) {
+                window.alert(error)
+                setCreateCompetitionReady(false)
+            }
             console.log("Settled", { data, error })
         },
     })
@@ -165,7 +164,7 @@ const CompetitionCreation = () => {
                             type="number"
                             placeholder="Enter Buy-In Amount"
                             value={buyIn}
-                            onChange={(e) => setBuyIn(e.target.value)}
+                            readOnly
                         />
                     </Form.Group>
 

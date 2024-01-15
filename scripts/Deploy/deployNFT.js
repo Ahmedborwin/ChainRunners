@@ -1,19 +1,20 @@
 const hre = require("hardhat")
-const { networkConfig, developmentChains } = require("../../helper-hardhat-config")
+const { networkConfig } = require("../../helper-hardhat-config")
 const { storeImages, storeTokenUriMetadata } = require("../utils/uploadPinata")
 const { metadataTemplateArray } = require("../../constants")
+const VRFCoordinatorV2ABI = require("../../src/config/vrfCordinatorV2ABI.json")
 
 let counter
 
 const imagesLocation = "Media/NFT"
 
 let tokenUris = [
-    "ipfs://QmdBMEK72nU2oMupqrT1fSj6kHt8VttTg5q67RvvgjXD3G",
-    "ipfs://QmeBpehrsCkMubmiyHMyh8mVH6DskdNzFR3DhLA61cXQrs",
-    "ipfs://QmfYfDLWpfz167rVtqve3we7SyuKcb5EPFaqnqxYCfpRJV",
-    "ipfs://QmQS2bbtcRV4tZ7ScHvBXbKuT3Nwp986e5rvwzhGsCe85Z",
-    "ipfs://QmX1eBFnkNsU33GiZnDXrp1cCPG31v8qnDiC7cNwtVjYAH",
-    "ipfs://QmeixBpjnnF7fWuc9p8CcFiRuMPTjkT27LY5CLgdYpi5wu",
+    "ipfs://Qmdiqgx6v4BwAob7LBbCoWXLQRfX6c64J7aAzf5HJ2Ueby",
+    "ipfs://QmW3Y41WmUmiR61TVyqFLBagmzQAFAFYjPFB262wv33Asd",
+    "ipfs://QmaSd4cazjgi3mF3f3m3JxR6eRN2sQ5nyRUjAWP1CS6o8R",
+    "ipfs://QmYJxJSnKr47rjLRjCHW8UxKoEykFxr2xMvYTCpsuH8VGM",
+    "ipfs://QmUCSDj79jANawVXBFSVStgMdVDrsZ2hoTo8Yt6w7Voud9",
+    "ipfs://QmX5vNacPZBC7GpFU2JJFgdKMbphLgGE5WxN7G36WLcPjE",
     "ipfs://QmQXHFdrFMynZRY2cmPV12EMuvKoNTeATmwjbzZ4sJm1b3",
 ]
 
@@ -59,7 +60,16 @@ async function deployNFT() {
 
     const chainRunnersNFT = await hre.ethers.deployContract("ChainRunnersNFT", args)
 
-    await vrfCoordinatorV2Mock.addConsumer(subscriptionId, chainRunnersNFT.address)
+    //Add NFt contract as a VRF consumer
+    if (chainId == 31337) {
+        await vrfCoordinatorV2Mock.addConsumer(subscriptionId, chainRunnersNFT.address)
+    } else {
+        const vrfCoorindatorContract = await hre.ethers.getContractAt(
+            VRFCoordinatorV2ABI,
+            vrfCoordinatorV2Address
+        )
+        await vrfCoorindatorContract.addConsumer(subscriptionId, chainRunnersNFT.address)
+    }
 
     return [chainRunnersNFT, vrfCoordinatorV2Mock]
 }
@@ -67,7 +77,7 @@ async function deployNFT() {
 async function handleTokenUris() {
     tokenUris = []
     counter = 1
-    const { responses: imageUploadResponses, files } = await storeImages(imagesLocation)
+    const { responses: imageUploadResponses } = await storeImages(imagesLocation)
     for (imageUploadResponseIndex in imageUploadResponses) {
         let tokenUriMetadata = metadataTemplateArray[imageUploadResponseIndex]
         tokenUriMetadata.image = `ipfs://${imageUploadResponses[imageUploadResponseIndex].IpfsHash}`

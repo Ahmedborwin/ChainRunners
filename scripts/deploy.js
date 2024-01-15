@@ -3,10 +3,11 @@ const fs = require("fs")
 const path = require("path")
 const updateContractInfo = require("./updateAddress&ABI")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const { SubscriptionManager } = require("@chainlink/functions-toolkit")
+const { SubscriptionManager, startLocalFunctionsTestnet } = require("@chainlink/functions-toolkit")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 const deployNFTContractScript = require("./Deploy/deployNFT")
 const deployTokenContractScript = require("./Deploy/deployToken")
+const { parseEther } = require("viem")
 
 async function main() {
     let donHostedSecretsObject,
@@ -39,6 +40,10 @@ async function main() {
     if (chainID === "31337") {
         provider = hre.network.provider
         ;[athlete, athlete_2] = await hre.ethers.getSigners()
+        // const localFunctionsTestnet = await startLocalFunctionsTestnet(
+        //     simulationConfigPath?: string // Absolute path to config file which exports simulation config parameters
+        //     options?: ServerOptions // Ganache server options
+        //   )
     } else {
         provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
         donHostedSecretsObject = await chainLinkFunctions(chainID)
@@ -72,7 +77,7 @@ async function main() {
     // only populate on test net for now
     if (chainID !== "31337") {
         console.log(`\n ------------------------------------`)
-        console.log(`Set up consumer if deployed to non Local`)
+        console.log(`Set up consumer for chainID:: ${chainID}`)
         console.log(`------------------------------------ \n`)
         const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
         const wallet = new hre.ethers.Wallet(privateKey)
@@ -119,7 +124,11 @@ async function main() {
     }
 
     //deploy chainrunners
-    const chainrunner = await hre.ethers.deployContract("ChainRunners", [consumer.address])
+    const chainrunner = await hre.ethers.deployContract("ChainRunners", [
+        consumer.address,
+        chainRunnerToken.address,
+        chainRunnersNFT.address,
+    ])
     await chainrunner.deployed()
 
     console.log(`\n ------------------------------------`)
@@ -127,32 +136,28 @@ async function main() {
     console.log(`------------------------------------\n`)
 
     //set up chainrunners for testing
-    if (chainID !== "31337") {
-        console.log(`\n ------------------------------------`)
-        console.log(`Create Competition , and Athlete2 Joins, set Admin, assign consumer address`)
-        console.log(`\n ------------------------------------`)
-        const buyIn = hre.ethers.utils.parseEther("0.01")
-        await chainrunner.createAthlete("Ahmed", "62612170")
-        await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
-        //create competitions and join with other athlete
-        await chainrunner.createCompetition("oneForAll", buyIn, 28, 7, {
-            value: buyIn,
-        })
-        await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
-        //set chainrunner as admin
-        await consumer.setAdmin(chainrunner.address)
-        //set chainrunner interface
-        await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
-    }
 
-    //TODO
-    //approve chain runners to token
+    console.log(`\n ------------------------------------`)
+    console.log(`Create Competition , and Athlete2 Joins, set Admin, assign consumer address`)
+    console.log(`------------------------------------\n`)
+    const buyIn = hre.ethers.utils.parseEther("0.01")
+    await chainrunner.createAthlete("Ahmed", "62612170")
+    await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
+    //create competitions and join with other athlete
+    await chainrunner.createCompetition("oneForAll", 28, 7, {
+        value: buyIn,
+    })
+    // await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    //set chainrunner as admin
+    await consumer.setAdmin(chainrunner.address)
+    //set chainrunner interface
+    await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
+
+    // approve chain runners to token
     const totalSupply = await chainRunnerToken.totalSupply()
-    await chainRunnerToken.approve(chainrunner.address, totalSupply)
-    const allowance = await chainRunnerToken.allowance(athlete.address, chainrunner.address)
-    console.log("Allowance: ", hre.ethers.utils.formatEther(allowance), "ETH")
-
-    // //record new contract address and ABI
+    // Keep
+    await chainRunnerToken.transfer(chainrunner.address, parseEther("100000"))
+    //record new contract address and ABI
     await updateContractInfo(
         chainrunner.address,
         consumer.address,

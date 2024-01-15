@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -11,10 +11,10 @@ import CompetitionInformation from "./CompetitionInformation"
 import { useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
 
-const ShowCompetitions = ({ showCompetitions }) => {
-    const [compIdArray, setCompIdArray] = useState([]);
+const ShowCompetitions = ({ showCompetitions, searchText }) => {
+    const [compIdArray, setCompIdArray] = useState([])
 
-    const { chain } = useWalletConnected();
+    const { chain } = useWalletConnected()
 
     // Read ChainRunners for competitionId's
     const { data: competitionCount } = useContractRead({
@@ -22,37 +22,43 @@ const ShowCompetitions = ({ showCompetitions }) => {
         abi: ChainRunners_ABI,
         functionName: "competitionId",
 
-        onError(error) {
-            window.alert(error)
-        },
-        onSuccess(data) {
-            console.log("Last Comp Id:", data)
-        },
         onSettled(data, error) {
-            console.log("Settled", { data, error })
+            if (data) {
+                console.log("Settled Succesfully", data)
+            } else if (error) {
+                console.log("Settled with error", error)
+            }
         },
     })
 
     // Create array of competition IDs
     useEffect(() => {
-        if (competitionCount > 1) {
+        if (competitionCount > 0) {
             // Create array of compID's
-            const _compIdArray = [];
+            const _compIdArray = []
             for (let i = 1; i <= competitionCount; i++) {
                 _compIdArray.push(i)
             }
-            setCompIdArray(_compIdArray);
+            setCompIdArray(_compIdArray)
         }
     }, [competitionCount])
+
+    console.log("show comp", searchText)
 
     return (
         showCompetitions && (
             <div style={{ width: "80vw" }}>
-                <h4 className="m-2" style={{ color: "white" }}>Search Results:</h4>
+                <h4 className="m-2" style={{ color: "white" }}>
+                    Search Results:
+                </h4>
                 <hr style={{ color: "white" }} />
-                <div style={{ display: "flex"}}>
+                <div style={{ display: "flex" }}>
                     {compIdArray.map((competitionId, index) => (
-                        <CompetitionInformation key={index} competitionId={competitionId} />
+                        <CompetitionInformation
+                            key={index}
+                            competitionId={competitionId}
+                            searchText={searchText}
+                        />
                     ))}
                 </div>
             </div>
@@ -60,4 +66,4 @@ const ShowCompetitions = ({ showCompetitions }) => {
     )
 }
 
-export default ShowCompetitions;
+export default ShowCompetitions

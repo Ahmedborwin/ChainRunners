@@ -66,7 +66,7 @@ module.exports = {
             url: "https://api.avax.network/ext/bc/C/rpc",
             gasPrice: 500000,
             chainId: 43114,
-            accounts: [],
+            accounts: [PRIVATE_KEY],
         },
     },
     etherscan: {

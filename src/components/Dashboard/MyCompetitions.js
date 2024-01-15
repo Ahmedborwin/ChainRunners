@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { formatEther, parseEther } from "viem"
+import Swal from "sweetalert2"
 import styled from "styled-components"
-import { Form, Button, Card } from "react-bootstrap"
 
 // ABIs
 import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
@@ -10,57 +9,26 @@ import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite, useContractRead } from "wagmi"
 import useWalletConnected from "../../hooks/useAccount"
-const FlexGridContainer = styled.div`
-    display: flex;
-    flex-direction: row;
-    wrap: nowrap;
-    gap: 2px; /* Adjust the gap as needed */
-    overflow-x: auto; /* Add horizontal scrolling if items overflow */
-`
-const GridItem = styled.div`
-    border: 1px solid #ccc;
-    padding: 10px;
-    box-sizing: border-box;
-    flex: 0 1 auto; /* Allow shrinking but not growing */
-    min-width: 130px; /* Set a minimum width for each item */
+import { Button } from "react-bootstrap"
 
-    /* Default flex-basis for small screens (e.g., mobile devices) */
-    flex-basis: calc(100% - 10px); /* Full width minus the gap */
-
-    /* Medium screens (e.g., tablets) */
-    @media (min-width: 600px) {
-        flex-basis: calc(50% - 10px); /* Half width for 2 items per row */
-    }
-
-    /* Large screens (e.g., desktops) */
-    @media (min-width: 1024px) {
-        flex-basis: calc(33.333% - 10px); /* One-third width for 3 items per row */
-    }
-
-    /* Extra large screens */
-    @media (min-width: 1440px) {
-        flex-basis: calc(25% - 10px); /* One-fourth width for 4 items per row */
-    }
-`
-
-const ScrollableGridContainer = styled.div`
-    display: column;
-    flex-direction: column;
-    overflow-x: auto; // Enable horizontal scrolling
-    width: 100%; // Adjust the width as needed
+const TableButtons = styled(Button)`
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
+    border-radius: 12px;
 `
 
 const MyCompetitions = ({ competitionId }) => {
     const [renderComp, setRenderComp] = useState(false)
     const [competitionDetails, setCompetitionDetails] = useState({})
     const [getCompetitionInformation, setGetCompetitionInformation] = useState(false)
+    const [getAthleteListByComp, setGetAthleteListByComp] = useState([])
     const [startComp, setStartComp] = useState(false)
+    const [notAdmin, setNotAdmin] = useState(false)
     const [compId, setCompId] = useState(null)
+    const [prepareStartCompReady, setPrepareStartCompReady] = useState(null)
     const [startCompetitionReady, setStartCompetitionReady] = useState(false)
-    const [compInProgress, setCompInProgress] = useState(false)
-    const [compClosed, setCompClosed] = useState(false)
-    const [compAborted, setCompAborted] = useState(false)
-    const [winnersAddress, setWinnersAddress] = useState(null)
+    const [prepareAbortCompReady, setPrepareAbortCompReady] = useState(false)
+    const [abortCompetitionReady, setAbortCompetitionReady] = useState(false)
+
     //functions
     function formatDate(epoch) {
         var date = new Date(epoch * 1000) // Convert epoch to milliseconds
@@ -90,7 +58,7 @@ const MyCompetitions = ({ competitionId }) => {
     }
 
     //hooks
-    const { chain, address, wallet } = useWalletConnected()
+    const { chain, address } = useWalletConnected()
 
     // Read competition table
     const { data: competitionForm } = useContractRead({
@@ -109,47 +77,94 @@ const MyCompetitions = ({ competitionId }) => {
         },
     })
 
-    // Read competition table
-    const { data: winnerAddress } = useContractRead({
+    // Read List of Athletes by Comp
+    //IF address is found in list of athletes for this CompId then renderComp
+    const { data: athleteListByCompId } = useContractRead({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        functionName: "overAllWinnerByComp",
+        functionName: "getAthleteList",
         args: [competitionId],
-        onError(error) {
-            window.alert(error)
-        },
-        onSuccess(data) {
-            setWinnersAddress(data)
-            console.log("winners address", data)
+        enabled: getAthleteListByComp,
+        onSettled(data, error) {
+            setGetAthleteListByComp(true)
+            if (data) {
+                console.log(competitionId, data)
+            } else if (error) {
+                console.log("get List of Athlete Error", error)
+            }
         },
     })
 
-    // Prepare contract write to join Competition
+    // Prepare contract write to start Competition
     const { config: prepareStartComp } = usePrepareContractWrite({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "commenceCompetition",
         args: [compId],
-        enabled: startCompetitionReady,
-        onError(error) {
-            window.alert(error)
-            setStartCompetitionReady(false) // Reset the state after the operation
-        },
-        onSuccess(data) {
-            console.log("start competition preparation success", data)
-            setStartCompetitionReady(false) // Reset the state after the operation
-        },
+        enabled: prepareStartCompReady,
         onSettled(data, error) {
             if (data) {
+                setStartCompetitionReady(true)
                 console.log("Start Comp Prepare write Settled Successfully", { data })
             } else if (error) {
                 console.log("Start Comp Prepare write settled with error", { error })
+                Swal.fire({
+                    title: "Create Competition Error",
+                    text: `${error}`,
+                    icon: "error",
+                })
+            }
+        },
+    })
+
+    // start competition
+    const {
+        write: startCompetition,
+        status: createCompStatus,
+        isError: startCompError,
+    } = useContractWrite(prepareStartComp)
+
+    // Prepare contract write to abort Competition
+    const { config: prepareAbortComp } = usePrepareContractWrite({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "abortCompetition",
+        args: [compId],
+        enabled: prepareAbortCompReady,
+        onSettled(data, error) {
+            if (data) {
+                setAbortCompetitionReady(true)
+                console.log("Abort Comp Prepare write Settled Successfully", { data })
+            } else if (error) {
+                console.log("Abort Comp Prepare write settled with error", { error })
+                Swal.fire({
+                    title: "Abort Competition Error",
+                    text: `${error}`,
+                    icon: "error",
+                })
             }
         },
     })
 
     // join competition
-    const { data, write: joinCompetition, isSuccess } = useContractWrite(prepareStartComp)
+    const { write: abortCompetition } = useContractWrite(prepareAbortComp)
+
+    //handle start competition
+    const handleStartCompetition = async (_compId) => {
+        setCompId(_compId)
+        setPrepareStartCompReady(true)
+    }
+
+    //handle Abort competition
+    const handleAbortCompetition = async (_compId) => {
+        setCompId(_compId)
+        setPrepareAbortCompReady(true)
+    }
+
+    useEffect(() => {
+        setGetCompetitionInformation(true)
+        setGetAthleteListByComp(true)
+    }, [competitionId])
 
     //set state for retreived comp table
     useEffect(() => {
@@ -180,87 +195,94 @@ const MyCompetitions = ({ competitionId }) => {
 
             setCompetitionDetails(competitionDetails)
 
-            //check if comp status is pending
+            //check if address is admin
             if (competitionDetails.adminAddress == address) {
+                //if so render comp
                 setRenderComp(true)
-            }
-            if (competitionDetails.status === "PENDING") {
-                setStartComp(true)
-            } else if (competitionDetails.status === "IN_PROGRESS") {
-                setCompInProgress(true)
-            } else if (competitionDetails.status === "CLOSED") {
-                setCompClosed(true)
-            } else if (competitionDetails.status === "ABORTED") {
-                setCompAborted(true)
+                //if so check if status is pending
+                if (competitionDetails.status === "PENDING") {
+                    //enable start and abort buttons
+                    setStartComp(true)
+                }
+                //else check if address is athlete in comp
+            } else if (athleteListByCompId.includes(address)) {
+                //if so render comp and set ad not admin
+                setRenderComp(true)
+                setNotAdmin(true)
             }
         }
     }, [competitionForm])
 
-    //handle start competition
-    const handleStartCompetition = async (_compId) => {
-        console.log(_compId)
-        setCompId(_compId)
-        setStartCompetitionReady(true)
-    }
-
+    //Trigger start competition contract call
     useEffect(() => {
-        setGetCompetitionInformation(true)
-    }, [competitionId])
-
-    useEffect(() => {
-        if (startCompetitionReady && compId && prepareStartComp) {
-            joinCompetition()
-            setStartCompetitionReady(false) // Reset the state after the operation
+        if (prepareStartCompReady && startCompetitionReady) {
+            startCompetition()
+            setStartCompetitionReady(false)
+            setPrepareStartCompReady(false)
         }
-    }, [startCompetitionReady, compId, prepareStartComp])
+    }, [prepareStartCompReady, startCompetitionReady])
+
+    //Trigger abort competition contract call
+    useEffect(() => {
+        if (prepareAbortCompReady && abortCompetitionReady) {
+            abortCompetition()
+            setPrepareAbortCompReady(false)
+            setAbortCompetitionReady(false)
+        }
+    }, [prepareAbortCompReady, abortCompetitionReady])
+
+    useEffect(() => {
+        if (startCompError) {
+            Swal.fire({
+                title: "Start Comp ERROR",
+                text: `ERROR ${JSON.stringify(startCompError)}`,
+                icon: "error",
+            })
+        }
+    }, [startCompError])
 
     return (
-        <div>
+        <>
             {renderComp && (
-                <FlexGridContainer>
-                    <GridItem>{competitionDetails.name}</GridItem>
-                    <GridItem>{competitionDetails.status}</GridItem>
-                    {startComp && (
-                        <GridItem>
-                            <Button
-                                style={{ backgroundColor: "#18729c" }}
-                                onClick={() => handleStartCompetition(competitionDetails.id)}
-                            >
-                                Start Competition
-                            </Button>
-                        </GridItem>
-                    )}
-                    {!startComp && (
-                        <GridItem>
-                            <Button style={{ backgroundColor: "#444444" }}>
-                                Start Competition
-                            </Button>
-                        </GridItem>
-                    )}
-                </FlexGridContainer>
+                <tr>
+                    <th scope="row">{competitionDetails.name}</th>
+                    <td>{competitionDetails.status}</td>
+                    <td>
+                        <TableButtons
+                            className={`${
+                                startComp
+                                    ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
+                                    : "bg-[#ccc] cursor-not-allowed opacity-50"
+                            }`}
+                            onClick={
+                                startComp
+                                    ? () => handleStartCompetition(competitionDetails.id)
+                                    : null
+                            }
+                        >
+                            {notAdmin ? "Admin Only" : "Start Competition"}
+                        </TableButtons>
+                    </td>
+                    <td>
+                        <TableButtons
+                            className={`${
+                                startComp
+                                    ? "bg-[#18729c] hover:bg-[#0f5261] cursor-pointer"
+                                    : "bg-[#ccc] cursor-not-allowed opacity-50"
+                            }`}
+                            onClick={
+                                startComp
+                                    ? () => handleAbortCompetition(competitionDetails.id)
+                                    : null
+                            }
+                            disabled={!prepareAbortComp}
+                        >
+                            {notAdmin ? "Admin Only" : "Abort Competition"}
+                        </TableButtons>
+                    </td>
+                </tr>
             )}
-            {/* {startComp && (
-                        <>
-                            <GridItem>
-                                {formatEther(competitionDetails.totalStakedAmount)} ETH
-                            </GridItem>
-                            <GridItem> {competitionDetails.startDeadline}</GridItem>
-                            <GridItem>
-                                <Button
-                                    style={{ backgroundColor: "#18729c" }}
-                                    onClick={() => handleStartCompetition(competitionDetails.id)}
-                                >
-                                    Start Competition
-                                </Button>
-                            </GridItem>
-                        </>
-                    )}
-                    {compClosed && (
-                        <>
-                            <GridItem> {winnerAddress}</GridItem>
-                        </>
-                    )} */}
-        </div>
+        </>
     )
 }
 

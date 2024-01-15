@@ -2,6 +2,12 @@ import React, { useState } from "react"
 import { Form, Button } from "react-bootstrap"
 import styled from "styled-components"
 
+import Swal from "sweetalert2"
+
+//Address and ABI
+import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
+import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
+
 // Components
 import Greeter from "../Greeter"
 import ShowCompetitions from "./ShowCompetitions"
@@ -14,6 +20,10 @@ import { useSelector } from "react-redux"
 
 // Store
 import { selectAuthDetails } from "../../store/tokenExchange"
+
+//hooks
+import { useContractEvent } from "wagmi"
+import useWalletConnected from "../../hooks/useAccount"
 
 const Container = styled("div")`
     position: relative;
@@ -37,13 +47,42 @@ const JoinNewCompetition = () => {
 
     const userData = useSelector(selectAuthDetails)
 
-    const handleSearch = () => setShowCompetitions(true);
+    const handleSearch = () => setShowCompetitions(true)
+
+    const { chain, address } = useWalletConnected()
+
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "athleteJoinedCompetition",
+        listener(log) {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Competition Joined!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                // This will be executed after the Swal alert
+                // Hard reload the page
+                window.location.href = "/"
+            })
+        },
+    })
 
     return (
         <Container>
             <Greeter />
 
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", marginTop: "2%" }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column",
+                    marginTop: "2%",
+                }}
+            >
                 <CustomForm className="m-4 text-center">
                     <h2 className="text-center">Join New Competition</h2>
                     <Form.Group controlId="searchText">
@@ -54,13 +93,13 @@ const JoinNewCompetition = () => {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </Form.Group>
-                    <hr/>
+                    <hr />
                     <Button style={{ backgroundColor: "#18729c" }} onClick={handleSearch}>
                         Search
                     </Button>
                 </CustomForm>
 
-                <ShowCompetitions showCompetitions={showCompetitions} />
+                <ShowCompetitions showCompetitions={showCompetitions} searchText={searchText} />
             </div>
         </Container>
     )

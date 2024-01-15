@@ -1,4 +1,5 @@
 import React from "react"
+import "./index.css"
 
 // Routers
 import ReactDOM from "react-dom/client"

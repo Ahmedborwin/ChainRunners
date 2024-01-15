@@ -1,5 +1,6 @@
 const { expect, add } = require("chai")
 const { ethers, network } = require("hardhat")
+const { getAddress } = require("viem")
 
 const tokens = (n) => {
     return ethers.utils.parseUnits(n.toString(), "ether")
@@ -9,13 +10,13 @@ const ether = tokens
 
 describe("ChainRunners", () => {
     //variables
-    let chainrunners, deployer, athlete2, defaultAddress, athlete3
+    let chainrunners, deployer, athlete2, athlete3, defaultAddress
     let username = "Ahmed"
-    let buyin = ether(1)
+    let buyin = ether(0.01)
     let stravaId = "123456"
     let clrConsumer
     beforeEach(async () => {
-        ;[deployer, athlete2, defaultAddress, athlete3] = await ethers.getSigners()
+        ;[deployer, athlete2, athlete3, defaultAddress] = await ethers.getSigners()
 
         //deploy chainlinkRequestConsumer contract
         const clrConsumerFactory = await ethers.getContractFactory("crChainlinkRequestConsumer")
@@ -26,7 +27,12 @@ describe("ChainRunners", () => {
 
         //deploy chainrunners contract
         const chainrunnerFactory = await ethers.getContractFactory("ChainRunners")
-        chainrunners = await chainrunnerFactory.deploy(clrConsumer.address)
+        //passing dummy address to
+        chainrunners = await chainrunnerFactory.deploy(
+            clrConsumer.address,
+            getAddress("0x0000000000000000000000000000000000000000"),
+            getAddress("0x0000000000000000000000000000000000000000")
+        )
     })
 
     describe("Deployment", () => {
@@ -39,12 +45,12 @@ describe("ChainRunners", () => {
         })
     })
     describe("Create Athlete Profile", () => {
-        let athleteProfile
+        let AthleteProfile
         describe("Success", () => {
             it("expect user created with username passed", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
-                expect(athleteProfile.username.toString()).equal(username)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
+                expect(AthleteProfile.username.toString()).equal(username)
             })
             it("emits new player created event", async () => {
                 await expect(chainrunners.createAthlete(username, stravaId))
@@ -53,15 +59,15 @@ describe("ChainRunners", () => {
             })
             it("sets athlete profile bool to true", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
-                expect(athleteProfile.registeredAthlete).equal(true)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
+                expect(AthleteProfile.registeredAthlete).equal(true)
             })
         })
 
         describe("Failure", () => {
             beforeEach("create athlete", async () => {
                 await chainrunners.createAthlete(username, stravaId)
-                athleteProfile = await chainrunners.athleteTable(deployer.address)
+                AthleteProfile = await chainrunners.athleteTable(deployer.address)
             })
             it("address already registered", async () => {
                 await expect(chainrunners.createAthlete("Borwin", stravaId)).revertedWith(
@@ -368,7 +374,7 @@ describe("ChainRunners", () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username, stravaId)
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
-                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", 30, 7, {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
@@ -410,13 +416,12 @@ describe("ChainRunners", () => {
                     .withArgs(1)
             })
         })
-
         describe("Abort Competition - Failure", () => {
             beforeEach(async () => {
                 //create athlete profiles
                 await chainrunners.createAthlete(username, stravaId)
                 await chainrunners.connect(athlete2).createAthlete("Bolt", stravaId)
-                await chainrunners.createCompetition("Winner Takes All", buyin, 30, 7, {
+                await chainrunners.createCompetition("Winner Takes All", 30, 7, {
                     value: buyin,
                 })
                 await chainrunners.connect(athlete2).joinCompetition("1", { value: buyin })
@@ -433,7 +438,6 @@ describe("ChainRunners", () => {
                     "ChainRunners__CompStatusNotAsExpected"
                 )
             })
-            it("", async () => {})
         })
     })
     describe("Test PreformUpkeep", () => {
@@ -534,9 +538,17 @@ describe("ChainRunners", () => {
                 it("winner receives split of the pot", async () => {
                     await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
                     await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
-                    expect(
-                        await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
-                    ).changeEtherBalance(deployer, ether(0.725))
+                    await expect(
+                        chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    ).changeEtherBalance(deployer, ether(0.7125))
+                })
+                it("records reward and tallies win to mapping", async () => {
+                    await chainrunners.handleAPIResponse(1, athlete2.address, 25000, 1)
+                    await chainrunners.handleAPIResponse(1, deployer.address, 40000, 1)
+                    await chainrunners.handleAPIResponse(1, athlete3.address, 25000, 1)
+                    const winnerStats = await chainrunners.winnerStatistics(deployer.address)
+                    expect(winnerStats.intervalsWon.toString()).equal("1")
+                    expect(winnerStats.etherWon.toString()).equal(ether(0.7125).toString())
                 })
             })
 

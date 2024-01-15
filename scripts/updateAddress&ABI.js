@@ -82,8 +82,13 @@ async function updateConsumerABI(chainFunctionsConsumerAddress) {
 async function updateChainRunnerNFTAddress(chainId, chainRunnersNFTAddress) {
     const chainRunnerNFTList = JSON.parse(fs.readFileSync(CHAINRUNNER_NFT_ADDRESS_FILE, "utf8"))
 
-    chainRunnerNFTList[chainId] = chainRunnersNFTAddress
-
+    if (chainId in chainRunnerNFTList) {
+        if (!chainRunnerNFTList[chainId].includes(chainRunnersNFTAddress)) {
+            chainRunnerNFTList[chainId] = chainRunnersNFTAddress
+        }
+    } else {
+        chainRunnerNFTList[chainId] = chainRunnersNFTAddress
+    }
     fs.writeFileSync(CHAINRUNNER_NFT_ADDRESS_FILE, JSON.stringify(chainRunnerNFTList, null, 2))
 }
 
@@ -98,8 +103,13 @@ async function updateNFTABI(chainRunnersNFTAddress) {
 async function updateChainRunnerTokenAddress(chainId, chainRunnerTokenAddress) {
     const chainRunnerTokenList = JSON.parse(fs.readFileSync(CHAINRUNNER_TOKEN_ADDRESS_FILE, "utf8"))
 
-    chainRunnerTokenList[chainId] = chainRunnerTokenAddress
-
+    if (chainId in chainRunnerTokenList) {
+        if (!chainRunnerTokenList[chainId].includes(chainRunnerTokenAddress)) {
+            chainRunnerTokenList[chainId] = chainRunnerTokenAddress
+        }
+    } else {
+        chainRunnerTokenList[chainId] = chainRunnerTokenAddress
+    }
     fs.writeFileSync(CHAINRUNNER_TOKEN_ADDRESS_FILE, JSON.stringify(chainRunnerTokenList, null, 2))
 }
 

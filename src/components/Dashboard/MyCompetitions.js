@@ -277,7 +277,7 @@ const MyCompetitions = ({ competitionId }) => {
                             }
                             disabled={!prepareAbortComp}
                         >
-                            {notAdmin ? "Admin Only" : "Start Competition"}
+                            {notAdmin ? "Admin Only" : "Abort Competition"}
                         </TableButtons>
                     </td>
                 </tr>

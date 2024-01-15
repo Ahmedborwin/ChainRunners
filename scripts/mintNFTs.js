@@ -10,8 +10,8 @@ async function main() {
 
     //will need deploy mock VRF?!
 
-    //call nft contract to mint 3 NFT
-    for (let i = 1; i < 7; i++) {
+    //call nft contract to mint All 7 NFTs
+    for (let i = 0; i < 7; i++) {
         await chainRunnerNFT.testMint(i)
     }
 

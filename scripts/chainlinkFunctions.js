@@ -1,8 +1,5 @@
-const fs = require("fs")
-const path = require("path")
 const { SecretsManager } = require("@chainlink/functions-toolkit")
 const hre = require("hardhat")
-const hardhatConfig = require("../hardhat.config")
 const accessToken = require("./getAppAccessToken")
 const chainLinkFunctionsRouterList = require("../src/config/ChainlinkFunctionRouters.json")
 require("@chainlink/env-enc").config()

@@ -22,7 +22,7 @@ ChainRunners enables users to participate in blockchain-based athletic competiti
 
 ## Workflow
 
-![ChainRunners Workflow](Media/ChainRunnersWorkflow.svg)
+![ChainRunners Workflow](ChainRunnersWorkflow.svg)
 
 *Describe the workflow depicted in the image here.*
 

@@ -20,7 +20,6 @@ import useWalletConnected from "../../hooks/useAccount"
 //Address and ABI
 import NFT_ABI from "../../config/chainRunnerNFTAbi.json"
 import NFTAddresses from "../../config/chainRunnerNFTAddress.json"
-import providerURLs from "../../config/ProviderUrl.json"
 
 const NftTitle = styled("h2")`
     color: #ffffff;

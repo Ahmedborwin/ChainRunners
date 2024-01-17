@@ -158,7 +158,7 @@ const CompetitionCreation = () => {
 
                     <Form.Group controlId="buyIn">
                         <Form.Label>
-                            <strong>Buy-In (ETH)</strong>
+                            <strong>Buy-In (MATIC)</strong>
                         </Form.Label>
                         <Form.Control
                             type="number"

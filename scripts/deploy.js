@@ -153,10 +153,8 @@ async function main() {
     //set chainrunner interface
     await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
 
-    // approve chain runners to token
-    const totalSupply = await chainRunnerToken.totalSupply()
-    // Keep
     //await chainRunnerToken.transfer(chainrunner.address, parseEther("100000"))
+
     //record new contract address and ABI
     await updateContractInfo(
         chainrunner.address,

@@ -1,5 +1,5 @@
 import styled from "styled-components"
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { formatEther, parseEther } from "viem"
 import Swal from "sweetalert2"
 

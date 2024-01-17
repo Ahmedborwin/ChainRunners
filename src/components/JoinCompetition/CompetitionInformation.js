@@ -70,7 +70,7 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
         },
         onSuccess(data) {
             setGetCompetitionInformation(false)
-            setBuyIn(formatEther(readBuyIn))
+            setBuyIn(readBuyIn)
         },
     })
 
@@ -176,7 +176,7 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
                     <FlexContainer>
                         <p>ID: {competitionDetails.id}</p>
                         <p>Status: {competitionDetails.status}</p>
-                        <p>Buy-in: {buyIn} MATIC</p>
+                        <p>Buy-in: {buyIn > 0 ? formatEther(buyIn) : 0} MATIC</p>
 
                         <Button
                             style={{ backgroundColor: "#18729c" }}

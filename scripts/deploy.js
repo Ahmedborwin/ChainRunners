@@ -147,13 +147,16 @@ async function main() {
     await chainrunner.createCompetition("oneForAll", 28, 7, {
         value: buyIn,
     })
-    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    // await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
     //set chainrunner as admin
     await consumer.setAdmin(chainrunner.address)
     //set chainrunner interface
     await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
 
-    //await chainRunnerToken.transfer(chainrunner.address, parseEther("100000"))
+    // approve chain runners to token
+    const totalSupply = await chainRunnerToken.totalSupply()
+
+    await chainRunnerToken.transfer(chainrunner.address, parseEther("100000000"))
 
     //record new contract address and ABI
     await updateContractInfo(

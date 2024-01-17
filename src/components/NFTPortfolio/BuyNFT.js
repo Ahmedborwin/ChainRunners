@@ -1,9 +1,8 @@
-import { Button, Card } from "react-bootstrap"
 import styled from "styled-components"
 import React, { useState, useEffect } from "react"
 import { formatEther, parseEther } from "viem"
 import Swal from "sweetalert2"
-import { ethers } from "ethers"
+
 import { useWaitForTransaction } from "wagmi"
 
 //Components
@@ -84,8 +83,6 @@ const BuyNFT = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [tokenBalance, setTokenBalance] = useState(0)
     const [approveHash, setApproveHash] = useState(null)
-    const [mintHash, setMintHash] = useState(null)
-
     const { chain, address } = useWalletConnected()
 
     // Read competition table
@@ -122,16 +119,10 @@ const BuyNFT = () => {
         },
     })
     // approve
-    const { writeAsync: approveChainRunner, isSuccess: approveSuccesfull } =
-        useContractWrite(prepareApproveTransfer)
+    const { writeAsync: approveChainRunner } = useContractWrite(prepareApproveTransfer)
 
     // Mint NFT
-    const {
-        data: NFTMintResponse,
-        writeAsync: mintNFTWrite,
-        isSuccess: MintNFTSuccesfull,
-        isError: MintNFTError,
-    } = useContractWrite({
+    const { data: NFTMintResponse, writeAsync: mintNFTWrite } = useContractWrite({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
         functionName: "mintNFT",
@@ -157,44 +148,15 @@ const BuyNFT = () => {
         setIsLoading(true)
     }
 
-    //TODO
-    //i want to get the hash of the mint tx and display to nft minter -
-    //maybe url to take them to polygonscan?
-    // useWaitForTransaction({
-    //     hash: approveHash,
-    //     confirmations: 1,
-    //     onSettled: (data, error) => {
-    //         if (data) {
-    //             // Handle successful transaction confirmation
-    //             setIsLoading(false)
-    //             // Once the approval is confirmed, proceed to mint NFT
-    //             const txMintResponse = mintNFTWrite()
-    //             setMintHash(txMintResponse.hash)
-    //             console.log(txMintResponse.hash)
-    //         } else if (error) {
-    //             console.error("Transaction failed", error)
-    //             Swal.fire({
-    //                 title: "Transaction Error",
-    //                 text: "There was an error processing your transaction",
-    //                 icon: "error",
-    //             })
-    //         }
-    //     },
-    // })
-
     useWaitForTransaction({
-        hash: mintHash,
+        hash: approveHash,
         confirmations: 1,
         onSettled: (data, error) => {
             if (data) {
-                console.log("txMintResponse", data)
-
-                Swal.fire({
-                    title: "<strong>NFT Mint TX Hash</strong>",
-                    icon: "info",
-                    url: `https://mumbai.polygonscan.com/address/`,
-                    showCloseButton: true,
-                })
+                // Handle successful transaction confirmation
+                setIsLoading(false)
+                // Once the approval is confirmed, proceed to mint NFT
+                mintNFTWrite()
             } else if (error) {
                 console.error("Transaction failed", error)
                 Swal.fire({
@@ -205,6 +167,33 @@ const BuyNFT = () => {
             }
         },
     })
+
+    //TODO
+    //i want to get the hash of the mint tx and display to nft minter -
+    //maybe url to take them to polygonscan?
+    // useWaitForTransaction({
+    //     hash: mintHash,
+    //     confirmations: 1,
+    //     onSettled: (data, error) => {
+    //         if (data) {
+    //             console.log("txMintResponse", data)
+
+    //             Swal.fire({
+    //                 title: "<strong>NFT Mint TX Hash</strong>",
+    //                 icon: "info",
+    //                 url: `https://mumbai.polygonscan.com/address/`,
+    //                 showCloseButton: true,
+    //             })
+    //         } else if (error) {
+    //             console.error("Transaction failed", error)
+    //             Swal.fire({
+    //                 title: "Transaction Error",
+    //                 text: "There was an error processing your transaction",
+    //                 icon: "error",
+    //             })
+    //         }
+    //     },
+    // })
 
     return (
         <>

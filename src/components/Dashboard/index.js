@@ -133,12 +133,11 @@ const Dashboard = ({ athlete }) => {
             const newAthleteProfile = {
                 username: athleteTable[0],
                 stravaId: athleteTable[1],
-                totalMeters: parseInt(athleteTable[2]),
+                totalMeters: parseInt(athleteTable[2]) / 1000,
                 registeredAthlete: athleteTable[3],
             }
             setAthleteProfile(newAthleteProfile)
         }
-        console.log(athleteProfile)
     }, [athleteTable])
 
     //Get Competitions Won for signed in Athlete
@@ -280,6 +279,10 @@ const Dashboard = ({ athlete }) => {
                     <InfoCards className="text-center">
                         <strong>Competitions Won: </strong>
                         <span>{athleteWinningStats.competitionsWon}</span>
+                    </InfoCards>
+                    <InfoCards className="text-center">
+                        <strong>Distance Logged: </strong>
+                        <span>{athleteProfile.totalMeters} KM</span>
                     </InfoCards>
                     <InfoCards className="text-center">
                         <strong>ChainRunner Tokens:</strong> <span>{tokensOwned}</span> CRT

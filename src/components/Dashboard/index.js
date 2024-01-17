@@ -71,15 +71,10 @@ const TableCard = styled(Card)`
 const Dashboard = ({ athlete }) => {
     const [athleteProfile, setAthleteProfile] = useState({})
     const [athleteWinningStats, setAthleteWinningStats] = useState({})
-    const [competitionDetails, setCompetitionDetails] = useState({})
     const [compIdArray, setCompIdArray] = useState([])
     const [tokensOwned, setTokensOwned] = useState(0)
 
     const { chain, address } = useWalletConnected()
-
-    //get provider
-    const providerurl = chain.id in providerURLs ? providerURLs[chain.id] : null
-    const provider = new ethers.providers.JsonRpcProvider(providerurl)
 
     // Read athlete table
     const { data: athleteTable } = useContractRead({

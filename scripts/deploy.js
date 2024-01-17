@@ -147,7 +147,7 @@ async function main() {
     await chainrunner.createCompetition("oneForAll", 28, 7, {
         value: buyIn,
     })
-    // await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
+    await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
     //set chainrunner as admin
     await consumer.setAdmin(chainrunner.address)
     //set chainrunner interface

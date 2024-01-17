@@ -131,6 +131,9 @@ const StravaAccountCreation = () => {
         }
     }, [])
 
+    // create Athlete
+    useEffect(() => {})
+
     return (
         <Container>
             <Body>

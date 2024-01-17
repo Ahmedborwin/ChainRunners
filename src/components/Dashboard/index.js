@@ -238,6 +238,8 @@ const Dashboard = ({ athlete }) => {
                   left top
                   no-repeat
                 `,
+            }).then(() => {
+                window.location.reload(true)
             })
         },
     })
@@ -263,6 +265,8 @@ const Dashboard = ({ athlete }) => {
                   left top
                   no-repeat
                 `,
+            }).then(() => {
+                window.location.reload(true)
             })
         },
     })

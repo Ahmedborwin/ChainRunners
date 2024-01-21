@@ -354,7 +354,7 @@ contract ChainRunners is Ownable {
         //set end date
         competition.endDate = block.timestamp + (8 * 86400); //(competition.durationDays * 86400);
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + (8 * 86400); //(competition.payoutIntervals * 86400);
+        competition.nextPayoutDate = block.timestamp + (2 * 86400); //(competition.payoutIntervals * 86400);
         //set next reward interval
 
         //Assign updated Competition Form back to mapping
@@ -643,6 +643,11 @@ contract ChainRunners is Ownable {
         return number;
     }
 
+    function TESTwithdrawBalance() external onlyOwner {
+        (bool sent, ) = msg.sender.call{value: address(this).balance}("");
+        require(sent, "Unable to withdraw funds");
+    }
+
     //getter functions
     function getAthleteList(uint256 _compId) external view returns (address[] memory) {
         return athleteListByComp[_compId];
@@ -657,165 +662,5 @@ contract ChainRunners is Ownable {
 
     function listAthleteCompetitions(address _athlete) external view returns (uint8[] memory) {
         return athleteToCompIdList[_athlete];
-    }
-
-    //---------------------------------
-    //---------------------------------
-    //FUNCTIONS TO ALLOW LOCAL UNIT TESTS
-    //---------------------------------
-    //---------------------------------
-    function testSetCompStatus(uint256 _compId) external {
-        competitionTable[_compId].status = CompetitionStatus.inProgress;
-    }
-
-    function testCommenceCompetition(uint256 _compId) external onlyAdmin(msg.sender, _compId) {
-        require(athleteListByComp[_compId].length >= 2, "Atleast two competitors required");
-
-        //populate mapping with new competition struct
-        competition = competitionTable[_compId];
-
-        if (competition.status != CompetitionStatus.pending) {
-            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
-        }
-        competitionIsLive[_compId] = true;
-
-        for (uint8 i = 0; i < athleteListByComp[_compId].length; i++) {
-            address[] memory listAthletes = athleteListByComp[_compId];
-            //Add competition to the athletes competitions Array
-            athleteToCompIdList[listAthletes[i]].push(uint8(_compId));
-            //Call handleAPIRequest and pass athletes address
-        }
-
-        //set comp status to inprogress for testing
-        competition.status = CompetitionStatus.inProgress;
-    }
-
-    function testHandleStartCompetition(uint8 _compId) external {
-        if (competitionTable[_compId].status != CompetitionStatus.pending) {
-            revert ChainRunners__CompStatusNotAsExpected(uint8(competitionTable[_compId].status));
-        }
-        //get competition Struct from mapping
-        competition = competitionTable[_compId];
-        // take fee
-        uint256 _fee = (competition.totalStaked * 5) / 100;
-        competition.totalStaked -= _fee;
-        dappFee += _fee;
-
-        //Assign updated Competition Form back to mapping
-        competitionTable[competitionId] = competition;
-        handleStartCompetition(_compId);
-    }
-
-    function testHandlePayoutEvent(
-        address _athlete,
-        uint256 _distance,
-        uint256 _compId
-    ) internal onlyConsumer(msg.sender) {
-        //------------------------
-        //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
-        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
-            _distance += counter;
-            counter += 1000;
-        }
-        //------------------------
-        uint256 metersLogged;
-        if (athleteTable[_athlete].totalMeters == 0) {
-            metersLogged = _distance;
-        } else {
-            metersLogged = _distance - athleteTable[_athlete].totalMeters;
-        }
-        //update athletes Total Meters as per the distance received form API Call
-        athleteTable[_athlete].totalMeters = _distance;
-        //  Transfer ERC20 token based on distance logged
-        uint256 tokensAwarded = _distance * 0.001 ether;
-        tokenContract.transferFrom(
-            address(tokenContract),
-            overAllWinnerByComp[_compId],
-            tokensAwarded
-        );
-        //check distance is greater, if so set as new winner
-        if (intervalWinnerDistance[_compId] < metersLogged) {
-            intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
-            intervalWinnerAddress[_compId] = _athlete; //current winners address
-        }
-        //record API response received by incrementing counter
-        payoutEventAPIResponseCounter[_compId]++;
-        //check if final response for this event call
-        if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
-            //Emit Winner Interval Event
-            emit IntervalWinnerEvent(
-                intervalWinnerAddress[_compId],
-                intervalWinnerDistance[_compId],
-                intervalEventCounter
-            );
-            //handle winner
-            handleWinner(_compId, tokensAwarded);
-            //reset API Response counter
-            payoutEventAPIResponseCounter[_compId] = 0;
-            //set new payoutDate
-            CompetitionForm memory _competition = competitionTable[_compId];
-            //Check if the competition has ended
-            if (block.timestamp >= _competition.endDate) {
-                endCompetition(_compId);
-            } else {
-                //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + 200; //(competition.payoutIntervals * 86400);
-                //set next reward interval;
-                competitionTable[_compId] = _competition;
-            }
-        }
-    }
-
-    function testPreformKeep() external {
-        for (uint256 _compId = 1; _compId <= competitionId; _compId++) {
-            CompetitionForm memory _competition = competitionTable[_compId];
-
-            //check if competitionId is set to live on isLive mapping and due a payout event
-            if (
-                competitionIsLive[_compId] == true && block.timestamp >= _competition.nextPayoutDate
-            ) {
-                console.log("comp id is: ", _compId);
-                //increment payoutId to reflect a new payout event triggered
-                compPayoutId[_compId]++;
-                apiCallBool[_compId] = true;
-            }
-        }
-    }
-
-    function testHandleAPICall(
-        uint8 _requestType,
-        address _athlete,
-        string memory _stravaId,
-        uint256 _compId
-    ) external onlyOwner {
-        //call consumer contract and pass address of athlete
-        string[] memory args = new string[](1);
-        args[0] = _stravaId;
-
-        //need to think about the what to record and why
-        i_linkReq.sendRequest(_requestType, args, _athlete, _compId);
-    }
-
-    function testReceiveAPIResponse(
-        uint8 _requestType,
-        address _athleteAddress,
-        uint256 _distance
-    ) external {
-        testInteger = _distance;
-        testAddress = _athleteAddress;
-        requesttype = requestType(_requestType);
-    }
-
-    function testPayoutIdIncrement(uint256 _compId) external {
-        compPayoutId[_compId]++;
-    }
-
-    function testTransfer() external {
-        tokenContract.transfer(0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029, 1 ether);
-    }
-
-    function TESTwithdrawBalance() external onlyOwner {
-        (bool sent, ) = msg.sender.call{value: address(this).balance}("");
-        require(sent, "Unable to withdraw funds");
     }
 }

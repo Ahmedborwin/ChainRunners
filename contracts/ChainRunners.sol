@@ -352,9 +352,9 @@ contract ChainRunners is Ownable {
         //set start date
         competition.startDate = block.timestamp;
         //set end date
-        competition.endDate = block.timestamp + 360; //(competition.durationDays * 86400);
+        competition.endDate = block.timestamp + (8 * 86400); //(competition.durationDays * 86400);
         //set next reward interval
-        competition.nextPayoutDate = block.timestamp + 90; //(competition.payoutIntervals * 86400);
+        competition.nextPayoutDate = block.timestamp + (8 * 86400); //(competition.payoutIntervals * 86400);
         //set next reward interval
 
         //Assign updated Competition Form back to mapping
@@ -454,14 +454,14 @@ contract ChainRunners is Ownable {
     function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
         //------------------------
         //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
-        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
-            _distance += counter;
-            counter += 30000;
-        }
-        if (_athlete == 0x0a192a377E7F2Bd2ffe494cE0976b79D897E10B0) {
-            _distance += counter;
-            counter += 20000;
-        }
+        // if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
+        //     _distance += counter;
+        //     counter += 30000;
+        // }
+        // if (_athlete == 0x0a192a377E7F2Bd2ffe494cE0976b79D897E10B0) {
+        //     _distance += counter;
+        //     counter += 20000;
+        // }
 
         //------------------------
         uint256 metersLogged;
@@ -512,7 +512,7 @@ contract ChainRunners is Ownable {
                 endCompetition(_compId);
             } else {
                 //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + 90; //(competition.payoutIntervals * 86400);
+                _competition.nextPayoutDate = _competition.nextPayoutDate + (2 * 86400); //(competition.payoutIntervals * 86400);
                 //set next reward interval;
                 competitionTable[_compId] = _competition;
             }

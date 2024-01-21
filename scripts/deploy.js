@@ -149,7 +149,7 @@ async function main() {
     //set chainrunner interface
     await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
     await chainrunner.createAthlete("Ahmed", "62612170")
-    await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
+    await chainrunner.connect(athlete_2).createAthlete("Mossab", "23842440")
     //create competitions and join with other athlete
     await chainrunner.createCompetition("oneForAll", 28, 7, {
         value: buyIn,

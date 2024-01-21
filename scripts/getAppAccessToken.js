@@ -4,8 +4,8 @@ async function getAthleteAccessToken() {
     const { default: fetch } = await import("node-fetch")
 
     const url = "https://www.strava.com/api/v3/oauth/token"
-    const clientId = "116415"
-    const clientSecret = "4784e5e419141ad81ecaac028eb765f0311ee0af"
+    const clientId = process.env.REACT_APP_CLIENT_ID // "116415"
+    const clientSecret = process.env.REACT_APP_CLIENT_SECRET //"4784e5e419141ad81ecaac028eb765f0311ee0af"
     const refreshToken = "5dbe5a90769790da6ef3810118e407517e06050a"
 
     const formData = new URLSearchParams()
@@ -32,15 +32,16 @@ async function getAthleteAccessToken() {
     }
 }
 
-//athlete 2 is mossab
+//Mossab Details Hardcoded
+//hacky
 
 async function getAccessTokenAthlete2() {
     const { default: fetch } = await import("node-fetch")
 
     const url = "https://www.strava.com/api/v3/oauth/token"
-    const clientId = "116415"
-    const clientSecret = "4784e5e419141ad81ecaac028eb765f0311ee0af"
-    const Athlete_2_Refresh_Token = "837dac6e13dea2e796bbf3b135515da27c77c210"
+    const clientId = process.env.REACT_APP_CLIENT_ID // "116415"
+    const clientSecret = process.env.REACT_APP_CLIENT_SECRET //"4784e5e419141ad81ecaac028eb765f0311ee0af"
+    const Athlete_2_Refresh_Token = "519374ec392eb874d01e9b9014dbf2f8e14d2f54"
 
     const formData = new URLSearchParams()
     formData.append("client_id", clientId)

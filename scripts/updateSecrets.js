@@ -30,7 +30,7 @@ async function main() {
     )
 
     //update secret for athlete 1
-    let txResponse = await functionsConsumer
+    await functionsConsumer
         .connect(admin)
         .populateVersionSecret(
             donHostedSecretsObject.donHostedSecretsVersion,
@@ -38,7 +38,7 @@ async function main() {
         )
 
     //update secret for athlete 2
-    txResponse = await functionsConsumer
+    await functionsConsumer
         .connect(admin)
         .populateVersionSecret(
             donHostedSecretsObject.donHostedSecretsVersion_2,

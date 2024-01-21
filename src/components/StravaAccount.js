@@ -13,7 +13,7 @@ import useWalletConnected from "../hooks/useAccount"
 import useChainLinkFunctions from "../hooks/useChainLinkFunctions"
 
 // Images
-import mapsImage from "../assets/images/chain.jpg"
+import mapsImage from "../assets/images/chainRunnersLoginScreen.png"
 
 // Redux
 import { useDispatch } from "react-redux"
@@ -37,17 +37,28 @@ const Container = styled.div`
     background: linear-gradient(to right, #0d2137, #19ddd3);
     color: #ffffff;
 `
+const imageContainer = styled.div`
+    font-family: "Arial, sans-serif";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    margin-left: 30rem;
+    width: 80%; /* Adjust the width as needed */
+    max-width: 400px; /* Set a maximum width */
+    background-image: url(${mapsImage});
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
+`
 
 const Body = styled.div`
     font-family: "Arial, sans-serif";
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 800px;
+    height: 400px;
     width: 80%; /* Adjust the width as needed */
     max-width: 400px; /* Set a maximum width */
-    background-image: url(${mapsImage});
-    background-color: #f2f2f2; /* Light gray background color */
     border-radius: 20px; /* Rounded corners */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
 `
@@ -212,6 +223,7 @@ const StravaAccountCreation = () => {
     return (
         <Container>
             <Body>
+                <imageContainer></imageContainer>
                 <ContentContainer>
                     <Title>Create Your Strava Account</Title>
                     <p>Connect with Strava to start tracking your activities!</p>

@@ -31,6 +31,7 @@ const AppContainer = styled("div")`
 
 function App() {
     const [athleteProfile, setAthleteProfile] = useState({})
+    const [chainReady, setChainReady] = useState(false)
 
     const authDetails = useSelector(selectAuthDetails)
 
@@ -41,8 +42,9 @@ function App() {
     const initialWalletRef = useRef(null)
 
     // Read athlete table
+
     const { data: athleteTable } = useContractRead({
-        address: ChainRunnersAddresses[chain.id],
+        address: ChainRunnersAddresses[chain?.id],
         abi: ChainRunners_ABI,
         functionName: "athleteTable",
         args: [address],
@@ -72,6 +74,12 @@ function App() {
             console.log("athlete Found? ", newAthleteProfile.registeredAthlete)
         }
     }, [athleteTable])
+
+    useEffect(() => {
+        if (chain) {
+            setChainReady(true)
+        }
+    }, [chain])
 
     return (
         <AppContainer>

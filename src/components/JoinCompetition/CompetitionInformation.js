@@ -41,7 +41,7 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
     const [buyIn, setBuyIn] = useState(0)
 
     //hooks
-    const { chain, wallet } = useWalletConnected()
+    const { chain, address } = useWalletConnected()
 
     // Read competition table
     const { data: competitionForm } = useContractRead({
@@ -71,6 +71,20 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
         onSuccess(data) {
             setGetCompetitionInformation(false)
             setBuyIn(readBuyIn)
+        },
+    })
+
+    const { data: athleteListByCompId } = useContractRead({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "getAthleteList",
+        args: [competitionId],
+        onSettled(data, error) {
+            if (data) {
+                console.log(competitionId, data)
+            } else if (error) {
+                console.log("get List of Athlete Error", error)
+            }
         },
     })
 
@@ -119,7 +133,6 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
     }, [competitionId])
 
     useEffect(() => {
-        console.log("joinCompetitionIsReady", joinCompetitionIsReady)
         if (joinCompetitionIsReady && compIdReady) {
             joinCompetition()
             setCompIdReady(false) // Reset the state after the operation
@@ -128,7 +141,6 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
     }, [joinCompetitionIsReady, compIdReady])
 
     useEffect(() => {
-        console.log("Join comp response", joinCompResponse)
         if (joinCompError) {
             Swal.fire({
                 title: "Join Competition Error",
@@ -158,10 +170,14 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
 
             //check if comp status is PENDING
             if (competitionDetails.status === competitionStatus[0]) {
-                setRenderComp(true)
+                //check address not admin or not in
+                if (!athleteListByCompId.includes(address)) {
+                    setRenderComp(true)
+                }
             }
 
             if (searchText !== "" && searchText !== competitionDetails.name) {
+                console.log("searchText", searchText)
                 setRenderComp(false)
             }
         }
@@ -176,7 +192,7 @@ const CompetitionInformation = ({ competitionId, searchText }) => {
                     <FlexContainer>
                         <p>ID: {competitionDetails.id}</p>
                         <p>Status: {competitionDetails.status}</p>
-                        <p>Buy-in: {buyIn > 0 ? formatEther(buyIn) : 0} MATIC</p>
+                        <p>Buy-in: {readBuyIn > 0 ? formatEther(readBuyIn) : 0} MATIC</p>
 
                         <Button
                             style={{ backgroundColor: "#18729c" }}

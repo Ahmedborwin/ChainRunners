@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react"
 import styled from "styled-components"
+import { useContractEvent } from "wagmi"
+import Swal from "sweetalert2"
 
 // ABIs
 import ChainRunners_ABI from "../config/chainRunnerAbi.json"
@@ -21,7 +23,7 @@ import { exchangeToken } from "../store/tokenExchange"
 
 const CLIENT_ID = "116415"
 const CLIENT_SECRET = "4784e5e419141ad81ecaac028eb765f0311ee0af"
-const REDIRECT_URI = "https://chain-runners-qcms.vercel.app" // Replace with your actual redirect URI
+const REDIRECT_URI = "http://localhost:3000" // Replace with your actual redirect URI
 const SCOPE = "read,activity:read_all"
 
 const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`
@@ -73,27 +75,19 @@ const StravaAccountCreation = () => {
     const dispatch = useDispatch()
 
     const [isLoading, setIsLoading] = useState(false)
-    const [athlete, setAthlete] = useState(null)
-    const [accessToken, setAccessToken] = useState(null)
+    const [athlete, setAthlete] = useState({})
+    const [getSingleToken, setGetSingleToken] = useState(false)
+    const [tokenObject, setTokenObject] = useState({})
+    const [prepareCreateAthleteReady, setPrepareCreateAthleteReady] = useState(false)
+    const [createAthleteReady, setCreateAthleteReady] = useState(false)
 
     const { chain } = useWalletConnected()
 
-    //useChainLinkFunctions(accessToken)
-
-    // Prepare contract write
-    const { config } = usePrepareContractWrite({
-        address: ChainRunnersAddresses[chain.id],
-        abi: ChainRunners_ABI,
-        functionName: "createAthlete",
-        args: [athlete?.username, athlete?.id],
-        enabled: Boolean(athlete),
-    })
-
-    // Write contract
-    useContractWrite(config)
+    //useChainLinkFunctions(tokenObject.accessToken)
 
     const redirectToStravaAuthorization = () => {
         window.location.href = STRAVA_AUTH_URL
+        setGetSingleToken(true)
     }
 
     const handleTokenExchange = (code) => {
@@ -109,8 +103,20 @@ const StravaAccountCreation = () => {
         )
             .then((response) => {
                 console.log("Token exchange successful:", response)
-                setAccessToken(response.accessToken)
-                setAthlete(response.athlete)
+                const accessTokenData = response["payload"]["data"]
+
+                if (accessTokenData) {
+                    setTokenObject({
+                        accessToken: accessTokenData["access_token"],
+                        refreshToken: accessTokenData["refresh_token"],
+                        expiresAt: accessTokenData["expires_at"],
+                        expiresIn: accessTokenData["expires_in"],
+                    })
+
+                    setAthlete(accessTokenData["athlete"])
+                } else {
+                    console.error("No token data found in response")
+                }
             })
             .catch((error) => {
                 console.error("Token exchange error:", error)
@@ -120,19 +126,88 @@ const StravaAccountCreation = () => {
             })
     }
 
+    //Prepare contract write
+    const { config: prepareCreateAthlete } = usePrepareContractWrite({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        functionName: "createAthlete",
+        args: ["Enigma", athlete?.id],
+        enabled: prepareCreateAthleteReady,
+        onSettled(data, error) {
+            if (data) {
+                setPrepareCreateAthleteReady(false)
+                setCreateAthleteReady(true)
+                console.log(data, error)
+            } else if (error) {
+                setPrepareCreateAthleteReady(false)
+                console.log(error, error)
+            }
+        },
+    })
+
+    const { data: createAthleteData, write: createAthleteWrite } =
+        useContractWrite(prepareCreateAthlete)
+
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search)
         const authorizationCode = urlParams ? urlParams.get("code") : null
 
         if (authorizationCode) {
             handleTokenExchange(authorizationCode)
+            setGetSingleToken(false)
         } else {
             console.error("Authorization code not found in URL parameters.")
         }
     }, [])
 
-    // create Athlete
-    useEffect(() => {})
+    useEffect(() => {
+        if (createAthleteData) {
+            console.log(createAthleteData)
+        }
+    }, [createAthleteData])
+
+    // Athlete Set
+    useEffect(() => {
+        if (athlete && Object.keys(athlete).length > 0) {
+            //Call contract to create new athlete
+            console.log("ATHLETE")
+            setPrepareCreateAthleteReady(true)
+        }
+    }, [athlete])
+
+    // tokenObject Set
+    useEffect(() => {
+        if (tokenObject && Object.keys(tokenObject).length > 0) {
+            //TODO
+            //upload secrets to DON here
+            //write DON secrets version?
+        }
+    }, [tokenObject])
+
+    useEffect(() => {
+        if (createAthleteReady) {
+            setCreateAthleteReady(false)
+            createAthleteWrite()
+        }
+    }, [createAthleteReady])
+
+    //comp Started Event Listener
+    useContractEvent({
+        address: ChainRunnersAddresses[chain.id],
+        abi: ChainRunners_ABI,
+        eventName: "athleteProfileCreated",
+        listener(log) {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Athlete Created!",
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => {
+                window.location.reload(true)
+            })
+        },
+    })
 
     return (
         <Container>

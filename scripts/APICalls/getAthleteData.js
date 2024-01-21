@@ -13,7 +13,7 @@ const stravaGetAtheleteRequest = Functions.makeHttpRequest({
 const stravaGetAtheleteResponse = await stravaGetAtheleteRequest
 
 if (stravaGetAtheleteResponse.error) {
-    throw new Error("STRAVA Error")
+    throw new Error("STRAVA Error", stravaGetAtheleteResponse.error)
 }
 
 const data = stravaGetAtheleteResponse["data"]

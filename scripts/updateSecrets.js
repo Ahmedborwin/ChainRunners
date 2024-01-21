@@ -1,34 +1,54 @@
 const hre = require("hardhat")
-const fs = require("fs")
-const path = require("path")
+const functionsConsumerAddresses = require("../src/config/consumerAddress.json")
+const functionsConsumerABI = require("../src/config/consumerAbi.json")
 const chainLinkFunctions = require("./chainlinkFunctions")
-const consumerAddresses = require("../src/config/consumerAddress.json")
 
-const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
-const consumer = consumerAddresses[chainID]
+async function main() {
+    let functionsConsumer, rpcUrl, provider, donHostedSecretsObject
 
-const rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
-const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    const chainID = (await hre.ethers.provider.getNetwork()).chainId.toString()
+    // initiate to consumer contract
+    const functionsConsumerAddress = functionsConsumerAddresses[chainID]
+    //need provider
+    if (chainID === "80001") {
+        rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
+    } else if (chainID === "43113") {
+        rpcUrl = "https://avalanche-fuji.drpc.org"
+    }
+    provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
+    //need signer
+    const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
+    const wallet = new hre.ethers.Wallet(privateKey)
+    const admin = wallet.connect(provider)
 
-//get secrets object
-const donHostedSecretsObject = await chainLinkFunctions(chainID)
+    //update Secrets by calling chainLink functions script
+    donHostedSecretsObject = await chainLinkFunctions(chainID)
 
-console.log(`\n ------------------------------------`)
-console.log(`Set up consumer for chainID:: ${chainID}`)
-console.log(`------------------------------------ \n`)
-const privateKey = process.env.PRIVATE_KEY // fetch PRIVATE_KEY
-const wallet = new hre.ethers.Wallet(privateKey)
-const athlete = wallet.connect(provider)
-//create athlete 2 for testing
-const privateKey_2 = process.env.PRIVATE_KEY_2 // fetch PRIVATE KEY of second account }
-const wallet_2 = new hre.ethers.Wallet(privateKey_2)
-const athlete_2 = wallet_2.connect(provider)
+    functionsConsumer = await hre.ethers.getContractAt(
+        functionsConsumerABI,
+        functionsConsumerAddress
+    )
 
-await consumer.populateVersionSecret(
-    donHostedSecretsObject.donHostedSecretsVersion,
-    athlete.address
-)
-await consumer.populateVersionSecret(
-    donHostedSecretsObject.donHostedSecretsVersion_2,
-    athlete_2.address
-)
+    //update secret for athlete 1
+    let txResponse = await functionsConsumer
+        .connect(admin)
+        .populateVersionSecret(
+            donHostedSecretsObject.donHostedSecretsVersion,
+            donHostedSecretsObject.athlete.address
+        )
+
+    //update secret for athlete 2
+    txResponse = await functionsConsumer
+        .connect(admin)
+        .populateVersionSecret(
+            donHostedSecretsObject.donHostedSecretsVersion_2,
+            donHostedSecretsObject.athlete_2.address
+        )
+}
+
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+})

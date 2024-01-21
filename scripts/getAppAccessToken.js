@@ -24,13 +24,15 @@ async function getAthleteAccessToken() {
         })
 
         const data = await response.json()
-        console.log(data)
+
         return data.access_token.toString()
     } catch (error) {
         console.error("Error:", error)
         throw error // Re-throw the error for handling by the caller
     }
 }
+
+//athlete 2 is mossab
 
 async function getAccessTokenAthlete2() {
     const { default: fetch } = await import("node-fetch")
@@ -56,7 +58,7 @@ async function getAccessTokenAthlete2() {
         })
 
         const data = await response.json()
-        console.log(data)
+
         return data.access_token.toString()
     } catch (error) {
         console.error("Error:", error)
@@ -73,7 +75,7 @@ async function getAccessTokens() {
 // Usage example:
 getAccessTokens()
     .then((accessToken) => {
-        console.log("Access Token:", accessToken.toString())
+        console.log("Access Token:", JSON.stringify(accessToken))
     })
     .catch((error) => {
         console.error("Error fetching access token:", error)

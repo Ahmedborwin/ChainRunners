@@ -143,6 +143,7 @@ contract ChainRunners is Ownable {
     mapping(address => uint8[]) public athleteToCompIdList; //Allow front end to access competition info using athlete address
     mapping(address => AthleteStatStruct) public athleteStats;
     mapping(uint256 => mapping(address => uint256)) public winTallyComp;
+    mapping(uint256 => uint256) public intervalByCompId;
     mapping(uint256 => address) public overAllWinnerByComp;
     mapping(uint256 => bool) public competitionIsLive;
     mapping(uint256 => CompetitionForm) public competitionTable; //Comp Id to CompForm
@@ -475,18 +476,6 @@ contract ChainRunners is Ownable {
         uint256 tokensAwarded = metersLogged * 0.001 ether;
         tokenContract.transfer(_athlete, tokensAwarded);
 
-        //TEST EVENT
-        //--------------
-        emit testDistanceLogged(_distance, winnersDistanceCounter, _athlete);
-        winnersDistanceCounter++;
-        //--------------
-        emit testWinnerDistanceVMetersLogged(
-            intervalWinnerDistance[_compId],
-            metersLogged,
-            _athlete
-        );
-        //--------------
-
         //check distance is greater, if so set as new winner
         if (intervalWinnerDistance[_compId] < metersLogged) {
             intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
@@ -508,16 +497,18 @@ contract ChainRunners is Ownable {
         payoutEventAPIResponseCounter[_compId]++;
         //check if final response for this event call
         if (payoutEventAPIResponseCounter[_compId] == athleteListByComp[_compId].length) {
+            //Interval by Comp ID counter
+            intervalByCompId[_compId]++;
             //handle winner
             handleWinner(_compId, tokensAwarded);
             //reset API Response counter
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
             CompetitionForm memory _competition = competitionTable[_compId];
-            //TODO
-            //check is this is the last interval
+
             //Check if the competition has ended
-            if (block.timestamp >= _competition.endDate) {
+            uint256 intervals = _competition.durationDays / _competition.payoutIntervals;
+            if (block.timestamp >= _competition.endDate && intervalByCompId[_compId] == intervals) {
                 endCompetition(_compId);
             } else {
                 //otherwise calculcate new payoutDate
@@ -567,6 +558,8 @@ contract ChainRunners is Ownable {
         athleteStats[overAllWinnerByComp[_compId]].competitionsWon++;
         //winner gets enough tokens bonus to mint 1 NFT
         tokenContract.transfer(overAllWinnerByComp[_compId], 10 ether);
+        //set isLive to false
+        competitionIsLive[_compId] = false;
         // emit event to signal successfull payout
         emit winnerPicked(
             overAllWinnerByComp[_compId],
@@ -638,7 +631,7 @@ contract ChainRunners is Ownable {
 
     //---------------------------------
     //---------------------------------
-    //helper function
+    //helper functions
     //---------------------------------
     //---------------------------------
 
@@ -821,7 +814,7 @@ contract ChainRunners is Ownable {
         tokenContract.transfer(0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029, 1 ether);
     }
 
-    function withdrawBalanceTEST() external onlyOwner {
+    function TESTwithdrawBalance() external onlyOwner {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Unable to withdraw funds");
     }

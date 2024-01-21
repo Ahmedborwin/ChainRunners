@@ -55,7 +55,6 @@ function App() {
                 initialWalletRef.current = walletConnected
             } else if (initialWalletRef.current !== walletConnected) {
                 // Reload the app only if the wallet address has changed
-                console.log("Wallet address changed. Reloading app.")
                 window.location.reload()
             }
         }
@@ -70,7 +69,7 @@ function App() {
                 registeredAthlete: athleteTable[3],
             }
             setAthleteProfile(newAthleteProfile)
-            console.log("athlete?", athleteProfile.registeredAthlete)
+            console.log("athlete Found? ", newAthleteProfile.registeredAthlete)
         }
     }, [athleteTable])
 

@@ -45,11 +45,11 @@ const JoinNewCompetition = () => {
     const [searchText, setSearchText] = useState("")
     const [showCompetitions, setShowCompetitions] = useState(false)
 
-    const userData = useSelector(selectAuthDetails)
+    const handleSearch = () => {
+        setShowCompetitions(true)
+    }
 
-    const handleSearch = () => setShowCompetitions(true)
-
-    const { chain, address } = useWalletConnected()
+    const { chain } = useWalletConnected()
 
     useContractEvent({
         address: ChainRunnersAddresses[chain.id],
@@ -63,8 +63,6 @@ const JoinNewCompetition = () => {
                 showConfirmButton: false,
                 timer: 1500,
             }).then(() => {
-                // This will be executed after the Swal alert
-                // Hard reload the page
                 window.location.href = "/"
             })
         },

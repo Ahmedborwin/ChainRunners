@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Card } from "react-bootstrap"
 import Swal from "sweetalert2"
-import { ethers } from "ethers"
 import styled from "styled-components"
 import { formatEther } from "viem"
 import { useContractEvent } from "wagmi"
@@ -11,7 +10,6 @@ import ChainRunners_ABI from "../../config/chainRunnerAbi.json"
 import ChainRunnersAddresses from "../../config/chainRunnerAddress.json"
 import ChainRunnersTokenAddresses from "../../config/chainRunnerTokenAddress.json"
 import ChainRunnersTokenABI from "../../config/chainRunnerTokenAbi.json"
-import providerURLs from "../../config/ProviderUrl.json"
 
 // Components
 import Greeter from "../Greeter"
@@ -112,14 +110,12 @@ const Dashboard = ({ athlete }) => {
         abi: ChainRunners_ABI,
         functionName: "competitionId",
 
-        onError(error) {
-            window.alert(error)
-        },
-        onSuccess(data) {
-            console.log("Last Comp Id:", data)
-        },
         onSettled(data, error) {
-            console.log("Settled", { data, error })
+            if (data) {
+                console.log("Comp Count Success", data)
+            } else if (error) {
+                console.log("Comp Count Error", error)
+            }
         },
     })
 
@@ -151,13 +147,13 @@ const Dashboard = ({ athlete }) => {
             }
             newAthleteWinningStats.tokensEarned = athletesWinnings
             setAthleteWinningStats(newAthleteWinningStats)
+            console.log("athleteWinningStats", athleteWinningStats)
         }
     }, [winnerStatistics])
 
     useEffect(() => {
         if (competitionCount > 0) {
             //create array of compID's
-            console.log("competitionCount", competitionCount)
             const _compIdArray = []
             for (let i = 1; i <= competitionCount; i++) {
                 _compIdArray.push(i)
@@ -166,6 +162,7 @@ const Dashboard = ({ athlete }) => {
         }
     }, [competitionCount])
 
+    //read tokens balance from token Contract
     useEffect(() => {
         if (tokens > 0) {
             const formattedTokens = formatEther(tokens)
@@ -219,6 +216,7 @@ const Dashboard = ({ athlete }) => {
         abi: ChainRunners_ABI,
         eventName: "IntervalWinnerEvent",
         listener(log) {
+            console.log("log", log)
             const winnerAddress = log[0].args.winnerAddress
 
             Swal.fire({

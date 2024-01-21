@@ -24,14 +24,14 @@ async function main() {
     const MumbaiURL = process.env.POLYGON_MUMBAI_RPC_URL
 
     if (chainID === "80001") {
-        rpcUrl = "https://polygon-mumbai.g.alchemy.com/v2/LCWjuGIGXSD0auG-b9ESZdI87BeQCNrp"
+        rpcUrl = process.env.POLYGON_MUMBAI_RPC_URL
     } else if (chainID === "43113") {
         rpcUrl = "https://avalanche-fuji.drpc.org"
     }
 
     if (chainID === "80001") {
         donIDString = "fun-polygon-mumbai-1"
-        subId = 584
+        subId = 1289
     } else if (chainID === "43113") {
         donIDString = "fun-avalanche-fuji-1"
         subId = 1620
@@ -45,6 +45,9 @@ async function main() {
         //     options?: ServerOptions // Ganache server options
         //   )
     } else {
+        if (!rpcUrl) {
+            return "No RPC URL"
+        }
         provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
         donHostedSecretsObject = await chainLinkFunctions(chainID)
         donId = hre.ethers.utils.formatBytes32String(donIDString)
@@ -141,6 +144,10 @@ async function main() {
     console.log(`Create Competition , and Athlete2 Joins, set Admin, assign consumer address`)
     console.log(`------------------------------------\n`)
     const buyIn = hre.ethers.utils.parseEther("0.01")
+    //set chainrunner as admin
+    await consumer.setAdmin(chainrunner.address)
+    //set chainrunner interface
+    await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
     await chainrunner.createAthlete("Ahmed", "62612170")
     await chainrunner.connect(athlete_2).createAthlete("Mihai", "127753215")
     //create competitions and join with other athlete
@@ -148,14 +155,9 @@ async function main() {
         value: buyIn,
     })
     await chainrunner.connect(athlete_2).joinCompetition(1, { value: buyIn })
-    //set chainrunner as admin
-    await consumer.setAdmin(chainrunner.address)
-    //set chainrunner interface
-    await consumer.setChainRunnerInterfaceAddress(chainrunner.address)
 
     // approve chain runners to token
-    const totalSupply = await chainRunnerToken.totalSupply()
-
+    //const totalSupply = await chainRunnerToken.totalSupply()
     await chainRunnerToken.transfer(chainrunner.address, parseEther("100000000"))
 
     //record new contract address and ABI

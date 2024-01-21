@@ -13,7 +13,6 @@ import useWalletConnected from "../../hooks/useAccount"
 
 const ShowCompetitions = ({ showCompetitions, searchText }) => {
     const [compIdArray, setCompIdArray] = useState([])
-
     const { chain } = useWalletConnected()
 
     // Read ChainRunners for competitionId's
@@ -42,8 +41,6 @@ const ShowCompetitions = ({ showCompetitions, searchText }) => {
             setCompIdArray(_compIdArray)
         }
     }, [competitionCount])
-
-    console.log("show comp", searchText)
 
     return (
         showCompetitions && (

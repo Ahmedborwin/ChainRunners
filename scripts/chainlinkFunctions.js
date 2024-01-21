@@ -35,14 +35,14 @@ async function chainLinkFunctions(chainID) {
 
     //Secrets for athlete 1
     const secrets = {
-        clientId: "116415",
-        clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
+        clientId: process.env.REACT_APP_CLIENT_ID,
+        clientSecret: process.env.REACT_APP_CLIENT_SECRET,
         accessToken: accessTokens.accessTokenAthlete1,
     }
 
     const secrets_2 = {
-        clientId: "116415",
-        clientSecret: "4784e5e419141ad81ecaac028eb765f0311ee0af",
+        clientId: process.env.REACT_APP_CLIENT_ID,
+        clientSecret: process.env.REACT_APP_CLIENT_SECRET,
         accessToken: accessTokens.accessTokenAthlete2,
     }
 
@@ -60,13 +60,13 @@ async function chainLinkFunctions(chainID) {
     //Set up athlete 1 and 2 signers
     const provider = new hre.ethers.providers.JsonRpcProvider(rpcUrl)
     const wallet = new hre.ethers.Wallet(privateKey)
-    const signer = wallet.connect(provider)
+    const athlete = wallet.connect(provider)
     const wallet_2 = new hre.ethers.Wallet(privateKey_2)
     const athlete_2 = wallet_2.connect(provider)
 
     // First encrypt secrets and upload the encrypted secrets to the DON
     const secretsManager = new SecretsManager({
-        signer: signer,
+        signer: athlete,
         functionsRouterAddress: routerAddress,
         donId: donId,
     })
@@ -109,7 +109,7 @@ async function chainLinkFunctions(chainID) {
     const donHostedSecretsVersion = parseInt(uploadResult.version) // fetch the reference of the encrypted secrets
     const donHostedSecretsVersion_2 = parseInt(uploadResult_2.version) // fetch the reference of the encrypted secrets
 
-    return { donHostedSecretsVersion, donHostedSecretsVersion_2 }
+    return { donHostedSecretsVersion, donHostedSecretsVersion_2, athlete, athlete_2 }
 }
 
 module.exports = chainLinkFunctions

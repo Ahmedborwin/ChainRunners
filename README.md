@@ -1,5 +1,8 @@
 # ChainRunners
 
+
+[![Video Title](src/assets/Thumbnail.png)](https://www.loom.com/share/21e56e54e49f44faa5d3e780aaf6fd08)
+
 ## Description
 **ChainRunners** is a groundbreaking decentralized application (dApp) that merges the drive of athletic competition with the immutability of blockchain technology. Our platform is built upon the core concept of commitment in competition, especially when that commitment is solidified in the blockchain. ChainRunners leverages the initial burst of enthusiasm athletes experience upon entering a contest, translating it into a binding, blockchain-based commitment through smart contracts.
 
@@ -12,10 +15,9 @@ ChainRunners enables users to participate in blockchain-based athletic competiti
 - **Programming Languages**: Solidity, JavaScript
 - **Frontend Framework**: React
 - **Blockchain Development Environment**: Hardhat
-- **Web3 Integration**: Wagmi
+- **Web3 Integration**: Wagmi , Chainlink Functions
 
 ## Installation and Setup
-*Instructions on how to install and set up ChainRunners locally will be provided here. This should include steps for cloning the repository, installing dependencies, and setting up necessary configurations.*
 
 ## Usage and Features
 *Here, you can detail how users can interact with ChainRunners, including any commands or steps to start the application. Highlight the key features and functionalities, such as creating competitions, staking Ether, tracking performance, and receiving rewards.*

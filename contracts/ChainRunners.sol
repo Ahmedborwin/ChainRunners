@@ -176,8 +176,8 @@ contract ChainRunners is Ownable {
         uint256 nextPayout
     );
     event competitionAborted(uint256 indexed CompetitionId);
-    event winnerPicked(address winnnersAddress, uint256 compTally, uint256 winnings);
-    event IntervalWinnerEvent(address winnerAddress, uint256 winnersDistance, uint8 counter);
+    event winnerPicked(address winnnerAddress, uint256 compTally, uint256 winnings);
+    event IntervalWinnerEvent(address winnerAddress, uint256 winnersDistance);
 
     /**
      *
@@ -453,7 +453,7 @@ contract ChainRunners is Ownable {
         // TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
         if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
             _distance += counter;
-            counter += 30000;
+            counter += 10000;
         }
         // if (_athlete == 0xAc0E0c20FfcCDb0D8Dd90f6A8672587b9C52238f) {
         //     _distance += counter;
@@ -473,15 +473,18 @@ contract ChainRunners is Ownable {
         uint256 tokensAwarded = metersLogged * 0.001 ether;
         tokenContract.transfer(_athlete, tokensAwarded);
 
-        //check distance is greater, if so set as new winner
-        if (intervalWinnerDistance[_compId] < metersLogged) {
+        //if the first response then record as the current winner
+        if (payoutEventAPIResponseCounter[_compId] == 0) {
+            intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
+            intervalWinnerAddress[_compId] = _athlete; //current winners address
+            //check distance is greater, if so set as new winner
+        } else if (intervalWinnerDistance[_compId] < metersLogged) {
             intervalWinnerDistance[_compId] = metersLogged; //current winning meters logged
             intervalWinnerAddress[_compId] = _athlete; //current winners address
         }
 
         intervalEventCounter++;
         //--------------
-
         //record API response received by incrementing counter
         payoutEventAPIResponseCounter[_compId]++;
         //check if final response for this event call
@@ -499,14 +502,6 @@ contract ChainRunners is Ownable {
             if (block.timestamp >= _competition.endDate && intervalByCompId[_compId] == intervals) {
                 endCompetition(_compId);
             } else {
-                //TEST EVENT
-                //--------------
-                //Emit Winner Interval Event
-                emit IntervalWinnerEvent(
-                    intervalWinnerAddress[_compId],
-                    intervalWinnerDistance[_compId],
-                    intervalEventCounter
-                );
                 //otherwise calculcate new payoutDate
                 _competition.nextPayoutDate = _competition.nextPayoutDate + 60; //(competition.payoutIntervals * 86400);
                 //set next reward interval;
@@ -516,6 +511,11 @@ contract ChainRunners is Ownable {
     }
 
     function handleWinner(uint256 _compId, uint256 tokensAwarded) internal {
+        //TEST EVENT
+        //--------------
+        //Emit Winner Interval Event
+        emit IntervalWinnerEvent(intervalWinnerAddress[_compId], intervalWinnerDistance[_compId]);
+        //--------------
         athleteStats[intervalWinnerAddress[_compId]].intervalsWon++;
         athleteStats[intervalWinnerAddress[_compId]].tokensEarned += tokensAwarded;
         //record athletes win for this comp/payoutevent using mapping

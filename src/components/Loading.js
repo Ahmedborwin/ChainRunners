@@ -13,30 +13,26 @@ const LoadingTitle = styled("h3")`
 
 const Container = styled("div")`
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     height: 100%;
     width: 500px;
 `
 
-const Image = styled("div")`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 5px 0;
-    height: 50%;
-    background-image: url(${sillouteImage}); /* Use LoginImage */
-    background-size: cover; /* Cover the entire div */
-    background-position: right center;
-    border-radius: 20px 0 0 20px; /* Adjusted rounded corners */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-`
+// const Image = styled("div")`
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     margin: 5px 0;
+//     height: 50%;
+//     background-image: url(${sillouteImage}); /* Use LoginImage */
+//     background-size: cover; /* Cover the entire div */
+//     background-position: right center;
+//     border-radius: 20px 0 0 20px; /* Adjusted rounded corners */
+//     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+// `
 const Loading = ({ customAction }) => {
     return (
         <Container>
-            <Image></Image>
-            <div className="text-center my-5">
+            <div className="text-center">
                 <Spinner animation="grow" />
                 <LoadingTitle className="my-2">{customAction}...</LoadingTitle>
             </div>

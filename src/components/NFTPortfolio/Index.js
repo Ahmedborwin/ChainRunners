@@ -37,8 +37,15 @@ const Container = styled("div")`
     background-image: url(${mapsImage});
     background-size: cover;
     background-position: center;
-    padding-top: 5rem;
+    padding: 8rem 0;
     min-height: 100vh;
+`
+
+const CenteredWrapper = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 5rem;
 `
 
 const GridContainer = styled.div`
@@ -108,9 +115,9 @@ const NFTPortfolio = ({ isLoading }) => {
     return (
         <>
             {isLoading ? (
-                <>
+                <CenteredWrapper>
                     <Loading customAction={"Approving Token Transfer"} />
-                </>
+                </CenteredWrapper>
             ) : (
                 <Container>
                     <BuyNFT />

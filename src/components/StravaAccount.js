@@ -10,6 +10,7 @@ import ChainRunnersAddresses from "../config/chainRunnerAddress.json"
 // Hooks
 import { useContractWrite, usePrepareContractWrite } from "wagmi"
 import useWalletConnected from "../hooks/useAccount"
+
 import useChainLinkFunctions from "../hooks/useChainLinkFunctions"
 
 // Images
@@ -22,8 +23,11 @@ import { useDispatch } from "react-redux"
 import { exchangeToken } from "../store/tokenExchange"
 
 const CLIENT_ID = "116415"
+
 const CLIENT_SECRET = "4784e5e419141ad81ecaac028eb765f0311ee0af"
-const REDIRECT_URI = "https://chain-runners-qcms.vercel.app" // Replace with your actual redirect URI
+
+const REDIRECT_URI = "https://localhost:3000" // Replace with your actual redirect UR
+
 const SCOPE = "read,activity:read_all"
 
 const STRAVA_AUTH_URL = `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`

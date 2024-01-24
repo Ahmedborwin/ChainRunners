@@ -209,27 +209,54 @@ const Dashboard = ({ athlete }) => {
         },
     })
 
-    //Interval Winner Picked Event Listener
+    // //Interval Winner Picked Event Listener
+    // useContractEvent({
+    //     address: ChainRunnersAddresses[chain.id],
+    //     abi: ChainRunners_ABI,
+    //     eventName: "IntervalWinnerEvent",
+    //     listener(log) {
+    //         console.log("log", log)
+    //         const winnerAddress = log[0].args.winnerAddress
+
+    //         Swal.fire({
+    //             title: `Interval Winner Picked! The winners Address is: ${winnerAddress}`,
+    //             width: 600,
+    //             padding: "3em",
+    //             color: "#716add",
+    //             background: "#fff url(/images/trees.png)",
+    //             backdrop: `
+    //               rgba(0,0,123,0.4)
+    //               url("/images/nyan-cat.gif")
+    //               left top
+    //               no-repeat
+    //             `,
+    //         }).then(() => {
+    //             window.location.reload(true)
+    //         })
+    //     },
+    // })
+
+    //Test overall current winner
     useContractEvent({
         address: ChainRunnersAddresses[chain.id],
         abi: ChainRunners_ABI,
-        eventName: "IntervalWinnerEvent",
+        eventName: "testCurrentOverAllWinner",
         listener(log) {
             console.log("log", log)
-            const winnerAddress = log[0].args.winnerAddress
+            const winnerAddress = log[0].args._athlete
 
             Swal.fire({
-                title: `Interval Winner Picked! The winners Address is: ${winnerAddress}`,
+                title: `Current Overall Winner is:  ${winnerAddress}`,
                 width: 600,
                 padding: "3em",
                 color: "#716add",
                 background: "#fff url(/images/trees.png)",
                 backdrop: `
-                  rgba(0,0,123,0.4)
-                  url("/images/nyan-cat.gif")
-                  left top
-                  no-repeat
-                `,
+                      rgba(0,0,123,0.4)
+                      url("/images/nyan-cat.gif")
+                      left top
+                      no-repeat
+                    `,
             }).then(() => {
                 window.location.reload(true)
             })
@@ -242,7 +269,7 @@ const Dashboard = ({ athlete }) => {
         abi: ChainRunners_ABI,
         eventName: "winnerPicked",
         listener(log) {
-            const winnerAddress = log[0].args.winnerAddress
+            const winnerAddress = log[0].args.winnnerAddress
             console.log("Winner picked log", log)
 
             Swal.fire({
@@ -273,11 +300,15 @@ const Dashboard = ({ athlete }) => {
                 <CenteredCards>
                     <InfoCards className="text-center">
                         <strong>Competitions Won: </strong>
-                        <span>{athleteWinningStats.competitionsWon}</span>
+                        <span>{athleteWinningStats?.competitionsWon}</span>
+                    </InfoCards>
+                    <InfoCards className="text-center">
+                        <strong>Intervals Won: </strong>
+                        <span>{athleteWinningStats?.intervalsWon}</span>
                     </InfoCards>
                     <InfoCards className="text-center">
                         <strong>Distance Logged: </strong>
-                        <span>{athleteProfile.totalMeters} KM</span>
+                        <span>{athleteProfile?.totalMeters} KM</span>
                     </InfoCards>
                     <InfoCards className="text-center">
                         <strong>ChainRunner Tokens:</strong> <span>{tokensOwned}</span> CRT

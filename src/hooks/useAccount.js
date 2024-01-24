@@ -1,17 +1,12 @@
 import { useAccount, useNetwork } from "wagmi"
 import { useWalletClient } from "wagmi"
-import { useEffect } from "react"
 
 const useWalletConnected = () => {
-    const { address, isConnecting, isConnected } = useAccount()
+    const { address, isConnecting } = useAccount()
 
     const { chain } = useNetwork()
 
-    const {
-        data: wallet,
-        isError: walletIsError,
-        isLoading,
-    } = useWalletClient({
+    const { data: wallet, isError: walletIsError } = useWalletClient({
         onSuccess() {
             console.log("Wallet Connected")
         },

@@ -35,12 +35,11 @@ const Image = styled("div")`
 const Loading = ({ customAction }) => {
     return (
         <Container>
-            <Image>
-                <div className="text-center my-5">
-                    <Spinner animation="grow" />
-                    <LoadingTitle className="my-2">{customAction}...</LoadingTitle>
-                </div>
-            </Image>
+            <Image></Image>
+            <div className="text-center my-5">
+                <Spinner animation="grow" />
+                <LoadingTitle className="my-2">{customAction}...</LoadingTitle>
+            </div>
         </Container>
     )
 }

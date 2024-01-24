@@ -479,14 +479,6 @@ contract ChainRunners is Ownable {
             intervalWinnerAddress[_compId] = _athlete; //current winners address
         }
 
-        //TEST EVENT
-        //--------------
-        //Emit Winner Interval Event
-        emit IntervalWinnerEvent(
-            intervalWinnerAddress[_compId],
-            intervalWinnerDistance[_compId],
-            intervalEventCounter
-        );
         intervalEventCounter++;
         //--------------
 
@@ -502,12 +494,19 @@ contract ChainRunners is Ownable {
             payoutEventAPIResponseCounter[_compId] = 0;
             //set new payoutDate
             CompetitionForm memory _competition = competitionTable[_compId];
-
             //Check if the competition has ended
             uint256 intervals = _competition.durationDays / _competition.payoutIntervals;
             if (block.timestamp >= _competition.endDate && intervalByCompId[_compId] == intervals) {
                 endCompetition(_compId);
             } else {
+                //TEST EVENT
+                //--------------
+                //Emit Winner Interval Event
+                emit IntervalWinnerEvent(
+                    intervalWinnerAddress[_compId],
+                    intervalWinnerDistance[_compId],
+                    intervalEventCounter
+                );
                 //otherwise calculcate new payoutDate
                 _competition.nextPayoutDate = _competition.nextPayoutDate + 60; //(competition.payoutIntervals * 86400);
                 //set next reward interval;

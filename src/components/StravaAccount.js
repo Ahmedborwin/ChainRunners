@@ -26,7 +26,7 @@ const CLIENT_ID = "116415"
 
 const CLIENT_SECRET = "4784e5e419141ad81ecaac028eb765f0311ee0af"
 
-const REDIRECT_URI = "https://localhost:3000" // Replace with your actual redirect UR
+const REDIRECT_URI = "https://chain-runners-qcms.vercel.app" // Replace with your actual redirect UR
 
 const SCOPE = "read,activity:read_all"
 

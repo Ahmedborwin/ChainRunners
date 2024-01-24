@@ -31,6 +31,7 @@ const Container = styled("div")`
     background-size: cover;
     background-position: center;
     min-height: 100vh;
+    padding-top: 5%;
 `
 
 const CustomForm = styled(Form)`
@@ -70,15 +71,12 @@ const JoinNewCompetition = () => {
 
     return (
         <Container>
-            <Greeter />
-
             <div
                 style={{
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     flexDirection: "column",
-                    marginTop: "2%",
                 }}
             >
                 <CustomForm className="m-4 text-center">

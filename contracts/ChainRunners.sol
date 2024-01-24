@@ -170,7 +170,7 @@ contract ChainRunners is Ownable {
     event competitionReady(uint256 _compId);
     event competitionStarted(
         uint256 compId,
-        address[] competingAthletes,
+        // address[] competingAthletes,
         uint256 startDate,
         uint256 endDate,
         uint256 nextPayout
@@ -338,39 +338,6 @@ contract ChainRunners is Ownable {
         }
     }
 
-    function handleStartCompetition(uint256 _compId) public {
-        //get competition Struct from mapping
-        competition = competitionTable[_compId];
-
-        //check totatStaked is not 0
-        //check comp Status is pending
-        if (competition.status != CompetitionStatus.pending) {
-            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
-        }
-        //set Comp Status
-        competition.status = CompetitionStatus.inProgress;
-        //set start date
-        competition.startDate = block.timestamp;
-        //set end date
-        competition.endDate = block.timestamp + (8 * 86400); //(competition.durationDays * 86400);
-        //set next reward interval
-        competition.nextPayoutDate = block.timestamp + (2 * 86400); //(competition.payoutIntervals * 86400);
-        //set next reward interval
-
-        //Assign updated Competition Form back to mapping
-        competitionTable[competitionId] = competition;
-
-        competitionIsLive[_compId] = true;
-
-        emit competitionStarted(
-            _compId,
-            athleteListByComp[_compId],
-            competition.startDate,
-            competition.endDate,
-            competition.nextPayoutDate
-        );
-    }
-
     function handleCompetitionLoop() internal {
         s_APIStatus = APICallStatus.inProgress;
         for (uint256 _compId = 0; _compId <= competitionId; _compId++) {
@@ -396,7 +363,7 @@ contract ChainRunners is Ownable {
         s_APIStatus = APICallStatus.Open;
     }
 
-    function checkUpkeep() public view returns (bool) {
+    function checkUpkeep() internal view returns (bool) {
         //CHECK IF CONTRACT IN PROGRESS
         bool isOpen = s_APIStatus == APICallStatus.Open;
         bool upkeepNeeded = isOpen;
@@ -442,8 +409,6 @@ contract ChainRunners is Ownable {
             athleteToCompIdList[_athlete].push(uint8(_compId));
             //if final response for comp received then start Comp
             if (startCompCallCounter[_compId] == athleteListByComp[_compId].length) {
-                //start competition
-                emit competitionReady(_compId);
                 handleStartCompetition(_compId);
             }
         } else if (requestType(_requestType) == requestType.payoutEvent) {
@@ -451,14 +416,46 @@ contract ChainRunners is Ownable {
         }
     }
 
+    function handleStartCompetition(uint256 _compId) public {
+        //get competition Struct from mapping
+        CompetitionForm memory competition = competitionTable[_compId];
+
+        //check comp Status is pending
+        if (competition.status != CompetitionStatus.pending) {
+            revert ChainRunners__CompStatusNotAsExpected(uint8(competition.status));
+        }
+        //set Comp Status
+        competition.status = CompetitionStatus.inProgress;
+        //set start date
+        competition.startDate = block.timestamp;
+        //set end date
+        competition.endDate = block.timestamp + 240; //(competition.durationDays * 86400);
+        //set next reward interval
+        competition.nextPayoutDate = block.timestamp + 60; //(competition.payoutIntervals * 86400);
+        //set next reward interval
+
+        //Assign updated Competition Form back to mapping
+        competitionTable[competitionId] = competition;
+
+        competitionIsLive[_compId] = true;
+
+        emit competitionStarted(
+            _compId,
+            // athleteListByComp[_compId],
+            competition.startDate,
+            competition.endDate,
+            competition.nextPayoutDate
+        );
+    }
+
     function handlePayoutEvent(address _athlete, uint256 _distance, uint256 _compId) internal {
         //------------------------
-        //TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
-        // if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
-        //     _distance += counter;
-        //     counter += 30000;
-        // }
-        // if (_athlete == 0x0a192a377E7F2Bd2ffe494cE0976b79D897E10B0) {
+        // TESTING PURPOSES ONLY SHOULD BE DELETED AFTER TESTING
+        if (_athlete == 0x5f2AF68dF96F3e58e1a243F4f83aD4f5D0Ca6029) {
+            _distance += counter;
+            counter += 30000;
+        }
+        // if (_athlete == 0xAc0E0c20FfcCDb0D8Dd90f6A8672587b9C52238f) {
         //     _distance += counter;
         //     counter += 20000;
         // }
@@ -512,7 +509,7 @@ contract ChainRunners is Ownable {
                 endCompetition(_compId);
             } else {
                 //otherwise calculcate new payoutDate
-                _competition.nextPayoutDate = _competition.nextPayoutDate + (2 * 86400); //(competition.payoutIntervals * 86400);
+                _competition.nextPayoutDate = _competition.nextPayoutDate + 60; //(competition.payoutIntervals * 86400);
                 //set next reward interval;
                 competitionTable[_compId] = _competition;
             }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Card } from "react-bootstrap"
 import styled from "styled-components"
 
-const CardFooter = styled("CardBody")`
+const CardFooter = styled("div")`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,7 +40,7 @@ const ShowNFT = ({ NFTURI }) => {
 
     return (
         <Card className="card" style={{ width: "19rem" }}>
-            <img loader={() => imageURI} src={imageURI} height="300" width="302" alt="NFT Token" />
+            <img src={imageURI} height="300" width="302" alt="NFT Token" />
             <CardFooter>
                 <div>{tokenName}</div>
             </CardFooter>

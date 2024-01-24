@@ -102,8 +102,6 @@ const JoinNewCompetition = () => {
             <LeftVerticalLine />
             <RightVerticalLine />
 
-            <Greeter />
-
             <h2 className="text-center mt-4 mb-4">Join a New Competition</h2>
 
             <Form className="m-4">

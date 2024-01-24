@@ -92,7 +92,7 @@ const BuyNFT = () => {
         functionName: "balanceOf",
         args: [address],
         onError(error) {
-            window.alert(error)
+            console.log("Error reading token balance", error)
         },
         onSuccess(data) {
             if (tokenBalanceData > 0) {
@@ -113,7 +113,7 @@ const BuyNFT = () => {
                 console.log("PrepareApprove", data)
                 setIsLoading(false)
             } else if (error) {
-                console.log(error)
+                console.log("PrepareApprove", error)
                 setIsLoading(false)
             }
         },
@@ -171,29 +171,6 @@ const BuyNFT = () => {
     //TODO
     //i want to get the hash of the mint tx and display to nft minter -
     //maybe url to take them to polygonscan?
-    // useWaitForTransaction({
-    //     hash: mintHash,
-    //     confirmations: 1,
-    //     onSettled: (data, error) => {
-    //         if (data) {
-    //             console.log("txMintResponse", data)
-
-    //             Swal.fire({
-    //                 title: "<strong>NFT Mint TX Hash</strong>",
-    //                 icon: "info",
-    //                 url: `https://mumbai.polygonscan.com/address/`,
-    //                 showCloseButton: true,
-    //             })
-    //         } else if (error) {
-    //             console.error("Transaction failed", error)
-    //             Swal.fire({
-    //                 title: "Transaction Error",
-    //                 text: "There was an error processing your transaction",
-    //                 icon: "error",
-    //             })
-    //         }
-    //     },
-    // })
 
     return (
         <>

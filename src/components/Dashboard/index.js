@@ -12,7 +12,6 @@ import ChainRunnersTokenAddresses from "../../config/chainRunnerTokenAddress.jso
 import ChainRunnersTokenABI from "../../config/chainRunnerTokenAbi.json"
 
 // Components
-import Greeter from "../Greeter"
 import MyCompetitions from "./MyCompetitions"
 
 // Hooks
@@ -266,8 +265,7 @@ const Dashboard = ({ athlete }) => {
 
     return (
         <>
-            <Greeter />
-            <div className="relative p-2 bg-no-repeat bg-cover bg-center items-center">
+            <div className=" p-2 ">
                 <DashboardTitle className="text-center my-2 text-white bg-blue-800 uppercase text-4xl mb-5 shadow-xl rounded-lg px-4 py-2">
                     {athlete?.firstname} {athlete?.lastname}'s Dashboard
                 </DashboardTitle>

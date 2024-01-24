@@ -13,7 +13,7 @@ import useWalletConnected from "../hooks/useAccount"
 import useChainLinkFunctions from "../hooks/useChainLinkFunctions"
 
 // Images
-import mapsImage from "../assets/images/chainRunnersLoginScreen.png"
+import LoginImage from "../assets/images/chainRunnersLoginScreen.png"
 
 // Redux
 import { useDispatch } from "react-redux"
@@ -37,34 +37,51 @@ const Container = styled.div`
     background: linear-gradient(to right, #0d2137, #19ddd3);
     color: #ffffff;
 `
-const imageContainer = styled.div`
-    font-family: "Arial, sans-serif";
+const ImageContainerLeft = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 400px;
-    margin-left: 30rem;
-    width: 80%; /* Adjust the width as needed */
-    max-width: 400px; /* Set a maximum width */
-    background-image: url(${mapsImage});
-    border-radius: 20px; /* Rounded corners */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
+    height: 100%;
+    width: 38%; /* Half of the container */
+    background-image: url(${LoginImage}); /* Use LoginImage */
+    background-size: cover; /* Cover the entire div */
+    border-radius: 20px 0 0 20px; /* Adjusted rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+`
+
+const ImageContainerRight = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 38%; /* Half of the container */
+    background-image: url(${LoginImage}); /* Use LoginImage */
+    background-size: cover; /* Cover the entire div */
+    background-position: right center;
+    border-radius: 20px 0 0 20px; /* Adjusted rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 `
 
 const Body = styled.div`
     font-family: "Arial, sans-serif";
     display: flex;
+    flex-direction: row; /* Align elements side by side */
     align-items: center;
-    justify-content: center;
+    justify-content: space-between; /* Space between elements */
     height: 400px;
-    width: 80%; /* Adjust the width as needed */
-    max-width: 400px; /* Set a maximum width */
-    border-radius: 20px; /* Rounded corners */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
+    width: 80%;
+    max-width: 800px; /* Adjust the total max width as needed */
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 `
 
 const ContentContainer = styled.div`
     text-align: center;
+    width: 50%;
+    padding: 0 20px;
+    font-family: "Comic Sans MS, Fantasy Fonts"; /* Specify the font family */
+    font-size: 16px; /* Specify the font size */
+    font-weight: normal; /* Specify the font weight (e.g., normal, bold) */
 `
 
 const Title = styled.h1`
@@ -223,14 +240,14 @@ const StravaAccountCreation = () => {
     return (
         <Container>
             <Body>
-                <imageContainer></imageContainer>
+                <ImageContainerLeft></ImageContainerLeft>
                 <ContentContainer>
-                    <Title>Create Your Strava Account</Title>
-                    <p>Connect with Strava to start tracking your activities!</p>
+                    <Title>Connect Your Strava Account</Title>
                     <LoginButton onClick={redirectToStravaAuthorization} disabled={isLoading}>
                         {isLoading ? "Connecting..." : "Connect with Strava"}
                     </LoginButton>
                 </ContentContainer>
+                <ImageContainerRight></ImageContainerRight>
             </Body>
         </Container>
     )

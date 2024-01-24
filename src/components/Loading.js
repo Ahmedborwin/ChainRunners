@@ -2,29 +2,46 @@ import { useState } from "react"
 import Spinner from "react-bootstrap/Spinner"
 import styled from "styled-components"
 
-const FlexContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 10);
-    border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.8);
-`
+// Images
+import sillouteImage from "../assets/Silouhette-Watching.webp"
 
 const LoadingTitle = styled("h3")`
     font-size: 24px;
     color: white;
     font-weight: bold;
 `
+
+const Container = styled("div")`
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 500px;
+`
+
+const Image = styled("div")`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px 0;
+    height: 50%;
+    background-image: url(${sillouteImage}); /* Use LoginImage */
+    background-size: cover; /* Cover the entire div */
+    background-position: right center;
+    border-radius: 20px 0 0 20px; /* Adjusted rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+`
 const Loading = ({ customAction }) => {
     return (
-        <div className="text-center my-5">
-            <Spinner animation="grow" />
-
-            <LoadingTitle className="my-2">{customAction}...</LoadingTitle>
-        </div>
+        <Container>
+            <Image>
+                <div className="text-center my-5">
+                    <Spinner animation="grow" />
+                    <LoadingTitle className="my-2">{customAction}...</LoadingTitle>
+                </div>
+            </Image>
+        </Container>
     )
 }
 

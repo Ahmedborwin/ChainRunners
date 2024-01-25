@@ -2,8 +2,12 @@
 
 ## **Constellation Hackathon (Honorable Mention Winner)**
 
-
+## Video Demonstration
 [![Video Title](src/assets/Thumbnail.png)](https://youtu.be/VoPciLLR0p4)
+
+## Website
+[ChainRunners Website](https://chain-runners-qcms.vercel.app/)
+
 
 ## Description
 **ChainRunners** is a groundbreaking decentralized application (dApp) that merges the drive of athletic competition with the immutability of blockchain technology. Our platform is built upon the core concept of commitment in competition, especially when that commitment is solidified in the blockchain. ChainRunners leverages the initial burst of enthusiasm athletes experience upon entering a contest, translating it into a binding, blockchain-based commitment through smart contracts.

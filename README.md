@@ -1,6 +1,4 @@
-# ChainRunners 
-
-## **Constellation Hackathon (Honorable Mention Winner)**
+# ChainRunners **Constellation Hackathon (Honorable Mention Winner)**
 
 ## Video Demonstration
 [![Video Title](src/assets/Thumbnail.png)](https://youtu.be/VoPciLLR0p4)

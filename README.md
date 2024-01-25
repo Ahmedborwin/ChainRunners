@@ -1,4 +1,4 @@
-# ChainRunners
+# ChainRunners **Constellation Hackathon Winner**
 
 
 [![Video Title](src/assets/Thumbnail.png)](https://www.loom.com/share/21e56e54e49f44faa5d3e780aaf6fd08)
@@ -17,24 +17,19 @@ ChainRunners enables users to participate in blockchain-based athletic competiti
 - **Blockchain Development Environment**: Hardhat
 - **Web3 Integration**: Wagmi , Chainlink Functions
 
-## Installation and Setup
-
-## Usage and Features
-*Here, you can detail how users can interact with ChainRunners, including any commands or steps to start the application. Highlight the key features and functionalities, such as creating competitions, staking Ether, tracking performance, and receiving rewards.*
-
 ## Workflow
 
 ![ChainRunners Workflow](ChainRunnersWorkflow.svg)
 
-*Describe the workflow depicted in the image here.*
+## Features to be added
+
+- [] Social Login
+- [] Sponsored Transaction for Athlete Creation
+- [] Deal with Draws
+- [] Deal with Failed API Calls
+- [] Improve Secrets Management Process
 
 ## Contributing
-*If you're open to contributions, outline how others can contribute to ChainRunners. Include guidelines for submitting pull requests, reporting bugs, or suggesting enhancements.*
-
-## License
-*Specify the license under which ChainRunners is distributed. This informs users about what they can and cannot do with your code.*
-
-## Contact Information
-*Provide your contact information or how people can reach out for collaborations, questions, or further information about ChainRunners.*
+If you like this project and would like to contribute on one of the features that we would like to add then fee free to complete a Pull Request.
 
 ```

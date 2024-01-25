@@ -1,7 +1,9 @@
-# ChainRunners **Constellation Hackathon Winner**
+# ChainRunners 
+
+## **Constellation Hackathon (Honorable Mention Winner)**
 
 
-[![Video Title](src/assets/Thumbnail.png)](https://www.loom.com/share/21e56e54e49f44faa5d3e780aaf6fd08)
+[![Video Title](src/assets/Thumbnail.png)](https://youtu.be/VoPciLLR0p4)
 
 ## Description
 **ChainRunners** is a groundbreaking decentralized application (dApp) that merges the drive of athletic competition with the immutability of blockchain technology. Our platform is built upon the core concept of commitment in competition, especially when that commitment is solidified in the blockchain. ChainRunners leverages the initial burst of enthusiasm athletes experience upon entering a contest, translating it into a binding, blockchain-based commitment through smart contracts.

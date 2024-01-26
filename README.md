@@ -28,13 +28,12 @@ ChainRunners enables users to participate in blockchain-based athletic competiti
 ## Features to be added
 
 - [] LocalTestNet Function for Local end-to-end Testing
+- [] Restrict Webpage Accesibility 
 - [] Improve Secrets Management Process
 - [] Social Login
 - [] Sponsored Transaction for Athlete Creation
 - [] Deal with Draws
 - [] Deal with Failed API Calls
-
-
 ## Contributing
 If you like this project and would like to contribute to one of the features that we would like to add then feel free to complete a Pull Request.
 
